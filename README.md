@@ -1,16 +1,117 @@
-# React + Vite
+# CheatDB
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, searchable video game cheat database with anti-cheat tracking. Built with React + Vite, powered by Firebase Firestore with real-time synchronization and admin-only content management.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🔍 **Searchable Database**: Instantly search across hundreds of game cheats
+- 🛡️ **Anti-Cheat Detection**: Track which games use EAC, BattlEye, Vanguard, VAC, Ricochet, or no anti-cheat
+- ✨ **Real-time Sync**: Changes appear instantly across all connected clients via Firestore listeners
+- 🔐 **Admin Controls**: Email/password authentication for content managers to add/remove games and cheats
+- 🎮 **Dark Theme UI**: Modern glassmorphism design with smooth animations using Tailwind CSS
+- ⚡ **Lightning Fast**: Vite dev server with HMR and optimized production builds
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 19.2 + Vite 7.2
+- **Styling**: Tailwind CSS 3.4
+- **Backend**: Firebase (Authentication + Firestore)
+- **Icons**: Lucide React
+- **Linting**: ESLint 9 with React hooks rules
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+```bash
+npm install
+```
+
+### Development
+
+```bash
+npm run dev
+```
+
+Opens dev server at `http://localhost:5173` with HMR enabled.
+
+### Build
+
+```bash
+npm run build
+```
+
+Generates optimized production build to `/dist`.
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+Runs ESLint on all `.js` and `.jsx` files.
+
+## Project Structure
+
+```
+src/
+├── App.jsx          # Main app component (all UI in single file)
+├── index.css        # Global styles
+├── main.jsx         # React entry point
+└── assets/          # Static assets
+```
+
+## Architecture
+
+CheatDB uses a monolithic component structure in `src/App.jsx` with the following key components:
+
+- **Header**: Search bar, logo, auth controls
+- **GameCard**: Grid items displaying game title, anti-cheat badge, cheat count
+- **GameDetail**: Modal showing full cheat list and admin form for adding cheats
+- **LoginModal**: Admin authentication interface
+- **CursorGlow**: Animated visual effect following mouse (performance-optimized with RAF)
+
+### Data Flow
+
+1. Firebase auth listener (`onAuthStateChanged`) manages user state on mount
+2. Real-time Firestore query (`onSnapshot`) subscribes to games collection
+3. Search filter uses `useMemo` to prevent unnecessary re-renders
+4. Admin actions (add/delete cheats) use `updateDoc`/`deleteDoc` with proper auth gating
+
+### Firestore Schema
+
+```
+artifacts/
+  cheatdb-games-v2/
+    public/
+      data/
+        games/
+          {gameId}
+            - title: string
+            - antiCheat: string (EAC|BattlEye|Vanguard|VAC|Ricochet|None)
+            - cheats: array of { code, effect, notes?, addedAt }
+```
+
+## Admin Setup
+
+1. Create a Firebase project and enable Firestore + Authentication
+2. Add the Firebase config to `src/App.jsx` (currently hardcoded)
+3. Create admin users in Firebase Console → Authentication → Users (email/password)
+4. Set Firestore security rules to allow reads from `artifacts/{appId}/public/data/games/*`
+
+## Debugging
+
+- **Auth issues**: Check Firebase Console → Authentication → Users
+- **Firestore sync fails**: Verify security rules allow read/write access
+- **Blank grid**: Ensure Firestore query is ordered by `title` ascending
+- **Performance**: Profile cursor glow effect in DevTools if laggy
