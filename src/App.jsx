@@ -39,7 +39,8 @@ import {
   Trash2,
   Pencil,
   Check,
-  Sparkles
+  Sparkles,
+  Shield
 } from 'lucide-react';
 
 // --- Firebase Configuration ---
@@ -56,6 +57,57 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'cheatdb-games-v2';
+
+// --- Utility Functions for Visual Effects ---
+const createConfetti = () => {
+  const colors = ['#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6'];
+  for (let i = 0; i < 30; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    const angle = (Math.random() * 360) * (Math.PI / 180);
+    const velocity = 5 + Math.random() * 10;
+    const tx = Math.cos(angle) * velocity * 30;
+    const ty = -Math.sin(angle) * velocity * 30;
+    
+    confetti.style.left = (window.innerWidth / 2) + 'px';
+    confetti.style.top = (window.innerHeight / 2) + 'px';
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.setProperty('--tx', `${tx}px`);
+    confetti.style.setProperty('--ty', `${ty}px`);
+    
+    document.body.appendChild(confetti);
+    
+    setTimeout(() => confetti.remove(), 1200);
+  }
+};
+
+const triggerShake = (elementId) => {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.classList.add('shake-error');
+    setTimeout(() => el.classList.remove('shake-error'), 500);
+  }
+};
+
+// Format timestamp to relative time (e.g., "2 hours ago")
+const formatTimeAgo = (timestamp) => {
+  if (!timestamp) return '';
+  const ms = typeof timestamp === 'number' ? timestamp : timestamp.toMillis?.() || 0;
+  if (!ms) return '';
+  
+  const seconds = Math.floor((Date.now() - ms) / 1000);
+  
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks}w ago`;
+  return 'long ago';
+};
 
 // --- New Component: Animated Background Mesh ---
 const AnimatedBackgroundMesh = ({ mousePos }) => {
@@ -109,9 +161,9 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
 
       {/* Grid overlay - subtle */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 grid-background"
         style={{
-          backgroundImage: `linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(rgba(139, 92, 246, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 246, 0.08) 1px, transparent 1px)`,
           backgroundSize: '50px 50px',
         }}
       />
@@ -119,125 +171,32 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
   );
 };
 
-// --- New Component: Animated Counter ---
-const AnimatedCounter = ({ value, label, icon: Icon, color = 'violet' }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    if (displayValue === value) return;
-
-    const duration = 1000;
-    const start = Date.now();
-    const startValue = displayValue;
-
-    const animate = () => {
-      const now = Date.now();
-      const progress = Math.min((now - start) / duration, 1);
-      const current = Math.floor(startValue + (value - startValue) * progress);
-      setDisplayValue(current);
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
-    };
-
-    requestAnimationFrame(animate);
-  }, [value, displayValue]);
-
-  const colorClasses = {
-    violet: 'text-violet-400',
-    blue: 'text-blue-400',
-    emerald: 'text-emerald-400',
-    rose: 'text-rose-400',
-    amber: 'text-amber-400',
-  };
-
-  return (
-    <div className="flex flex-col items-center p-6 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 backdrop-blur-sm hover:border-white/20 transition-all duration-300 group">
-      <div className={`p-3 rounded-xl bg-${color}-500/10 mb-3 group-hover:scale-110 transition-transform`}>
-        <Icon className={`w-6 h-6 ${colorClasses[color]}`} />
-      </div>
-      <div className={`text-3xl font-bold ${colorClasses[color]} mb-1`}>
-        {displayValue}
-      </div>
-      <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-        {label}
-      </div>
-    </div>
-  );
-};
-
 // --- New Component: Statistics Dashboard ---
-const StatisticsDashboard = ({ games, isDarkMode }) => {
+const StatisticsDashboard = ({ games }) => {
+  // Calculate statistics
   const totalGames = games.length;
   const totalCheats = games.reduce((sum, game) => sum + (game.cheats?.length || 0), 0);
   
-  const antiCheatBreakdown = games.reduce((acc, game) => {
-    const ac = game.antiCheat || 'Unknown';
-    acc[ac] = (acc[ac] || 0) + 1;
-    return acc;
-  }, {});
-
-  const antiCheatStats = [
-    { name: 'EAC', count: antiCheatBreakdown['EAC'] || 0, color: 'blue' },
-    { name: 'BattlEye', count: antiCheatBreakdown['BattlEye'] || 0, color: 'amber' },
-    { name: 'Vanguard', count: antiCheatBreakdown['Vanguard'] || 0, color: 'rose' },
-    { name: 'VAC', count: antiCheatBreakdown['VAC'] || 0, color: 'emerald' },
-    { name: 'Ricochet', count: antiCheatBreakdown['Ricochet'] || 0, color: 'violet' },
-    { name: 'None', count: antiCheatBreakdown['None'] || 0, color: 'zinc' },
-  ];
-
   return (
-    <div className={`mb-12 p-8 rounded-3xl border backdrop-blur-sm transition-all duration-500 ${
-      isDarkMode 
-        ? 'bg-gradient-to-br from-zinc-900/20 to-zinc-900/10 border-white/10' 
-        : 'bg-gradient-to-br from-neutral-800/15 to-neutral-800/5 border-neutral-700/20'
-    }`}>
-      <div className={`mb-8 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-        <h2 className="text-2xl font-black mb-2">Database Statistics</h2>
-        <p className={`text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-          Real-time analytics of your cheat database
-        </p>
+    <div className="mb-8 px-6 py-3 rounded-xl border backdrop-blur-sm transition-all duration-500 bg-zinc-900/40 border-white/10 flex items-center justify-center gap-16">
+      {/* Total Games */}
+      <div className="flex flex-col items-center gap-1 group cursor-pointer">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 group-hover:text-violet-400 transition-colors">Games</span>
+        <div className="flex items-center gap-2">
+          <Gamepad2 className="w-5 h-5 text-violet-400 icon-pulse" />
+          <span className="text-2xl font-black text-violet-400 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-violet-400 group-hover:to-pink-400 transition-all">{totalGames}</span>
+        </div>
       </div>
-
-      {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <AnimatedCounter value={totalGames} label="Total Games" icon={Gamepad2} color="violet" />
-        <AnimatedCounter value={totalCheats} label="Total Cheats" icon={Zap} color="amber" />
-      </div>
-
-      {/* Anti-Cheat Breakdown */}
-      <div>
-        <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-          Anti-Cheat Distribution
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-          {antiCheatStats.map((stat) => (
-            <div
-              key={stat.name}
-              className={`flex flex-col items-center p-4 rounded-xl border transition-all duration-300 ${
-                isDarkMode
-                  ? 'bg-white/5 border-white/10 hover:border-white/20'
-                  : 'bg-white border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <div className={`text-lg font-bold mb-1 ${
-                stat.color === 'blue' ? (isDarkMode ? 'text-blue-400' : 'text-blue-600') :
-                stat.color === 'amber' ? (isDarkMode ? 'text-amber-400' : 'text-amber-600') :
-                stat.color === 'rose' ? (isDarkMode ? 'text-rose-400' : 'text-rose-600') :
-                stat.color === 'emerald' ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') :
-                stat.color === 'violet' ? (isDarkMode ? 'text-violet-400' : 'text-violet-600') :
-                isDarkMode ? 'text-zinc-400' : 'text-slate-500'
-              }`}>
-                {stat.count}
-              </div>
-              <div className={`text-xs font-semibold uppercase tracking-wider ${
-                isDarkMode ? 'text-zinc-500' : 'text-slate-500'
-              }`}>
-                {stat.name}
-              </div>
-            </div>
-          ))}
+      
+      {/* Divider */}
+      <div className="w-px h-8 bg-white/10"></div>
+      
+      {/* Total Cheats */}
+      <div className="flex flex-col items-center gap-1 group cursor-pointer">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 group-hover:text-amber-400 transition-colors">Cheats</span>
+        <div className="flex items-center gap-2">
+          <Zap className="w-5 h-5 text-amber-400 icon-pulse" style={{ animationDelay: '0.3s' }} />
+          <span className="text-2xl font-black text-amber-400 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-amber-400 group-hover:to-orange-400 transition-all">{totalCheats}</span>
         </div>
       </div>
     </div>
@@ -269,7 +228,8 @@ const ParticleEffect = ({ x, y }) => {
     </>
   );
 };
-const CursorGlow = ({ onMouseMove, isDarkMode = true }) => {
+
+const CursorGlow = ({ onMouseMove }) => {
   const [pos, setPos] = useState({ x: -500, y: -500 });
   const [isVisible, setIsVisible] = useState(false);
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
@@ -439,9 +399,7 @@ const CursorGlow = ({ onMouseMove, isDarkMode = true }) => {
           height: '150px',
           marginLeft: '-75px',
           marginTop: '-75px',
-          filter: isDarkMode 
-            ? `drop-shadow(0 0 30px rgba(139, 92, 246, 0.6))`
-            : `drop-shadow(0 0 30px rgba(59, 130, 246, 0.4))`,
+          filter: `drop-shadow(0 0 30px rgba(139, 92, 246, 0.6))`,
           zIndex: 0,
         }}
       >
@@ -449,7 +407,7 @@ const CursorGlow = ({ onMouseMove, isDarkMode = true }) => {
         <div
           className="bubble-ripple-fast absolute inset-0 rounded-full blur-2xl opacity-60"
           style={{
-            backgroundColor: isDarkMode ? 'rgb(139, 92, 246)' : 'rgb(59, 130, 246)',
+            backgroundColor: 'rgb(139, 92, 246)',
             transform: `rotate(${angle}deg) scale(1.1)`,
             transition: 'transform 0.3s ease-out',
           }}
@@ -459,9 +417,7 @@ const CursorGlow = ({ onMouseMove, isDarkMode = true }) => {
         <div
           className="bubble-ripple absolute inset-0 rounded-full blur-xl opacity-50"
           style={{
-            background: isDarkMode 
-              ? 'linear-gradient(135deg, rgb(167, 139, 250) to rgb(232, 121, 250))'
-              : 'linear-gradient(135deg, rgb(96, 165, 250) to rgb(96, 165, 250))',
+            background: 'linear-gradient(135deg, rgb(167, 139, 250) to rgb(232, 121, 250))',
             transform: `rotate(${angle * 0.7}deg) scale(0.95)`,
             transition: 'transform 0.3s ease-out',
           }}
@@ -471,9 +427,7 @@ const CursorGlow = ({ onMouseMove, isDarkMode = true }) => {
         <div
           className="bubble-ripple-fast absolute inset-6 rounded-full blur-lg opacity-60"
           style={{
-            background: isDarkMode
-              ? 'linear-gradient(135deg, rgb(196, 181, 253) to rgb(243, 194, 231))'
-              : 'linear-gradient(135deg, rgb(147, 197, 253) to rgb(191, 219, 254))',
+            background: 'linear-gradient(135deg, rgb(196, 181, 253) to rgb(243, 194, 231))',
             boxShadow: 'inset 0 -20px 40px rgba(0, 0, 0, 0.2), inset 0 20px 40px rgba(255, 255, 255, 0.4)',
             transform: `scale(0.9)`,
             animation: 'ripple-wave 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite 0.2s',
@@ -484,7 +438,7 @@ const CursorGlow = ({ onMouseMove, isDarkMode = true }) => {
         <div
           className="bubble-ripple absolute inset-0 rounded-full border-2"
           style={{
-            borderColor: isDarkMode ? 'rgb(196, 181, 253)' : 'rgb(147, 197, 253)',
+            borderColor: 'rgb(196, 181, 253)',
             opacity: 0.9,
             transform: `rotate(${angle * 0.5}deg) scale(1.05)`,
             transition: 'transform 0.3s ease-out',
@@ -527,59 +481,157 @@ const CursorGlow = ({ onMouseMove, isDarkMode = true }) => {
   );
 };
 
+// Toast Notification Component
+const Toast = ({ message, type = 'success', onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor = type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' : 
+                 type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-300' :
+                 'bg-blue-500/20 border-blue-500/30 text-blue-300';
+
+  return (
+    <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl border backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-300 font-semibold text-sm z-[70] ${bgColor}`}>
+      {message}
+    </div>
+  );
+};
+
+// Keyboard Shortcuts Modal Component
+const ShortcutsModal = ({ onClose }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
+    <div className="relative bg-zinc-900/95 border border-violet-500/20 rounded-2xl p-8 max-w-md w-full animate-in fade-in zoom-in-95 duration-300">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-white">Keyboard Shortcuts</h2>
+        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <kbd className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs font-mono text-zinc-400">Esc</kbd>
+          <span className="text-sm text-zinc-300">Close modal</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <kbd className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs font-mono text-zinc-400">?</kbd>
+          <span className="text-sm text-zinc-300">Show this menu</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <kbd className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs font-mono text-zinc-400">Ctrl/Cmd</kbd>
+          <span className="text-sm text-zinc-300">Focus search</span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 // --- Components ---
 
-const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick, isDarkMode, onThemeChange }) => (
-  <header className={`sticky top-0 z-50 border-b transition-all duration-500 ${
-    isDarkMode
-      ? 'border-white/5 bg-black/40 backdrop-blur-2xl supports-[backdrop-filter]:bg-black/20'
-      : 'border-slate-200 bg-white/40 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/20'
-  }`}>
+// Typewriter Effect Component
+const TypewriterText = ({ text = "v2.0 // Database" }) => {
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  useEffect(() => {
+    const typingSpeed = 200;
+    const deletingSpeed = 150;
+    const pauseTime = 3000;
+    
+    let timeout;
+    
+    if (!isDeleting && displayText !== text) {
+      // Typing
+      timeout = setTimeout(() => {
+        setDisplayText(text.substring(0, displayText.length + 1));
+      }, typingSpeed);
+    } else if (!isDeleting && displayText === text) {
+      // Pause at full text
+      timeout = setTimeout(() => {
+        setIsDeleting(true);
+      }, pauseTime);
+    } else if (isDeleting && displayText !== '') {
+      // Deleting
+      timeout = setTimeout(() => {
+        setDisplayText(displayText.substring(0, displayText.length - 1));
+      }, deletingSpeed);
+    } else if (isDeleting && displayText === '') {
+      // Start typing again
+      setIsDeleting(false);
+    }
+    
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, text]);
+  
+  return (
+    <span className="inline-block border-r-2 border-violet-400 pr-0.5 font-mono" style={{ width: 'fit-content' }}>
+      {displayText}
+    </span>
+  );
+};
+
+const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick }) => {
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  return (
+  <header className="sticky top-0 z-50 border-b border-white/5 bg-black/40 backdrop-blur-2xl supports-[backdrop-filter]:bg-black/20">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex items-center justify-between h-24 gap-6">
+      <div className="flex items-center justify-between gap-6 py-4">
         {/* Logo */}
         <div className="flex items-center gap-3 flex-shrink-0 cursor-pointer group" onClick={() => window.location.reload()}>
           <div className="relative">
             <div className="absolute inset-0 bg-violet-600 blur-xl opacity-20 group-hover:opacity-60 transition-opacity duration-500 rounded-full animate-pulse"></div>
             <div className="relative bg-zinc-900/80 p-3 rounded-2xl border border-white/10 group-hover:border-violet-500/50 transition-all duration-300 shadow-xl shadow-black/50">
-              <Gamepad2 className="w-6 h-6 text-violet-400 group-hover:text-white transition-colors" />
+              <Gamepad2 className="w-6 h-6 text-violet-400 group-hover:text-white transition-colors icon-rotate-on-hover" />
             </div>
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-3xl font-black tracking-tighter text-white drop-shadow-lg">
-              CHEAT<span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">DB</span>
+            <h1 className="text-3xl font-black tracking-tighter text-white drop-shadow-lg group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r transition-all duration-500 group-hover:from-violet-400 group-hover:via-pink-400 group-hover:to-purple-400">
+              CHEAT<span className="bg-gradient-to-r from-violet-400 via-pink-400 to-fuchsia-400 text-transparent bg-clip-text animate-pulse">DB</span>
             </h1>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] pl-1">
-              v2.0 // Database
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] pl-1 h-4">
+              <TypewriterText text="v2.0 // Database" />
             </p>
           </div>
         </div>
 
         {/* Search Bar */}
-        <div className="flex-1 max-w-xl relative group">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-            <Search className="h-5 w-5 text-zinc-500 group-focus-within:text-violet-400 transition-colors duration-300" />
+        <div className="flex-1 max-w-xl">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+              <Search className="h-5 w-5 text-zinc-500 group-focus-within:text-violet-400 transition-colors duration-300" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-12 pr-4 py-3 bg-zinc-900/40 border border-white/5 rounded-2xl leading-5 text-zinc-200 placeholder-zinc-600 focus:outline-none focus:bg-zinc-900/80 focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500/50 focus:shadow-[0_0_30px_-5px_rgba(139,92,246,0.2)] sm:text-sm transition-all duration-300 backdrop-blur-sm"
+              placeholder="Search database..."
+              value={searchTerm}
+              onChange={(e) => onSearch(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+            />
+            {isSearchFocused && searchTerm && (
+              <div className="fixed left-4 right-4 sm:left-auto sm:right-auto sm:max-w-xl p-3 bg-zinc-900/95 border border-white/5 rounded-xl backdrop-blur-xl flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]" style={{ top: 'calc(100% + 1rem)' }}>
+                <span className="text-xs text-zinc-500 w-full font-bold uppercase tracking-wider">Quick Filters:</span>
+                {['cs2', 'cod', 'eft', 'tf2', 'None'].map((tag, i) => (
+                  <button
+                    key={i}
+                    onClick={() => onSearch(tag)}
+                    className="px-3 py-1 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold hover:bg-violet-500/20 transition-all pill-enter animate-in fade-in zoom-in-95"
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <input
-            type="text"
-            className="block w-full pl-12 pr-4 py-4 bg-zinc-900/40 border border-white/5 rounded-2xl leading-5 text-zinc-200 placeholder-zinc-600 focus:outline-none focus:bg-zinc-900/80 focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500/50 focus:shadow-[0_0_30px_-5px_rgba(139,92,246,0.2)] sm:text-sm transition-all duration-300 backdrop-blur-sm"
-            placeholder="Search database..."
-            value={searchTerm}
-            onChange={(e) => onSearch(e.target.value)}
-          />
         </div>
 
         {/* Admin / Login Button */}
         <div className="flex items-center gap-3">
-          {/* Theme Toggle */}
-          <button
-            onClick={onThemeChange}
-            className="p-3 bg-zinc-900/50 border border-white/5 rounded-xl text-zinc-500 hover:text-amber-400 hover:bg-zinc-800 hover:border-amber-500/20 transition-all duration-300"
-            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {isDarkMode ? '☀️' : '🌙'}
-          </button>
-
           {user && (
             <div className="hidden md:flex flex-col items-end">
               <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider flex items-center gap-1">
@@ -616,62 +668,61 @@ const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick, isDar
       </div>
     </div>
   </header>
-);
+  );
+};
 
-const AntiCheatBadge = ({ ac, isDarkMode = true }) => {
-  const styles = isDarkMode ? {
-    'EAC': 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_10px_-4px_rgba(59,130,246,0.3)]',
-    'BattlEye': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-[0_0_10px_-4px_rgba(234,179,8,0.3)]',
-    'Vanguard': 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_10px_-4px_rgba(239,68,68,0.3)]',
-    'VAC': 'bg-green-500/10 text-green-400 border-green-500/20 shadow-[0_0_10px_-4px_rgba(34,197,94,0.3)]',
-    'Ricochet': 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_10px_-4px_rgba(168,85,247,0.3)]',
+const AntiCheatBadge = ({ ac }) => {
+  const styles = {
+    'EAC': 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_10px_-4px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_-4px_rgba(59,130,246,0.6)]',
+    'BattlEye': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-[0_0_10px_-4px_rgba(234,179,8,0.3)] hover:shadow-[0_0_20px_-4px_rgba(234,179,8,0.6)]',
+    'Vanguard': 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_10px_-4px_rgba(239,68,68,0.3)] hover:shadow-[0_0_20px_-4px_rgba(239,68,68,0.6)]',
+    'VAC': 'bg-green-500/10 text-green-400 border-green-500/20 shadow-[0_0_10px_-4px_rgba(34,197,94,0.3)] hover:shadow-[0_0_20px_-4px_rgba(34,197,94,0.6)]',
+    'Ricochet': 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_10px_-4px_rgba(168,85,247,0.3)] hover:shadow-[0_0_20px_-4px_rgba(168,85,247,0.6)]',
     'None': 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
-  } : {
-    'EAC': 'bg-blue-200/60 text-blue-900 border-blue-300 shadow-[0_0_10px_-4px_rgba(59,130,246,0.15)]',
-    'BattlEye': 'bg-yellow-200/60 text-yellow-900 border-yellow-300 shadow-[0_0_10px_-4px_rgba(234,179,8,0.15)]',
-    'Vanguard': 'bg-red-200/60 text-red-900 border-red-300 shadow-[0_0_10px_-4px_rgba(239,68,68,0.15)]',
-    'VAC': 'bg-green-200/60 text-green-900 border-green-300 shadow-[0_0_10px_-4px_rgba(34,197,94,0.15)]',
-    'Ricochet': 'bg-purple-200/60 text-purple-900 border-purple-300 shadow-[0_0_10px_-4px_rgba(168,85,247,0.15)]',
-    'None': 'bg-amber-200/60 text-amber-900 border-amber-300',
   };
   
   const acName = ac || 'Unknown';
   
   return (
-    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md ${styles[acName] || styles.None}`}>
+    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md transition-all duration-300 hover:scale-110 cursor-pointer ${styles[acName] || styles.None}`}>
       {acName}
     </span>
   );
 };
 
-const GameCard = ({ game, onClick, user, onDelete, isEditMode, index, isDarkMode }) => (
+const GameCard = ({ game, onClick, user, onDelete, isEditMode, index }) => {
+  const [showPreview, setShowPreview] = useState(false);
+  const freeCount = game.cheats?.filter(c => c.tier === 'FREE' || !c.tier).length || 0;
+  const paidCount = game.cheats?.filter(c => c.tier === 'PAID').length || 0;
+  
+  return (
   <div 
     onClick={() => onClick(game)}
-    className={`group relative rounded-3xl p-6 transition-all duration-500 cursor-pointer hover:-translate-y-2 overflow-hidden backdrop-blur-sm card-bounce-enter border ${
-      isDarkMode
-        ? 'bg-zinc-900/30 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40'
-        : 'bg-white/40 hover:bg-white/60 border-slate-200 hover:border-violet-300'
-    }`}
+    onMouseEnter={() => setShowPreview(true)}
+    onMouseLeave={() => setShowPreview(false)}
+    className="group relative rounded-3xl p-6 transition-all duration-500 cursor-pointer hover:-translate-y-3 overflow-hidden backdrop-blur-sm card-bounce-enter border bg-zinc-900/30 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)]"
     style={{ animationDelay: `${index * 50}ms` }}
   >
     {/* Animated Gradient Background on Hover */}
     <div className="absolute inset-0 bg-gradient-to-br from-violet-600/10 via-transparent to-fuchsia-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
     
+    {/* Hover Preview Tooltip */}
+    {showPreview && game.cheats && game.cheats.length > 0 && (
+      <div className="absolute -top-20 left-1/2 -translate-x-1/2 z-50 bg-zinc-900/95 border border-violet-500/30 rounded-xl px-4 py-2 whitespace-nowrap text-xs font-bold text-violet-300 backdrop-blur-xl float-in animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="flex gap-3">
+          <span className="text-emerald-400">Free: {freeCount}</span>
+          <span className="text-amber-400">Paid: {paidCount}</span>
+        </div>
+      </div>
+    )}
+    
     <div className="relative z-10 flex flex-col h-full">
       <div className="flex justify-between items-start mb-5">
         <div className="flex items-center gap-3">
-          <div className={`p-3 rounded-2xl border shadow-inner group-hover:scale-110 transition-transform duration-300 ${
-            isDarkMode
-              ? 'bg-black/40 border-white/5'
-              : 'bg-white/40 border-slate-300'
-          }`}>
-            <ShieldAlert className={`w-5 h-5 transition-colors icon-pulse ${
-              isDarkMode
-                ? 'text-zinc-400 group-hover:text-violet-400'
-                : 'text-slate-600 group-hover:text-violet-600'
-            }`} />
+          <div className="p-3 rounded-2xl border shadow-inner group-hover:scale-110 transition-transform duration-300 bg-black/40 border-white/5">
+            <ShieldAlert className="w-5 h-5 transition-colors icon-pulse text-zinc-400 group-hover:text-violet-400" />
           </div>
-          <AntiCheatBadge ac={game.antiCheat} isDarkMode={isDarkMode} />
+          <AntiCheatBadge ac={game.antiCheat} />
         </div>
         
         {/* DELETE BUTTON (Admin Only + Edit Mode) */}
@@ -689,44 +740,55 @@ const GameCard = ({ game, onClick, user, onDelete, isEditMode, index, isDarkMode
         )}
       </div>
       
-      <h3 className={`text-2xl font-black mb-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r transition-all ${
-        isDarkMode
-          ? 'text-white group-hover:from-white group-hover:to-violet-200'
-          : 'text-amber-950 group-hover:from-amber-950 group-hover:to-violet-700'
-      }`}>
+      <h3 className="text-2xl font-black mb-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r transition-all text-white group-hover:from-white group-hover:to-violet-200">
         {game.title}
       </h3>
       
       <div className="flex items-center gap-2 mb-8">
-        <span className={`text-xs font-medium px-2 py-1 rounded-md border flex items-center gap-1.5 transition-colors ${
-          isDarkMode
-            ? 'text-zinc-500 bg-zinc-800/50 border-white/5 group-hover:border-violet-500/20'
-            : 'text-amber-900 bg-amber-200/60 border-amber-300 group-hover:border-violet-400/50'
-        }`}>
-          <Zap className={`w-3 h-3 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`} />
-          {game.cheats?.length || 0} Cheats
+        <span className="text-xs font-medium px-2 py-1 rounded-md border flex items-center gap-1.5 transition-all text-zinc-500 bg-zinc-800/50 border-white/5 group-hover:border-violet-500/30 group-hover:bg-zinc-800/80">
+          <Zap className="w-3 h-3 text-violet-400" />
+          {game.cheats?.length || 0} Programs
         </span>
       </div>
 
-      <div className={`mt-auto pt-5 border-t flex items-center justify-between text-sm transition-colors ${
-        isDarkMode
-          ? 'border-white/5 text-zinc-500 group-hover:text-violet-300'
-          : 'border-amber-200/60 text-amber-800 group-hover:text-violet-600'
-      }`}>
+      <div className="mt-auto pt-5 border-t flex items-center justify-between text-sm transition-colors border-white/5 text-zinc-500 group-hover:text-violet-300">
         <span className="text-xs font-bold uppercase tracking-wider">Access Database</span>
-        <div className={`p-1.5 rounded-full transition-colors ${
-          isDarkMode
-            ? 'bg-white/5 group-hover:bg-violet-500/20'
-            : 'bg-slate-200 group-hover:bg-violet-200'
-        }`}>
+        <div className="p-1.5 rounded-full transition-all bg-white/5 group-hover:bg-violet-500/20 group-hover:scale-110">
           <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
     </div>
   </div>
+  );
+};
+
+const SkeletonCard = ({ index }) => (
+  <div 
+    className="group relative rounded-3xl p-6 transition-all duration-500 overflow-hidden backdrop-blur-sm card-bounce-enter border bg-zinc-900/30 border-white/5 animate-pulse"
+    style={{ animationDelay: `${index * 50}ms` }}
+  >
+    <div className="relative z-10 flex flex-col h-full gap-4">
+      <div className="flex justify-between items-start">
+        <div className="flex gap-3 flex-1">
+          <div className="p-3 rounded-2xl bg-zinc-800/50 w-12 h-12" />
+          <div className="flex gap-2">
+            <div className="h-6 bg-zinc-800/50 rounded w-20" />
+            <div className="h-6 bg-zinc-800/50 rounded w-16" />
+          </div>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div className="h-8 bg-zinc-800/50 rounded w-40" />
+        <div className="h-5 bg-zinc-800/50 rounded w-32" />
+      </div>
+      <div className="mt-auto pt-4 border-t border-white/5">
+        <div className="h-4 bg-zinc-800/50 rounded w-24" />
+      </div>
+    </div>
+  </div>
 );
 
-const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
+const LoginModal = ({ onClose, onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -749,73 +811,41 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <div className={`absolute inset-0 backdrop-blur-md transition-opacity duration-300 ${
-        isDarkMode ? 'bg-black/60' : 'bg-white/40'
-      }`} onClick={onClose} />
-      <div className={`relative w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-300 ring-1 border transition-colors ${
-        isDarkMode
-          ? 'bg-[#0a0a0a] border-white/10 ring-white/10'
-          : 'bg-amber-50 border-amber-200 ring-amber-200/30'
-      }`}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300" onClick={onClose} />
+      <div className="relative w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-300 ring-1 border transition-colors bg-[#0a0a0a] border-white/10 ring-white/10">
         
-        <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r ${
-          isDarkMode
-            ? 'from-transparent via-violet-500/50 to-transparent'
-            : 'from-transparent via-violet-400/40 to-transparent'
-        }`}></div>
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent"></div>
         
-        <h2 className={`text-2xl font-black mb-6 flex items-center gap-3 ${
-          isDarkMode ? 'text-white' : 'text-amber-950'
-        }`}>
-          <div className={`p-2 rounded-xl transition-colors ${
-            isDarkMode
-              ? 'bg-violet-500/10'
-              : 'bg-amber-200/60'
-          }`}>
-             <Lock className={`w-6 h-6 ${isDarkMode ? 'text-violet-500' : 'text-amber-900'}`} />
+        <h2 className="text-2xl font-black mb-6 flex items-center gap-3 text-white">
+          <div className="p-2 rounded-xl transition-colors bg-violet-500/10">
+             <Lock className="w-6 h-6 text-violet-500" />
           </div>
           Admin Access
         </h2>
         {error && (
-          <div className={`mb-6 p-4 rounded-2xl text-sm flex items-center gap-2 border transition-colors ${
-            isDarkMode
-              ? 'bg-red-500/5 border-red-500/10 text-red-400'
-              : 'bg-red-100/50 border-red-300 text-red-700'
-          }`}>
+          <div id="login-error" className="mb-6 p-4 rounded-2xl text-sm flex items-center gap-2 border transition-colors bg-red-500/5 border-red-500/10 text-red-400 animate-in slide-in-from-top-4 shake-error">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             {error}
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <label className={`text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors ${
-              isDarkMode ? 'text-zinc-500' : 'text-amber-900'
-            }`}>Email</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Email</label>
             <input 
               type="email" 
               required
-              className={`w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border ${
-                isDarkMode
-                  ? 'bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:bg-zinc-900'
-                  : 'bg-amber-100/50 border-amber-200 text-amber-950 focus:ring-violet-500 focus:bg-amber-100/70'
-              }`}
+              className="w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:bg-zinc-900"
               placeholder="admin@cheatdb.org"
               value={email}
               onChange={e => setEmail(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label className={`text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors ${
-              isDarkMode ? 'text-zinc-500' : 'text-amber-900'
-            }`}>Password</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Password</label>
             <input 
               type="password" 
               required
-              className={`w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border ${
-                isDarkMode
-                  ? 'bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:bg-zinc-900'
-                  : 'bg-amber-100/50 border-amber-200 text-amber-950 focus:ring-violet-500 focus:bg-amber-100/70'
-              }`}
+              className="w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:bg-zinc-900"
               placeholder="••••••••"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -824,13 +854,19 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
           <button 
             type="submit" 
             disabled={loading}
-            className={`w-full text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] ${
-              isDarkMode
-                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/20'
-                : 'bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 shadow-lg shadow-violet-300/20'
-            }`}
+            className="w-full text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2"
           >
-            {loading ? 'Verifying...' : 'Unlock Database'}
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4 icon-rotate-on-hover" />
+                Unlock Database
+              </>
+            )}
           </button>
         </form>
       </div>
@@ -838,46 +874,45 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
   );
 };
 
-const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
-  const [newCheat, setNewCheat] = useState({ code: '', effect: '' });
+const GameDetail = ({ game, onClose, onAddCheat, user }) => {
+  const [newCheat, setNewCheat] = useState({ name: '', productLink: '', features: [], notes: '', tier: 'FREE' });
   const [isAdding, setIsAdding] = useState(false);
   const [particles, setParticles] = useState([]);
+  const [tierFilter, setTierFilter] = useState('ALL');
+  const featureTags = ['Aimbot', 'ESP', 'Exploits', 'Configs', 'Misc'];
+  const tiers = ['FREE', 'PAID'];
 
   const handleAddCheat = async (e) => {
     e.preventDefault();
-    if (!newCheat.code || !newCheat.effect) return;
+    if (!newCheat.name || !newCheat.productLink) return;
     await onAddCheat(game.id, newCheat);
-    setNewCheat({ code: '', effect: '' });
+    setNewCheat({ name: '', productLink: '', features: [], notes: '', tier: 'FREE' });
     setIsAdding(false);
   };
 
-  const handleCopyCode = (code, e) => {
-    navigator.clipboard.writeText(code);
-    
-    // Create particle effect at click position
-    const newParticle = {
-      id: Date.now(),
-      x: e.clientX,
-      y: e.clientY,
-    };
-    setParticles([...particles, newParticle]);
-    
-    // Remove particle after animation
-    setTimeout(() => {
-      setParticles(p => p.filter(particle => particle.id !== newParticle.id));
-    }, 1000);
+  const filteredCheats = game.cheats ? game.cheats.filter(cheat => 
+    tierFilter === 'ALL' || cheat.tier === tierFilter
+  ) : [];
+
+  const toggleFeature = (feature) => {
+    setNewCheat(prev => ({
+      ...prev,
+      features: prev.features.includes(feature)
+        ? prev.features.filter(f => f !== feature)
+        : [...prev.features, feature]
+    }));
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-xl transition-opacity duration-300" 
+        className="absolute inset-0 bg-black/80 backdrop-blur-xl transition-opacity duration-300 modal-backdrop" 
         onClick={onClose}
       />
-      <div className="relative rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300 w-full max-w-4xl max-h-[90vh] ring-1 border transition-colors" style={{
-        backgroundColor: isDarkMode ? '#0a0a0a' : 'rgba(251, 245, 235, 0.98)',
-        borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(217, 119, 6, 0.2)',
-        ringColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(217, 119, 6, 0.1)',
+      <div className="relative rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300 slide-up-enter w-full max-w-4xl max-h-[90vh] ring-1 border transition-colors" style={{
+        backgroundColor: '#0a0a0a',
+        borderColor: 'rgba(255,255,255,0.1)',
+        ringColor: 'rgba(255,255,255,0.1)',
       }}>
         
         {/* Particles */}
@@ -886,39 +921,26 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
         ))}
         
         {/* Header */}
-        <div className={`flex items-start justify-between px-8 py-8 border-b transition-colors ${
-          isDarkMode
-            ? 'border-white/5 bg-gradient-to-b from-zinc-900/50 to-transparent'
-            : 'border-orange-200 bg-gradient-to-b from-orange-100/40 to-transparent'
-        }`}>
+        <div className="flex items-start justify-between px-8 py-8 border-b transition-colors border-white/5 bg-gradient-to-b from-zinc-900/50 to-transparent">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <AntiCheatBadge ac={game.antiCheat} isDarkMode={isDarkMode} />
-              <div className={`h-1 w-1 rounded-full ${isDarkMode ? 'bg-zinc-700' : 'bg-slate-400'}`}></div>
-              <span className={`text-xs font-bold uppercase tracking-wider transition-colors ${
-                isDarkMode ? 'text-zinc-500' : 'text-slate-600'
-              }`}>Database Entry</span>
+              <AntiCheatBadge ac={game.antiCheat} />
+              <div className="h-1 w-1 rounded-full bg-zinc-700"></div>
+              <span className="text-xs font-bold uppercase tracking-wider transition-colors text-zinc-500">Database Entry</span>
             </div>
-            <h2 className={`text-4xl sm:text-5xl font-black tracking-tighter mb-2 ${
-              isDarkMode ? 'text-white' : 'text-slate-900'
-            }`}>{game.title}</h2>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tighter mb-2 text-white">{game.title}</h2>
           </div>
           <button 
             onClick={onClose}
-            className={`p-3 rounded-full transition-all hover:rotate-90 duration-300 ${
-              isDarkMode
-                ? 'text-zinc-400 hover:bg-white/5 hover:text-white'
-                : 'text-slate-600 hover:bg-slate-300 hover:text-slate-900'
-            }`}
+            className="p-3 rounded-full transition-all hover:rotate-90 hover:scale-110 active:scale-95 duration-300 text-zinc-400 hover:bg-violet-500/20 hover:text-white border border-transparent hover:border-violet-500/30"
+            title="Close (Keyboard: Esc)"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Content */}
-        <div className={`flex-1 overflow-y-auto p-8 custom-scrollbar transition-colors ${
-          isDarkMode ? 'bg-[#0a0a0a]' : 'bg-amber-50/50'
-        }`}>
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar transition-colors bg-[#0a0a0a]">
           
           {/* Add Cheat Form - ONLY VISIBLE IF LOGGED IN */}
           {user && (
@@ -926,71 +948,92 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
               {!isAdding ? (
                 <button 
                   onClick={() => setIsAdding(true)}
-                  className={`w-full mb-8 py-4 border border-dashed rounded-2xl hover:transition-all text-sm font-bold uppercase tracking-wide flex items-center justify-center gap-2 group ${
-                    isDarkMode
-                      ? 'border-zinc-800 text-zinc-500 hover:text-violet-400 hover:border-violet-500/30 hover:bg-violet-500/5'
-                      : 'border-amber-300 text-amber-800 hover:text-violet-600 hover:border-violet-400 hover:bg-violet-100/15'
-                  }`}
+                  className="w-full mb-8 py-4 border border-dashed rounded-2xl hover:transition-all text-sm font-bold uppercase tracking-wide flex items-center justify-center gap-2 group border-zinc-800 text-zinc-500 hover:text-violet-400 hover:border-violet-500/30 hover:bg-violet-500/5"
                 >
-                  <div className={`p-1 rounded-md transition-colors ${
-                    isDarkMode
-                      ? 'bg-zinc-800 group-hover:bg-violet-500/20'
-                      : 'bg-neutral-700/40 group-hover:bg-violet-500/30'
-                  }`}>
+                  <div className="p-1 rounded-md transition-colors bg-zinc-800 group-hover:bg-violet-500/20">
                     <Plus className="w-4 h-4" />
                   </div>
                   Add New Cheat (Admin)
                 </button>
               ) : (
-                <form onSubmit={handleAddCheat} className={`mb-8 p-8 rounded-3xl border animate-in slide-in-from-top-4 ring-1 transition-all ${
-                  isDarkMode
-                    ? 'bg-zinc-900/30 border-violet-500/20 ring-violet-500/10'
-                    : 'bg-orange-100/30 border-violet-400/40 ring-violet-400/15'
-                }`}>
-                  <h3 className={`text-lg font-bold mb-6 flex items-center gap-2 ${
-                    isDarkMode ? 'text-white' : 'text-slate-900'
-                  }`}>
-                    <div className={`p-2 rounded-lg transition-colors ${
-                      isDarkMode
-                        ? 'bg-violet-500/10'
-                        : 'bg-violet-200'
-                    }`}>
-                      <Zap className={`w-5 h-5 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`} />
+                <form onSubmit={handleAddCheat} className="mb-8 p-8 rounded-3xl border animate-in slide-in-from-top-4 ring-1 transition-all bg-zinc-900/30 border-violet-500/20 ring-violet-500/10">
+                  <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-white">
+                    <div className="p-2 rounded-lg transition-colors bg-violet-500/10">
+                      <Zap className="w-5 h-5 text-violet-400" />
                     </div>
-                    New Cheat Code
+                    New Cheat Program
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-6 mb-6">
                     <div className="space-y-2">
-                      <label className={`text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors ${
-                        isDarkMode ? 'text-zinc-500' : 'text-amber-900'
-                      }`}>Effect / Description</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Program Name</label>
                       <input
                         autoFocus
                         required
-                        placeholder="e.g. Infinite Health"
-                        className={`w-full rounded-xl px-4 py-3 outline-none text-sm transition-all focus:ring-1 border ${
-                          isDarkMode
-                            ? 'bg-black/50 border-white/10 text-white placeholder-zinc-700 focus:ring-violet-500 focus:bg-black'
-                            : 'bg-amber-100/40 border-amber-200 text-amber-950 placeholder-amber-700 focus:ring-violet-500 focus:bg-amber-100/60'
-                        }`}
-                        value={newCheat.effect}
-                        onChange={e => setNewCheat({...newCheat, effect: e.target.value})}
+                        placeholder="e.g. UnknownCheats V2"
+                        className="w-full rounded-xl px-4 py-3 outline-none text-sm transition-all focus:ring-1 border bg-black/50 border-white/10 text-white placeholder-zinc-700 focus:ring-violet-500 focus:bg-black"
+                        value={newCheat.name}
+                        onChange={e => setNewCheat({...newCheat, name: e.target.value})}
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className={`text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors ${
-                        isDarkMode ? 'text-zinc-500' : 'text-amber-900'
-                      }`}>Code / Combination</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Product Link</label>
                       <input
                         required
-                        placeholder="e.g. UP, DOWN, L1, R2..."
-                        className={`w-full rounded-xl px-4 py-3 outline-none text-sm font-mono transition-all focus:ring-1 border ${
-                          isDarkMode
-                            ? 'bg-black/50 border-white/10 text-white placeholder-zinc-700 focus:ring-violet-500 focus:bg-black'
-                            : 'bg-amber-100/40 border-amber-200 text-amber-950 placeholder-amber-700 focus:ring-violet-500 focus:bg-amber-100/60'
-                        }`}
-                        value={newCheat.code}
-                        onChange={e => setNewCheat({...newCheat, code: e.target.value})}
+                        type="url"
+                        placeholder="https://example.com/cheat"
+                        className="w-full rounded-xl px-4 py-3 outline-none text-sm transition-all focus:ring-1 border bg-black/50 border-white/10 text-white placeholder-zinc-700 focus:ring-violet-500 focus:bg-black"
+                        value={newCheat.productLink}
+                        onChange={e => setNewCheat({...newCheat, productLink: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Features</label>
+                      <div className="flex flex-wrap gap-2">
+                        {featureTags.map(feature => (
+                          <button
+                            key={feature}
+                            type="button"
+                            onClick={() => toggleFeature(feature)}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                              newCheat.features.includes(feature)
+                                ? 'bg-violet-500/30 border-violet-500/50 text-violet-200'
+                                : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/50'
+                            }`}
+                          >
+                            {feature}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Tier</label>
+                      <div className="flex gap-3">
+                        {tiers.map(tier => (
+                          <button
+                            key={tier}
+                            type="button"
+                            onClick={() => setNewCheat({...newCheat, tier})}
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                              newCheat.tier === tier
+                                ? tier === 'FREE'
+                                  ? 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200'
+                                  : 'bg-amber-500/30 border-amber-500/50 text-amber-200'
+                                : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/50'
+                            }`}
+                          >
+                            {tier}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Notes (Optional)</label>
+                      <textarea
+                        placeholder="Additional information..."
+                        className="w-full rounded-xl px-4 py-3 outline-none text-sm transition-all focus:ring-1 border bg-black/50 border-white/10 text-white placeholder-zinc-700 focus:ring-violet-500 focus:bg-black resize-none"
+                        rows="2"
+                        value={newCheat.notes}
+                        onChange={e => setNewCheat({...newCheat, notes: e.target.value})}
                       />
                     </div>
                   </div>
@@ -998,23 +1041,15 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                     <button
                       type="button"
                       onClick={() => setIsAdding(false)}
-                      className={`px-6 py-2.5 text-xs font-bold transition-colors uppercase tracking-wide ${
-                        isDarkMode
-                          ? 'text-zinc-500 hover:text-white'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
+                      className="px-6 py-2.5 text-xs font-bold transition-colors uppercase tracking-wide text-zinc-500 hover:text-white"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className={`px-6 py-2.5 text-white text-xs font-bold rounded-xl transition-all shadow-lg uppercase tracking-wide hover:scale-105 ${
-                        isDarkMode
-                          ? 'bg-violet-600 hover:bg-violet-500 shadow-violet-900/20'
-                          : 'bg-violet-500 hover:bg-violet-600 shadow-violet-300/20'
-                      }`}
+                      className="px-6 py-2.5 text-white text-xs font-bold rounded-xl transition-all shadow-lg uppercase tracking-wide hover:scale-105 bg-violet-600 hover:bg-violet-500 shadow-violet-900/20"
                     >
-                      Save Cheat
+                      Add Program
                     </button>
                   </div>
                 </form>
@@ -1022,62 +1057,95 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
             </>
           )}
 
-          {/* List */}
-          <div className="space-y-3">
-            {game.cheats && game.cheats.length > 0 ? (
-              [...game.cheats].reverse().map((cheat, idx) => (
-                <div key={idx} className={`group flex flex-col md:flex-row md:items-center justify-between p-5 border rounded-2xl transition-all duration-300 ${
-                  isDarkMode
-                    ? 'bg-zinc-900/20 hover:bg-zinc-900/50 border-white/5 hover:border-violet-500/20'
-                    : 'bg-amber-100/25 hover:bg-amber-100/40 border-amber-200/60 hover:border-violet-400/50'
-                }`}>
-                  <div className="mb-3 md:mb-0">
-                    <div className={`font-bold text-lg group-hover:transition-colors ${
-                      isDarkMode
-                        ? 'text-zinc-200 group-hover:text-violet-200'
-                        : 'text-amber-950 group-hover:text-violet-700'
-                    }`}>{cheat.effect}</div>
-                    {cheat.notes && <div className={`text-xs mt-1 ${isDarkMode ? 'text-zinc-500' : 'text-amber-800'}`}>{cheat.notes}</div>}
+          {/* Tier Filter Tabs */}
+          {game.cheats && game.cheats.length > 0 && (
+            <div className="mb-6 flex gap-2 border-b border-white/10 pb-4">
+              {['ALL', 'FREE', 'PAID'].map(tier => (
+                <button
+                  key={tier}
+                  onClick={() => setTierFilter(tier)}
+                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all rounded-lg border ${
+                    tierFilter === tier
+                      ? tier === 'ALL'
+                        ? 'bg-violet-500/30 border-violet-500/50 text-violet-200'
+                        : tier === 'FREE'
+                        ? 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200'
+                        : 'bg-amber-500/30 border-amber-500/50 text-amber-200'
+                      : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/50'
+                  }`}
+                >
+                  {tier === 'ALL' ? `All (${game.cheats.length})` : `${tier} (${game.cheats.filter(c => c.tier === tier).length})`}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Cheats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredCheats.length > 0 ? (
+              [...filteredCheats].reverse().map((cheat, idx) => (
+                <a
+                  key={idx}
+                  href={cheat.productLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative p-5 border rounded-2xl transition-all duration-300 bg-zinc-900/20 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_15px_40px_-10px_rgba(139,92,246,0.5)] cursor-pointer flex flex-col overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 via-transparent to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  <div className="relative z-10">
+                    <div className="mb-3">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h4 className="font-bold text-sm group-hover:text-violet-300 text-zinc-200 flex-1 line-clamp-2 transition-colors">{cheat.name}</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
+                          cheat.tier === 'FREE'
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 group-hover:bg-emerald-500/30 group-hover:border-emerald-500/50'
+                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 group-hover:bg-amber-500/30 group-hover:border-amber-500/50'
+                        }`}>
+                          {cheat.tier || 'FREE'}
+                        </span>
+                      </div>
+                      {cheat.notes && <p className="text-xs text-zinc-500 line-clamp-2 group-hover:text-zinc-400 transition-colors">{cheat.notes}</p>}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {cheat.features && cheat.features.map((feature, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[10px] font-bold uppercase tracking-wider transition-all group-hover:bg-violet-500/30 group-hover:border-violet-500/50">
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                    {cheat.addedAt && (
+                      <div className="text-[10px] text-zinc-600 group-hover:text-zinc-500 transition-colors mb-3">
+                        Added {formatTimeAgo(cheat.addedAt)}
+                      </div>
+                    )}
+                    <div className="mt-auto pt-3 border-t border-white/5 flex items-center justify-between text-xs">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigator.clipboard.writeText(cheat.productLink);
+                          setToast({ message: 'Link copied to clipboard!', type: 'success' });
+                        }}
+                        className="flex items-center gap-1.5 text-zinc-500 hover:text-cyan-400 transition-colors font-semibold"
+                        title="Copy link"
+                      >
+                        <Copy className="w-3 h-3" />
+                        Copy
+                      </button>
+                      <span className="text-zinc-600 group-hover:text-violet-300 transition-colors font-semibold flex items-center gap-1.5">
+                        View Product
+                        <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                      </span>
+                    </div>
                   </div>
-                  <div className={`flex items-center gap-4 pl-4 md:border-l-0 ${
-                    isDarkMode ? 'border-l border-white/5' : 'border-l border-neutral-700/30'
-                  }`}>
-                    <code className={`px-4 py-2 rounded-lg font-mono text-sm border tracking-wider select-all shadow-inner group-hover:transition-colors ${
-                      isDarkMode
-                        ? 'bg-black/50 text-violet-300 border-white/5 group-hover:border-violet-500/30'
-                        : 'bg-amber-200/50 text-violet-700 border-amber-300 group-hover:border-violet-400/60'
-                    }`}>
-                      {cheat.code}
-                    </code>
-                    <button 
-                      onClick={(e) => handleCopyCode(cheat.code, e)}
-                      className={`p-2 transition-colors opacity-0 group-hover:opacity-100 rounded-lg ${
-                        isDarkMode
-                          ? 'text-zinc-600 hover:text-white hover:bg-white/5'
-                          : 'text-amber-700 hover:text-amber-950 hover:bg-amber-200/50'
-                      }`}
-                      title="Copy Code"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                </a>
               ))
             ) : (
-              <div className={`text-center py-20 border border-dashed rounded-3xl ${
-                isDarkMode
-                  ? 'border-zinc-800 bg-zinc-900/20'
-                  : 'border-amber-300 bg-amber-100/20'
-              }`}>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border ${
-                  isDarkMode
-                    ? 'bg-zinc-900 border-zinc-800'
-                    : 'bg-amber-200/50 border-amber-300'
-                }`}>
-                   <Ghost className={`w-8 h-8 ${isDarkMode ? 'text-zinc-700' : 'text-amber-800'}`} />
+              <div className="col-span-full text-center py-20 border border-dashed rounded-3xl border-zinc-800 bg-zinc-900/20">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border bg-zinc-900 border-zinc-800">
+                   <Ghost className="w-8 h-8 text-zinc-700" />
                 </div>
-                <h3 className={`font-bold mb-1 ${isDarkMode ? 'text-zinc-300' : 'text-amber-950'}`}>No Cheats Yet</h3>
-                <p className={`text-sm ${isDarkMode ? 'text-zinc-600' : 'text-amber-800'}`}>This database entry is waiting for contributions.</p>
+                <h3 className="font-bold mb-1 text-zinc-300">{tierFilter === 'ALL' ? 'No Programs Yet' : `No ${tierFilter} Programs`}</h3>
+                <p className="text-sm text-zinc-600">{tierFilter === 'ALL' ? 'This database entry is waiting for contributions.' : 'Try selecting a different tier.'}</p>
               </div>
             )}
           </div>
@@ -1099,7 +1167,8 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [toast, setToast] = useState(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   // 1. Auth Listener
   useEffect(() => {
@@ -1132,11 +1201,61 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 3. Filter
+  // 3. Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Esc key: close modal
+      if (e.key === 'Escape') {
+        if (selectedGame) {
+          setSelectedGame(null);
+          e.preventDefault();
+        }
+        if (showLogin) {
+          setShowLogin(false);
+          e.preventDefault();
+        }
+        if (showShortcuts) {
+          setShowShortcuts(false);
+          e.preventDefault();
+        }
+      }
+      
+      // ? key: show shortcuts
+      if (e.key === '?' && !showShortcuts) {
+        setShowShortcuts(true);
+        e.preventDefault();
+      }
+      
+      // Ctrl/Cmd + K: focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        const searchInput = document.querySelector('input[placeholder="Search database..."]');
+        if (searchInput) {
+          searchInput.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedGame, showLogin, showShortcuts]);
+
+  // 4. Advanced Filter
   const filteredGames = useMemo(() => {
-    if (!searchTerm.trim()) return games;
-    const lower = searchTerm.toLowerCase();
-    return games.filter(g => g.title.toLowerCase().includes(lower));
+    let result = games;
+    
+    // Text search
+    if (searchTerm.trim()) {
+      const lower = searchTerm.toLowerCase();
+      result = result.filter(g => {
+        const titleMatch = g.title.toLowerCase().includes(lower);
+        const nicknameMatch = g.nicknames && g.nicknames.some(nick => nick.toLowerCase().includes(lower));
+        const acMatch = g.antiCheat && g.antiCheat.toLowerCase().includes(lower);
+        return titleMatch || nicknameMatch || acMatch;
+      });
+    }
+    
+    return result;
   }, [games, searchTerm]);
 
   // 4. Actions
@@ -1173,24 +1292,24 @@ export default function App() {
           cheats: [...(prev.cheats || []), cheatData]
         }));
       }
+      // Trigger confetti on success
+      createConfetti();
     } catch (err) {
       console.error(err);
+      // Trigger error shake on failure
+      triggerShake('app-root');
       alert("Error adding cheat. Do you have permission?");
     }
   };
 
   return (
-    <div className={`min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 ${
-      isDarkMode
-        ? 'bg-[#050505] text-zinc-200'
-        : 'bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 text-amber-950'
-    }`}>
+    <div id="app-root" className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 bg-[#050505] text-zinc-200">
       
       {/* ADDED CURSOR GLOW HERE */}
-      <CursorGlow onMouseMove={setMousePos} isDarkMode={isDarkMode} />
+      <CursorGlow onMouseMove={setMousePos} />
 
       {/* Animated Background Mesh */}
-      {isDarkMode && <AnimatedBackgroundMesh mousePos={mousePos} />}
+      <AnimatedBackgroundMesh mousePos={mousePos} />
 
       <div className="relative z-10">
         <Header 
@@ -1199,32 +1318,24 @@ export default function App() {
           user={user}
           onLoginClick={() => setShowLogin(true)}
           onLogoutClick={handleLogout}
-          isDarkMode={isDarkMode}
-          onThemeChange={() => setIsDarkMode(!isDarkMode)}
         />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           
           {/* Statistics Dashboard */}
           {!loading && games.length > 0 && (
-            <StatisticsDashboard games={games} isDarkMode={isDarkMode} />
+            <StatisticsDashboard games={games} />
           )}
           
           {/* Grid Header */}
-          <div className={`flex items-center justify-between mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ${
-            isDarkMode ? '' : 'text-slate-900'
-          }`}>
+          <div className="flex items-center justify-between mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg border transition-colors duration-500 ${
-                isDarkMode
-                  ? 'bg-zinc-900 border-white/5'
-                  : 'bg-slate-200 border-slate-300'
-              }`}>
-                <LayoutGrid className={`w-5 h-5 ${isDarkMode ? 'text-zinc-500' : 'text-slate-600'}`} />
+              <div className="p-2 rounded-lg border transition-colors duration-500 bg-zinc-900 border-white/5">
+                <LayoutGrid className="w-5 h-5 text-zinc-500" />
               </div>
               <div>
-                <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Database Entries</h2>
-                <p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-600' : 'text-slate-500'}`}>
+                <h2 className="text-xl font-bold text-white">Database Entries</h2>
+                <p className="text-xs font-medium text-zinc-600">
                   {filteredGames.length} Games Indexed
                 </p>
               </div>
@@ -1235,12 +1346,8 @@ export default function App() {
                   onClick={() => setIsEditMode(!isEditMode)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 shadow-lg ${
                     isEditMode 
-                      ? isDarkMode
-                        ? 'bg-red-500/10 text-red-400 border border-red-500/20 ring-1 ring-red-500/20'
-                        : 'bg-red-100 text-red-700 border border-red-300 ring-1 ring-red-200'
-                      : isDarkMode
-                        ? 'bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/5'
-                        : 'bg-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-300 border border-slate-300'
+                      ? 'bg-red-500/10 text-red-400 border border-red-500/20 ring-1 ring-red-500/20'
+                      : 'bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/5'
                   }`}
                 >
                   {isEditMode ? (
@@ -1283,7 +1390,6 @@ export default function App() {
                   onDelete={handleDeleteGame}
                   isEditMode={isEditMode}
                   index={idx}
-                  isDarkMode={isDarkMode}
                 />
               ))}
             </div>
@@ -1292,36 +1398,51 @@ export default function App() {
               {games.length === 0 ? (
                 // Empty Database State
                 <>
-                  <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-black/50 border border-white/5">
-                    <Database className="w-10 h-10 text-zinc-700" />
+                  <div className="w-24 h-24 bg-gradient-to-br from-violet-600/20 to-pink-600/20 rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-violet-500/20 border border-violet-500/20 pulse-glow">
+                    <div className="p-2 rounded-lg bg-violet-500/10">
+                      <Database className="w-12 h-12 text-violet-400 icon-pulse" />
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-black text-white mb-2">Database Empty</h3>
-                  <p className="text-zinc-500 max-w-md mb-8 leading-relaxed">
-                    The database is currently empty. Login as Admin to add games.
+                  <h3 className="text-3xl font-black text-white mb-3 bg-clip-text bg-gradient-to-r from-violet-400 to-pink-400">Database Empty</h3>
+                  <p className="text-zinc-400 max-w-md mb-10 leading-relaxed text-sm">
+                    The database is currently empty. Login as Admin to start adding your favorite games and cheats.
                   </p>
                   <button
                      onClick={() => setShowLogin(true)}
-                     className="flex items-center gap-3 bg-white text-black hover:bg-zinc-200 px-8 py-4 rounded-2xl font-bold transition-all shadow-xl hover:scale-105 active:scale-95"
+                     className="flex items-center gap-3 bg-gradient-to-r from-violet-600 to-pink-600 text-white hover:from-violet-500 hover:to-pink-500 px-8 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-violet-500/20 hover:scale-105 active:scale-95 scale-in-animation"
                   >
-                    <Lock className="w-4 h-4" />
+                    <Lock className="w-4 h-4 icon-rotate-on-hover" />
                     Admin Login
                   </button>
                 </>
               ) : (
                 // Empty Search State
                 <>
-                   <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-black/50 border border-white/5">
-                    <Sparkles className="w-10 h-10 text-zinc-700" />
+                   <div className="w-24 h-24 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-cyan-500/20 border border-cyan-500/20 pulse-glow">
+                    <div className="p-2 rounded-lg bg-cyan-500/10">
+                      <Sparkles className="w-12 h-12 text-cyan-400 icon-pulse" />
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-black text-white mb-2">No Results Found</h3>
-                  <p className="text-zinc-500 max-w-md">
-                    We couldn't find anything matching "<span className="text-violet-400">{searchTerm}</span>".
+                  <h3 className="text-3xl font-black text-white mb-3 bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">No Results Found</h3>
+                  <p className="text-zinc-400 max-w-md text-sm">
+                    We couldn't find anything matching "<span className="text-cyan-400 font-bold">{searchTerm}</span>". Try searching for games by title or nickname (cs2, cod, eft, tf2).
                   </p>
                 </>
               )}
             </div>
           )}
         </main>
+
+        {/* Floating Action Button */}
+        {user && (
+          <button
+            onClick={() => setShowLogin(true)}
+            className="fixed bottom-8 right-8 p-4 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-2xl shadow-violet-500/40 hover:scale-110 active:scale-95 transition-all duration-300 fab-float animate-in fade-in slide-in-from-bottom-4 z-40"
+            title="Add New Game (Coming Soon)"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+        )}
 
         {/* Modals */}
         {selectedGame && (
@@ -1330,7 +1451,6 @@ export default function App() {
             onClose={() => setSelectedGame(null)} 
             onAddCheat={handleAddCheatToGame}
             user={user}
-            isDarkMode={isDarkMode}
           />
         )}
 
@@ -1338,8 +1458,21 @@ export default function App() {
           <LoginModal 
             onClose={() => setShowLogin(false)}
             onLogin={handleLogin}
-            isDarkMode={isDarkMode}
           />
+        )}
+
+        {/* Toast Notification */}
+        {toast && (
+          <Toast 
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+
+        {/* Keyboard Shortcuts Modal */}
+        {showShortcuts && (
+          <ShortcutsModal onClose={() => setShowShortcuts(false)} />
         )}
       </div>
     </div>

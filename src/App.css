@@ -40,3 +40,416 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Modal and Transition Animations */
+@keyframes modal-blur-in {
+  0% {
+    backdrop-filter: blur(0px);
+    opacity: 0;
+  }
+  100% {
+    backdrop-filter: blur(12px);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes search-expand {
+  0% {
+    width: 200px;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes pill-pop-in {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes float-in {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes skeleton-load {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes floating-bob {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Modal backdrop blur effect */
+.modal-backdrop {
+  animation: modal-blur-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Search bar expand animation */
+.search-expand {
+  animation: search-expand 0.3s ease-out;
+}
+
+/* Category pill animation */
+.pill-enter {
+  animation: pill-pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Floating action button */
+.fab-float {
+  animation: floating-bob 3s ease-in-out infinite;
+}
+
+/* Skeleton loader */
+.skeleton-loader {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 1000px 100%;
+  animation: skeleton-load 2s infinite;
+}
+
+/* Slide up animation for modals */
+.slide-up-enter {
+  animation: slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ===== NEW VISUAL POLISH ANIMATIONS ===== */
+
+/* Animated Gradient Text */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-text-animated {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradient-shift 6s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Icon Pulse Animation */
+@keyframes icon-pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.icon-pulse {
+  animation: icon-pulse 2s ease-in-out infinite;
+}
+
+/* Icon Rotate on Hover */
+@keyframes icon-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.icon-rotate-on-hover {
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.icon-rotate-on-hover:hover {
+  animation: icon-rotate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Shake Animation for Errors */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+.shake-error {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Confetti Burst Animation */
+@keyframes confetti-burst {
+  0% {
+    transform: translate(0, 0) rotateZ(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) rotateZ(720deg);
+    opacity: 0;
+  }
+}
+
+.confetti {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  animation: confetti-burst 1.2s ease-out forwards;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Shimmer Effect for Skeleton Loading */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer-loading {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Success Bounce */
+@keyframes success-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.success-bounce {
+  animation: success-bounce 0.6s ease-in-out;
+}
+
+/* Pulse Glow */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+/* Scale In Animation */
+@keyframes scale-in {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.scale-in-animation {
+  animation: scale-in 0.3s ease-out;
+}
+
+/* Grid Background Animation */
+.grid-background {
+  animation: grid-fade-in 0.5s ease-in;
+}
+
+@keyframes grid-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Glow Pulse Effect */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+  }
+}
+
+.glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Card Lift on Hover */
+@keyframes card-lift {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-8px);
+  }
+}
+
+.card-lift:hover {
+  animation: card-lift 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Shimmer Text Effect */
+@keyframes text-shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
+  background-size: 1000px 100%;
+  animation: text-shimmer 2s infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Smooth entrance stagger */
+@keyframes stagger-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-in {
+  animation: stagger-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Border glow on focus */
+@keyframes border-glow {
+  0%, 100% {
+    border-color: rgba(139, 92, 246, 0.3);
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.1);
+  }
+  50% {
+    border-color: rgba(139, 92, 246, 0.6);
+    box-shadow: 0 0 15px -3px rgba(139, 92, 246, 0.3);
+  }
+}
+
+/* Floating particle animation */
+@keyframes float-particle {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) translateX(var(--tx)) scale(0);
+    opacity: 0;
+  }
+}
+
+.float-particle {
+  animation: float-particle 0.8s ease-out forwards;
+}
+
+/* Hover scale pulse */
+@keyframes hover-scale-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Grid background animation */
+@keyframes grid-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.08;
+  }
+}
+
+.grid-fade-in {
+  animation: grid-fade-in 1.5s ease-out forwards;
+}
+
+.border-glow:focus {
+  animation: border-glow 1.5s ease-in-out;
+}
+
