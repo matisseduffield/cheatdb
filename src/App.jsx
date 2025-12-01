@@ -627,12 +627,12 @@ const AntiCheatBadge = ({ ac, isDarkMode = true }) => {
     'Ricochet': 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_10px_-4px_rgba(168,85,247,0.3)]',
     'None': 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
   } : {
-    'EAC': 'bg-blue-500/20 text-blue-300 border-blue-500/30 shadow-[0_0_10px_-4px_rgba(59,130,246,0.2)]',
-    'BattlEye': 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30 shadow-[0_0_10px_-4px_rgba(234,179,8,0.2)]',
-    'Vanguard': 'bg-red-500/20 text-red-300 border-red-500/30 shadow-[0_0_10px_-4px_rgba(239,68,68,0.2)]',
-    'VAC': 'bg-green-500/20 text-green-300 border-green-500/30 shadow-[0_0_10px_-4px_rgba(34,197,94,0.2)]',
-    'Ricochet': 'bg-purple-500/20 text-purple-300 border-purple-500/30 shadow-[0_0_10px_-4px_rgba(168,85,247,0.2)]',
-    'None': 'bg-neutral-700/30 text-neutral-300 border-neutral-600/40',
+    'EAC': 'bg-blue-200/60 text-blue-900 border-blue-300 shadow-[0_0_10px_-4px_rgba(59,130,246,0.15)]',
+    'BattlEye': 'bg-yellow-200/60 text-yellow-900 border-yellow-300 shadow-[0_0_10px_-4px_rgba(234,179,8,0.15)]',
+    'Vanguard': 'bg-red-200/60 text-red-900 border-red-300 shadow-[0_0_10px_-4px_rgba(239,68,68,0.15)]',
+    'VAC': 'bg-green-200/60 text-green-900 border-green-300 shadow-[0_0_10px_-4px_rgba(34,197,94,0.15)]',
+    'Ricochet': 'bg-purple-200/60 text-purple-900 border-purple-300 shadow-[0_0_10px_-4px_rgba(168,85,247,0.15)]',
+    'None': 'bg-amber-200/60 text-amber-900 border-amber-300',
   };
   
   const acName = ac || 'Unknown';
@@ -692,7 +692,7 @@ const GameCard = ({ game, onClick, user, onDelete, isEditMode, index, isDarkMode
       <h3 className={`text-2xl font-black mb-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r transition-all ${
         isDarkMode
           ? 'text-white group-hover:from-white group-hover:to-violet-200'
-          : 'text-neutral-100 group-hover:from-neutral-100 group-hover:to-violet-300'
+          : 'text-amber-950 group-hover:from-amber-950 group-hover:to-violet-700'
       }`}>
         {game.title}
       </h3>
@@ -701,7 +701,7 @@ const GameCard = ({ game, onClick, user, onDelete, isEditMode, index, isDarkMode
         <span className={`text-xs font-medium px-2 py-1 rounded-md border flex items-center gap-1.5 transition-colors ${
           isDarkMode
             ? 'text-zinc-500 bg-zinc-800/50 border-white/5 group-hover:border-violet-500/20'
-            : 'text-neutral-300 bg-neutral-700/40 border-neutral-600/40 group-hover:border-violet-500/40'
+            : 'text-amber-900 bg-amber-200/60 border-amber-300 group-hover:border-violet-400/50'
         }`}>
           <Zap className={`w-3 h-3 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`} />
           {game.cheats?.length || 0} Cheats
@@ -711,7 +711,7 @@ const GameCard = ({ game, onClick, user, onDelete, isEditMode, index, isDarkMode
       <div className={`mt-auto pt-5 border-t flex items-center justify-between text-sm transition-colors ${
         isDarkMode
           ? 'border-white/5 text-zinc-500 group-hover:text-violet-300'
-          : 'border-neutral-700/40 text-neutral-400 group-hover:text-violet-300'
+          : 'border-amber-200/60 text-amber-800 group-hover:text-violet-600'
       }`}>
         <span className="text-xs font-bold uppercase tracking-wider">Access Database</span>
         <div className={`p-1.5 rounded-full transition-colors ${
@@ -755,7 +755,7 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
       <div className={`relative w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-300 ring-1 border transition-colors ${
         isDarkMode
           ? 'bg-[#0a0a0a] border-white/10 ring-white/10'
-          : 'bg-neutral-900/95 border-neutral-700/40 ring-neutral-700/20'
+          : 'bg-amber-50 border-amber-200 ring-amber-200/30'
       }`}>
         
         <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r ${
@@ -765,14 +765,14 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
         }`}></div>
         
         <h2 className={`text-2xl font-black mb-6 flex items-center gap-3 ${
-          isDarkMode ? 'text-white' : 'text-neutral-100'
+          isDarkMode ? 'text-white' : 'text-amber-950'
         }`}>
           <div className={`p-2 rounded-xl transition-colors ${
             isDarkMode
               ? 'bg-violet-500/10'
-              : 'bg-violet-500/30'
+              : 'bg-amber-200/60'
           }`}>
-             <Lock className={`w-6 h-6 ${isDarkMode ? 'text-violet-500' : 'text-violet-400'}`} />
+             <Lock className={`w-6 h-6 ${isDarkMode ? 'text-violet-500' : 'text-amber-900'}`} />
           </div>
           Admin Access
         </h2>
@@ -780,7 +780,7 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
           <div className={`mb-6 p-4 rounded-2xl text-sm flex items-center gap-2 border transition-colors ${
             isDarkMode
               ? 'bg-red-500/5 border-red-500/10 text-red-400'
-              : 'bg-red-500/10 border-red-500/20 text-red-300'
+              : 'bg-red-100/50 border-red-300 text-red-700'
           }`}>
             <AlertTriangle className="w-4 h-4 shrink-0" />
             {error}
@@ -789,7 +789,7 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <label className={`text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors ${
-              isDarkMode ? 'text-zinc-500' : 'text-neutral-300'
+              isDarkMode ? 'text-zinc-500' : 'text-amber-900'
             }`}>Email</label>
             <input 
               type="email" 
@@ -797,7 +797,7 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
               className={`w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border ${
                 isDarkMode
                   ? 'bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:bg-zinc-900'
-                  : 'bg-neutral-800/60 border-neutral-700/40 text-neutral-100 focus:ring-violet-500 focus:bg-neutral-800/80'
+                  : 'bg-amber-100/50 border-amber-200 text-amber-950 focus:ring-violet-500 focus:bg-amber-100/70'
               }`}
               placeholder="admin@cheatdb.org"
               value={email}
@@ -806,7 +806,7 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
           </div>
           <div className="space-y-2">
             <label className={`text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors ${
-              isDarkMode ? 'text-zinc-500' : 'text-neutral-300'
+              isDarkMode ? 'text-zinc-500' : 'text-amber-900'
             }`}>Password</label>
             <input 
               type="password" 
@@ -814,7 +814,7 @@ const LoginModal = ({ onClose, onLogin, isDarkMode = true }) => {
               className={`w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border ${
                 isDarkMode
                   ? 'bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:bg-zinc-900'
-                  : 'bg-neutral-800/60 border-neutral-700/40 text-neutral-100 focus:ring-violet-500 focus:bg-neutral-800/80'
+                  : 'bg-amber-100/50 border-amber-200 text-amber-950 focus:ring-violet-500 focus:bg-amber-100/70'
               }`}
               placeholder="••••••••"
               value={password}
@@ -875,9 +875,9 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
         onClick={onClose}
       />
       <div className="relative rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300 w-full max-w-4xl max-h-[90vh] ring-1 border transition-colors" style={{
-        backgroundColor: isDarkMode ? '#0a0a0a' : 'rgba(23,23,23,0.95)',
-        borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(120,120,120,0.2)',
-        ringColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(120,120,120,0.1)',
+        backgroundColor: isDarkMode ? '#0a0a0a' : 'rgba(251, 245, 235, 0.98)',
+        borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(217, 119, 6, 0.2)',
+        ringColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(217, 119, 6, 0.1)',
       }}>
         
         {/* Particles */}
@@ -889,7 +889,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
         <div className={`flex items-start justify-between px-8 py-8 border-b transition-colors ${
           isDarkMode
             ? 'border-white/5 bg-gradient-to-b from-zinc-900/50 to-transparent'
-            : 'border-neutral-700/30 bg-gradient-to-b from-neutral-800/40 to-transparent'
+            : 'border-orange-200 bg-gradient-to-b from-orange-100/40 to-transparent'
         }`}>
           <div>
             <div className="flex items-center gap-3 mb-3">
@@ -917,7 +917,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
 
         {/* Content */}
         <div className={`flex-1 overflow-y-auto p-8 custom-scrollbar transition-colors ${
-          isDarkMode ? 'bg-[#0a0a0a]' : 'bg-neutral-900/80'
+          isDarkMode ? 'bg-[#0a0a0a]' : 'bg-amber-50/50'
         }`}>
           
           {/* Add Cheat Form - ONLY VISIBLE IF LOGGED IN */}
@@ -929,7 +929,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                   className={`w-full mb-8 py-4 border border-dashed rounded-2xl hover:transition-all text-sm font-bold uppercase tracking-wide flex items-center justify-center gap-2 group ${
                     isDarkMode
                       ? 'border-zinc-800 text-zinc-500 hover:text-violet-400 hover:border-violet-500/30 hover:bg-violet-500/5'
-                      : 'border-neutral-700/40 text-neutral-400 hover:text-violet-300 hover:border-violet-500/40 hover:bg-violet-500/10'
+                      : 'border-amber-300 text-amber-800 hover:text-violet-600 hover:border-violet-400 hover:bg-violet-100/15'
                   }`}
                 >
                   <div className={`p-1 rounded-md transition-colors ${
@@ -945,7 +945,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                 <form onSubmit={handleAddCheat} className={`mb-8 p-8 rounded-3xl border animate-in slide-in-from-top-4 ring-1 transition-all ${
                   isDarkMode
                     ? 'bg-zinc-900/30 border-violet-500/20 ring-violet-500/10'
-                    : 'bg-neutral-800/40 border-violet-500/30 ring-violet-500/10'
+                    : 'bg-orange-100/30 border-violet-400/40 ring-violet-400/15'
                 }`}>
                   <h3 className={`text-lg font-bold mb-6 flex items-center gap-2 ${
                     isDarkMode ? 'text-white' : 'text-slate-900'
@@ -962,7 +962,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div className="space-y-2">
                       <label className={`text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors ${
-                        isDarkMode ? 'text-zinc-500' : 'text-neutral-300'
+                        isDarkMode ? 'text-zinc-500' : 'text-amber-900'
                       }`}>Effect / Description</label>
                       <input
                         autoFocus
@@ -971,7 +971,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                         className={`w-full rounded-xl px-4 py-3 outline-none text-sm transition-all focus:ring-1 border ${
                           isDarkMode
                             ? 'bg-black/50 border-white/10 text-white placeholder-zinc-700 focus:ring-violet-500 focus:bg-black'
-                            : 'bg-neutral-800/60 border-neutral-700/40 text-neutral-100 placeholder-neutral-500 focus:ring-violet-500 focus:bg-neutral-800/80'
+                            : 'bg-amber-100/40 border-amber-200 text-amber-950 placeholder-amber-700 focus:ring-violet-500 focus:bg-amber-100/60'
                         }`}
                         value={newCheat.effect}
                         onChange={e => setNewCheat({...newCheat, effect: e.target.value})}
@@ -979,7 +979,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                     </div>
                     <div className="space-y-2">
                       <label className={`text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors ${
-                        isDarkMode ? 'text-zinc-500' : 'text-neutral-300'
+                        isDarkMode ? 'text-zinc-500' : 'text-amber-900'
                       }`}>Code / Combination</label>
                       <input
                         required
@@ -987,7 +987,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                         className={`w-full rounded-xl px-4 py-3 outline-none text-sm font-mono transition-all focus:ring-1 border ${
                           isDarkMode
                             ? 'bg-black/50 border-white/10 text-white placeholder-zinc-700 focus:ring-violet-500 focus:bg-black'
-                            : 'bg-neutral-800/60 border-neutral-700/40 text-neutral-100 placeholder-neutral-500 focus:ring-violet-500 focus:bg-neutral-800/80'
+                            : 'bg-amber-100/40 border-amber-200 text-amber-950 placeholder-amber-700 focus:ring-violet-500 focus:bg-amber-100/60'
                         }`}
                         value={newCheat.code}
                         onChange={e => setNewCheat({...newCheat, code: e.target.value})}
@@ -1029,15 +1029,15 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                 <div key={idx} className={`group flex flex-col md:flex-row md:items-center justify-between p-5 border rounded-2xl transition-all duration-300 ${
                   isDarkMode
                     ? 'bg-zinc-900/20 hover:bg-zinc-900/50 border-white/5 hover:border-violet-500/20'
-                    : 'bg-neutral-800/30 hover:bg-neutral-800/50 border-neutral-700/30 hover:border-violet-500/40'
+                    : 'bg-amber-100/25 hover:bg-amber-100/40 border-amber-200/60 hover:border-violet-400/50'
                 }`}>
                   <div className="mb-3 md:mb-0">
                     <div className={`font-bold text-lg group-hover:transition-colors ${
                       isDarkMode
                         ? 'text-zinc-200 group-hover:text-violet-200'
-                        : 'text-neutral-100 group-hover:text-violet-300'
+                        : 'text-amber-950 group-hover:text-violet-700'
                     }`}>{cheat.effect}</div>
-                    {cheat.notes && <div className={`text-xs mt-1 ${isDarkMode ? 'text-zinc-500' : 'text-neutral-400'}`}>{cheat.notes}</div>}
+                    {cheat.notes && <div className={`text-xs mt-1 ${isDarkMode ? 'text-zinc-500' : 'text-amber-800'}`}>{cheat.notes}</div>}
                   </div>
                   <div className={`flex items-center gap-4 pl-4 md:border-l-0 ${
                     isDarkMode ? 'border-l border-white/5' : 'border-l border-neutral-700/30'
@@ -1045,7 +1045,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                     <code className={`px-4 py-2 rounded-lg font-mono text-sm border tracking-wider select-all shadow-inner group-hover:transition-colors ${
                       isDarkMode
                         ? 'bg-black/50 text-violet-300 border-white/5 group-hover:border-violet-500/30'
-                        : 'bg-neutral-800/60 text-violet-300 border-neutral-700/30 group-hover:border-violet-500/40'
+                        : 'bg-amber-200/50 text-violet-700 border-amber-300 group-hover:border-violet-400/60'
                     }`}>
                       {cheat.code}
                     </code>
@@ -1054,7 +1054,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
                       className={`p-2 transition-colors opacity-0 group-hover:opacity-100 rounded-lg ${
                         isDarkMode
                           ? 'text-zinc-600 hover:text-white hover:bg-white/5'
-                          : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700/40'
+                          : 'text-amber-700 hover:text-amber-950 hover:bg-amber-200/50'
                       }`}
                       title="Copy Code"
                     >
@@ -1067,17 +1067,17 @@ const GameDetail = ({ game, onClose, onAddCheat, user, isDarkMode = true }) => {
               <div className={`text-center py-20 border border-dashed rounded-3xl ${
                 isDarkMode
                   ? 'border-zinc-800 bg-zinc-900/20'
-                  : 'border-neutral-700/40 bg-neutral-800/20'
+                  : 'border-amber-300 bg-amber-100/20'
               }`}>
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border ${
                   isDarkMode
                     ? 'bg-zinc-900 border-zinc-800'
-                    : 'bg-neutral-800/40 border-neutral-700/30'
+                    : 'bg-amber-200/50 border-amber-300'
                 }`}>
-                   <Ghost className={`w-8 h-8 ${isDarkMode ? 'text-zinc-700' : 'text-neutral-500'}`} />
+                   <Ghost className={`w-8 h-8 ${isDarkMode ? 'text-zinc-700' : 'text-amber-800'}`} />
                 </div>
-                <h3 className={`font-bold mb-1 ${isDarkMode ? 'text-zinc-300' : 'text-neutral-200'}`}>No Cheats Yet</h3>
-                <p className={`text-sm ${isDarkMode ? 'text-zinc-600' : 'text-neutral-400'}`}>This database entry is waiting for contributions.</p>
+                <h3 className={`font-bold mb-1 ${isDarkMode ? 'text-zinc-300' : 'text-amber-950'}`}>No Cheats Yet</h3>
+                <p className={`text-sm ${isDarkMode ? 'text-zinc-600' : 'text-amber-800'}`}>This database entry is waiting for contributions.</p>
               </div>
             )}
           </div>
@@ -1183,7 +1183,7 @@ export default function App() {
     <div className={`min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 ${
       isDarkMode
         ? 'bg-[#050505] text-zinc-200'
-        : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-100 text-slate-900'
+        : 'bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 text-amber-950'
     }`}>
       
       {/* ADDED CURSOR GLOW HERE */}
