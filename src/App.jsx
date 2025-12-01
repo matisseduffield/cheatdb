@@ -381,7 +381,20 @@ const CursorGlow = ({ onMouseMove }) => {
         }
 
         .icon-pulse {
-          animation: pulse-scale 2s ease-in-out infinite;
+          animation: pulse-scale 8s ease-in-out infinite !important;
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: .5;
+          }
+        }
+
+        .animate-pulse {
+          animation: pulse 4.5s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
         }
 
         .orb-float {
@@ -523,12 +536,329 @@ const ShortcutsModal = ({ onClose }) => (
           <kbd className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs font-mono text-zinc-400">Ctrl/Cmd</kbd>
           <span className="text-sm text-zinc-300">Focus search</span>
         </div>
+        <div className="flex items-center gap-3">
+          <kbd className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs font-mono text-zinc-400">K</kbd>
+          <span className="text-sm text-zinc-300">Open command palette</span>
+        </div>
       </div>
     </div>
   </div>
 );
 
+// Command Palette Component
+const CommandPalette = ({ onClose, games, onSelectGame, user }) => {
+  const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const commands = [
+    { id: 'search', label: 'Search Games', icon: '🔍', action: () => {} },
+    user && { id: 'login', label: 'Logout', icon: '🚪', action: () => {} },
+    !user && { id: 'login', label: 'Admin Login', icon: '🔐', action: () => {} },
+    { id: 'shortcuts', label: 'Show Keyboard Shortcuts', icon: '⌨️', action: () => {} },
+  ].filter(Boolean);
+
+  const gameResults = query.trim() ? games.filter(g => 
+    g.title.toLowerCase().includes(query.toLowerCase())
+  ).slice(0, 5) : [];
+
+  const allResults = [...commands, ...gameResults];
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev + 1) % allResults.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev - 1 + allResults.length) % allResults.length);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const selected = allResults[selectedIndex];
+        if (selected.id && !selected.title) {
+          selected.action();
+        } else if (selected.id && selected.title) {
+          onSelectGame(selected);
+        }
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedIndex, allResults]);
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-start justify-center p-4 pt-20">
+      <div className="absolute inset-0 bg-black/60 command-palette-overlay" onClick={onClose} />
+      <div className="relative w-full max-w-xl rounded-2xl border border-violet-500/30 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200" style={{ backgroundColor: '#0a0a0a' }}>
+        <div className="relative p-4 border-b border-zinc-800">
+          <input
+            autoFocus
+            type="text"
+            placeholder="Search games or commands..."
+            value={query}
+            onChange={e => {
+              setQuery(e.target.value);
+              setSelectedIndex(0);
+            }}
+            className="w-full bg-transparent outline-none text-white placeholder-zinc-500 text-lg"
+          />
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-zinc-600">K to open</div>
+        </div>
+
+        <div className="max-h-96 overflow-y-auto custom-scrollbar">
+          {allResults.length === 0 ? (
+            <div className="p-8 text-center text-zinc-500 text-sm">No results found</div>
+          ) : (
+            allResults.map((result, idx) => (
+              <div
+                key={idx}
+                onClick={() => {
+                  setSelectedIndex(idx);
+                  if (result.title) onSelectGame(result);
+                  onClose();
+                }}
+                className={`px-4 py-3 cursor-pointer command-item transition-all ${
+                  selectedIndex === idx ? 'selected' : ''
+                } border-l-4 border-l-transparent`}
+              >
+                {result.title ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{result.antiCheat === 'None' ? '🎮' : '⚠️'}</span>
+                      <div>
+                        <div className="font-medium text-white">{result.title}</div>
+                        <div className="text-xs text-zinc-500">{result.cheats?.length || 0} programs</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-zinc-600" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{result.icon}</span>
+                    <span className="text-white font-medium">{result.label}</span>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="px-4 py-3 border-t border-zinc-800 bg-zinc-900/30 text-xs text-zinc-600 flex items-center justify-between">
+          <div className="flex gap-4">
+            <span><kbd className="px-1.5 py-0.5 bg-zinc-800 rounded text-xs">↑↓</kbd> navigate</span>
+            <span><kbd className="px-1.5 py-0.5 bg-zinc-800 rounded text-xs">Enter</kbd> select</span>
+            <span><kbd className="px-1.5 py-0.5 bg-zinc-800 rounded text-xs">Esc</kbd> close</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- Components ---
+
+// Ripple Effect Handler
+const createRipple = (event) => {
+  const button = event.currentTarget;
+  const ripple = document.createElement('div');
+  const rect = button.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = event.clientX - rect.left - size / 2;
+  const y = event.clientY - rect.top - size / 2;
+
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = x + 'px';
+  ripple.style.top = y + 'px';
+  ripple.classList.add('ripple');
+
+  button.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+};
+
+// Blob Component for Background with Cursor Interaction & Ripples
+const BlobBackground = ({ mousePos }) => {
+  const [blob1Offset, setBlob1Offset] = useState({ x: 0, y: 0, scale: 1, brightness: 1 });
+  const [blob2Offset, setBlob2Offset] = useState({ x: 0, y: 0, scale: 1, brightness: 1 });
+  const [blob1Float, setBlob1Float] = useState({ x: 0, y: 0 });
+  const [blob2Float, setBlob2Float] = useState({ x: 0, y: 0 });
+  const [ripples1, setRipples1] = useState([]);
+  const [ripples2, setRipples2] = useState([]);
+
+  // Random floating movement for blobs
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Blob 1 random movement
+      const angle1 = Math.random() * Math.PI * 2;
+      const speed1 = 60 + Math.random() * 40; // 60-100px movement
+      setBlob1Float({
+        x: Math.cos(angle1) * speed1,
+        y: Math.sin(angle1) * speed1
+      });
+
+      // Blob 2 random movement
+      const angle2 = Math.random() * Math.PI * 2;
+      const speed2 = 60 + Math.random() * 40;
+      setBlob2Float({
+        x: Math.cos(angle2) * speed2,
+        y: Math.sin(angle2) * speed2
+      });
+    }, 2000); // Change direction every 2 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Blob 1 (Cyan) position - top left
+    const blob1X = window.innerWidth * 0.15 + blob1Float.x;
+    const blob1Y = window.innerHeight * 0.1 + blob1Float.y;
+    const distX1 = mousePos.x - blob1X;
+    const distY1 = mousePos.y - blob1Y;
+    const distance1 = Math.sqrt(distX1 * distX1 + distY1 * distY1);
+    
+    if (distance1 < 300) {
+      const pushForce = (300 - distance1) / 300;
+      const angle1 = Math.atan2(distY1, distX1);
+      setBlob1Offset({
+        x: -Math.cos(angle1) * pushForce * 150,
+        y: -Math.sin(angle1) * pushForce * 150,
+        scale: 1 + pushForce * 0.8,
+        brightness: 1 + pushForce * 2
+      });
+      
+      // Add ripples more frequently
+      if (distance1 < 150 && Math.random() > 0.5) {
+        const rippleId = Date.now() + Math.random();
+        setRipples1(prev => [...prev, { id: rippleId, x: distX1, y: distY1 }]);
+        setTimeout(() => {
+          setRipples1(prev => prev.filter(r => r.id !== rippleId));
+        }, 1000);
+      }
+    } else {
+      setBlob1Offset({ x: 0, y: 0, scale: 1, brightness: 1 });
+    }
+
+    // Blob 2 (Pink) position - bottom right
+    const blob2X = window.innerWidth * 0.85 + blob2Float.x;
+    const blob2Y = window.innerHeight * 0.75 + blob2Float.y;
+    const distX2 = mousePos.x - blob2X;
+    const distY2 = mousePos.y - blob2Y;
+    const distance2 = Math.sqrt(distX2 * distX2 + distY2 * distY2);
+    
+    if (distance2 < 300) {
+      const pushForce = (300 - distance2) / 300;
+      const angle2 = Math.atan2(distY2, distX2);
+      setBlob2Offset({
+        x: -Math.cos(angle2) * pushForce * 150,
+        y: -Math.sin(angle2) * pushForce * 150,
+        scale: 1 + pushForce * 0.8,
+        brightness: 1 + pushForce * 2
+      });
+      
+      // Add ripples more frequently
+      if (distance2 < 150 && Math.random() > 0.5) {
+        const rippleId = Date.now() + Math.random();
+        setRipples2(prev => [...prev, { id: rippleId, x: distX2, y: distY2 }]);
+        setTimeout(() => {
+          setRipples2(prev => prev.filter(r => r.id !== rippleId));
+        }, 1000);
+      }
+    } else {
+      setBlob2Offset({ x: 0, y: 0, scale: 1, brightness: 1 });
+    }
+  }, [mousePos, blob1Float, blob2Float]);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      {/* Blob 1 - Cyan/Turquoise */}
+      <div
+        style={{
+          position: 'absolute',
+          top: `calc(10% + ${blob1Float.y + blob1Offset.y}px)`,
+          left: `calc(10% + ${blob1Float.x + blob1Offset.x}px)`,
+          width: '384px',
+          height: '384px',
+          background: 'radial-gradient(circle, rgb(6, 182, 212) 0%, rgba(6, 182, 212, 0) 70%)',
+          borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%',
+          opacity: 0.6,
+          filter: `blur(40px) brightness(${blob1Offset.brightness})`,
+          transform: `scale(${blob1Offset.scale})`,
+          transition: 'all 3s ease-out',
+          animation: 'blob-morph-1 20s infinite',
+        }}
+      >
+        {ripples1.map(ripple => (
+          <div
+            key={ripple.id}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              border: '3px solid rgba(6, 182, 212, 1)',
+              boxShadow: '0 0 20px rgba(6, 182, 212, 0.8)',
+              transform: `translate(-50%, -50%) scale(1)`,
+              animation: `ripple-blob 1s ease-out forwards`,
+              pointerEvents: 'none',
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* Blob 2 - Pink */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: `calc(10% + ${blob2Float.y + blob2Offset.y}px)`,
+          right: `calc(15% + ${blob2Float.x + blob2Offset.x}px)`,
+          width: '320px',
+          height: '320px',
+          background: 'radial-gradient(circle, rgb(236, 72, 153) 0%, rgba(236, 72, 153, 0) 70%)',
+          borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%',
+          opacity: 0.6,
+          filter: `blur(40px) brightness(${blob2Offset.brightness})`,
+          transform: `scale(${blob2Offset.scale})`,
+          transition: 'all 3s ease-out',
+          animation: 'blob-morph-2 25s infinite',
+        }}
+      >
+        {ripples2.map(ripple => (
+          <div
+            key={ripple.id}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              border: '3px solid rgba(236, 72, 153, 1)',
+              boxShadow: '0 0 20px rgba(236, 72, 153, 0.8)',
+              transform: `translate(-50%, -50%) scale(1)`,
+              animation: `ripple-blob 1s ease-out forwards`,
+              pointerEvents: 'none',
+            }}
+          />
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes ripple-blob {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(6);
+            opacity: 0;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 // Typewriter Effect Component
 const TypewriterText = ({ text = "v2.0 // Database" }) => {
@@ -690,6 +1020,24 @@ const AntiCheatBadge = ({ ac }) => {
   );
 };
 
+// Logo mapping for games
+const gameLogoMap = {
+  'Apex Legends': '/logos/apex.svg',
+  'Call of Duty: Black Ops 7': '/logos/cod.svg',
+  'Call of Duty: Warzone': '/logos/warzone.svg',
+  'Counter Strike 2': '/logos/cs2.svg',
+  'Escape from Tarkov': '/logos/eft.svg',
+  'Overwatch 2': '/logos/ow2.svg',
+  'Rust': '/logos/rust.svg',
+  'Team Fortress 2': '/logos/tf2.svg',
+};
+
+// Scale multipliers for logos with extra whitespace
+const logoScaleMap = {
+  'Rust': 3,
+  'Call of Duty: Warzone': 3,
+};
+
 const GameCard = ({ game, onClick, user, onDelete, isEditMode, index }) => {
   const [showPreview, setShowPreview] = useState(false);
   const freeCount = game.cheats?.filter(c => c.tier === 'FREE' || !c.tier).length || 0;
@@ -700,7 +1048,7 @@ const GameCard = ({ game, onClick, user, onDelete, isEditMode, index }) => {
     onClick={() => onClick(game)}
     onMouseEnter={() => setShowPreview(true)}
     onMouseLeave={() => setShowPreview(false)}
-    className="group relative rounded-3xl p-6 transition-all duration-500 cursor-pointer hover:-translate-y-3 overflow-hidden backdrop-blur-sm card-bounce-enter border bg-zinc-900/30 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)]"
+    className="group relative rounded-3xl p-6 transition-all duration-500 cursor-pointer hover:-translate-y-3 overflow-hidden card-bounce-enter stagger-cascade border bg-zinc-900/30 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)]"
     style={{ animationDelay: `${index * 50}ms` }}
   >
     {/* Animated Gradient Background on Hover */}
@@ -719,8 +1067,20 @@ const GameCard = ({ game, onClick, user, onDelete, isEditMode, index }) => {
     <div className="relative z-10 flex flex-col h-full">
       <div className="flex justify-between items-start mb-5">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl border shadow-inner group-hover:scale-110 transition-transform duration-300 bg-black/40 border-white/5">
-            <ShieldAlert className="w-5 h-5 transition-colors icon-pulse text-zinc-400 group-hover:text-violet-400" />
+          <div className="p-1 rounded-2xl border shadow-inner group-hover:scale-110 transition-transform duration-300 bg-white/90 border-white/5 overflow-hidden flex items-center justify-center" style={{ width: '40px', height: '40px' }}>
+            {gameLogoMap[game.title] ? (
+              <img 
+                src={gameLogoMap[game.title]} 
+                alt={game.title} 
+                className="w-full h-full object-cover object-center"
+                style={{ transform: `scale(${logoScaleMap[game.title] || 1.5})` }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            ) : (
+              <ShieldAlert className="w-8 h-8 transition-colors icon-pulse text-zinc-400 group-hover:text-violet-400" />
+            )}
           </div>
           <AntiCheatBadge ac={game.antiCheat} />
         </div>
@@ -732,7 +1092,11 @@ const GameCard = ({ game, onClick, user, onDelete, isEditMode, index }) => {
               e.stopPropagation(); 
               onDelete(game.id);
             }}
-            className="p-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all border border-red-500/20 hover:scale-110 shadow-lg shadow-red-500/10 animate-in zoom-in duration-200"
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              createRipple(e);
+            }}
+            className="p-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all border border-red-500/20 hover:scale-110 shadow-lg shadow-red-500/10 animate-in zoom-in duration-200 ripple-button"
             title="Delete Game"
           >
             <Trash2 className="w-4 h-4" />
@@ -812,11 +1176,11 @@ const LoginModal = ({ onClose, onLogin }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300" onClick={onClose} />
-      <div className="relative w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-300 ring-1 border transition-colors bg-[#0a0a0a] border-white/10 ring-white/10">
+      <div className="relative w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-300 glass-card border border-violet-500/20">
         
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent"></div>
         
-        <h2 className="text-2xl font-black mb-6 flex items-center gap-3 text-white">
+        <h2 className="text-2xl font-black mb-8 flex items-center gap-3 text-white">
           <div className="p-2 rounded-xl transition-colors bg-violet-500/10">
              <Lock className="w-6 h-6 text-violet-500" />
           </div>
@@ -828,33 +1192,38 @@ const LoginModal = ({ onClose, onLogin }) => {
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Email</label>
+        <form onSubmit={handleSubmit} className="space-y-7">
+          <div className="input-with-floating-label relative">
             <input 
               type="email" 
               required
-              className="w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:bg-zinc-900"
-              placeholder="admin@cheatdb.org"
+              placeholder=" "
+              className="peer w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:border-violet-500 focus:bg-black"
               value={email}
               onChange={e => setEmail(e.target.value)}
             />
+            <label className="floating-label text-zinc-500 pointer-events-none">
+              Email Address
+            </label>
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Password</label>
+          <div className="input-with-floating-label relative">
             <input 
               type="password" 
               required
-              className="w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:bg-zinc-900"
-              placeholder="••••••••"
+              placeholder=" "
+              className="peer w-full rounded-xl px-4 py-3 outline-none transition-all focus:ring-1 border bg-zinc-900/50 border-white/10 text-white focus:ring-violet-500 focus:border-violet-500 focus:bg-black"
               value={password}
               onChange={e => setPassword(e.target.value)}
             />
+            <label className="floating-label text-zinc-500 pointer-events-none">
+              Password
+            </label>
           </div>
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2"
+            onMouseDown={createRipple}
+            className="w-full text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 ripple-button"
           >
             {loading ? (
               <>
@@ -1169,6 +1538,8 @@ export default function App() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [toast, setToast] = useState(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [displayedGames, setDisplayedGames] = useState(20);
 
   // 1. Auth Listener
   useEffect(() => {
@@ -1201,10 +1572,10 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 3. Keyboard Shortcuts
+  // 3. Keyboard Shortcuts & Command Palette
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Esc key: close modal
+      // Esc key: close modals
       if (e.key === 'Escape') {
         if (selectedGame) {
           setSelectedGame(null);
@@ -1218,21 +1589,22 @@ export default function App() {
           setShowShortcuts(false);
           e.preventDefault();
         }
+        if (showCommandPalette) {
+          setShowCommandPalette(false);
+          e.preventDefault();
+        }
       }
       
       // ? key: show shortcuts
-      if (e.key === '?' && !showShortcuts) {
+      if (e.key === '?' && !showShortcuts && !showCommandPalette) {
         setShowShortcuts(true);
         e.preventDefault();
       }
       
-      // Ctrl/Cmd + K: focus search
+      // Ctrl/Cmd + K: open command palette
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        const searchInput = document.querySelector('input[placeholder="Search database..."]');
-        if (searchInput) {
-          searchInput.focus();
-          e.preventDefault();
-        }
+        setShowCommandPalette(true);
+        e.preventDefault();
       }
     };
 
@@ -1304,6 +1676,9 @@ export default function App() {
 
   return (
     <div id="app-root" className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 bg-[#050505] text-zinc-200">
+      
+      {/* Blob Background Animation */}
+      <BlobBackground mousePos={mousePos} />
       
       {/* ADDED CURSOR GLOW HERE */}
       <CursorGlow onMouseMove={setMousePos} />
@@ -1380,19 +1755,38 @@ export default function App() {
               <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest animate-pulse">Loading Assets...</p>
             </div>
           ) : filteredGames.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
-              {filteredGames.map((game, idx) => (
-                <GameCard 
-                  key={game.id} 
-                  game={game} 
-                  onClick={setSelectedGame}
-                  user={user}
-                  onDelete={handleDeleteGame}
-                  isEditMode={isEditMode}
-                  index={idx}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredGames.slice(0, displayedGames).map((game, idx) => (
+                  <GameCard 
+                    key={game.id} 
+                    game={game} 
+                    onClick={setSelectedGame}
+                    user={user}
+                    onDelete={handleDeleteGame}
+                    isEditMode={isEditMode}
+                    index={idx}
+                  />
+                ))}
+              </div>
+
+              {/* Infinite Scroll Loader */}
+              {displayedGames < filteredGames.length && (
+                <div className="flex flex-col items-center gap-6 pt-12">
+                  <div className="infinite-scroll-loader">
+                    <div className="loader-dot"></div>
+                    <div className="loader-dot"></div>
+                    <div className="loader-dot"></div>
+                  </div>
+                  <button
+                    onClick={() => setDisplayedGames(prev => Math.min(prev + 20, filteredGames.length))}
+                    className="px-8 py-3 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 font-bold text-sm hover:bg-violet-600/30 transition-all"
+                  >
+                    Load More ({displayedGames} / {filteredGames.length})
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-32 bg-zinc-900/20 rounded-[2.5rem] border border-white/5 border-dashed flex flex-col items-center backdrop-blur-sm animate-in zoom-in-95 duration-500">
               {games.length === 0 ? (
@@ -1409,7 +1803,8 @@ export default function App() {
                   </p>
                   <button
                      onClick={() => setShowLogin(true)}
-                     className="flex items-center gap-3 bg-gradient-to-r from-violet-600 to-pink-600 text-white hover:from-violet-500 hover:to-pink-500 px-8 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-violet-500/20 hover:scale-105 active:scale-95 scale-in-animation"
+                     className="flex items-center gap-3 bg-gradient-to-r from-violet-600 to-pink-600 text-white hover:from-violet-500 hover:to-pink-500 px-8 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-violet-500/20 hover:scale-105 active:scale-95 scale-in-animation ripple-button"
+                     onMouseDown={createRipple}
                   >
                     <Lock className="w-4 h-4 icon-rotate-on-hover" />
                     Admin Login
@@ -1473,6 +1868,16 @@ export default function App() {
         {/* Keyboard Shortcuts Modal */}
         {showShortcuts && (
           <ShortcutsModal onClose={() => setShowShortcuts(false)} />
+        )}
+
+        {/* Command Palette */}
+        {showCommandPalette && (
+          <CommandPalette 
+            onClose={() => setShowCommandPalette(false)}
+            games={filteredGames}
+            onSelectGame={setSelectedGame}
+            user={user}
+          />
         )}
       </div>
     </div>
