@@ -243,7 +243,7 @@ const ShootingStars = () => {
         /* Tail: Long gradient line pointing backward */
         .shooting-star-tail {
           position: absolute;
-          left: 0;
+          right: 0;
           top: 50%;
           width: 250px;
           height: 2px;
@@ -285,10 +285,11 @@ const ShootingStars = () => {
           }
         }
 
-        /* Tail fade animation: Shrinking and burning out */
+        /* Tail fade animation: Evaporating from the back end */
         @keyframes tail-fade {
           0% { width: 0; opacity: 0; }
-          10% { width: 250px; opacity: 1; }
+          20% { width: 250px; opacity: 1; }
+          50% { width: 250px; opacity: 0.8; }
           100% { width: 0; opacity: 0; }
         }
       `;
