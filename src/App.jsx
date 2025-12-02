@@ -198,6 +198,112 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
   );
 };
 
+// --- New Component: Shooting Stars Animation ---
+const ShootingStars = () => {
+  useEffect(() => {
+    // Inject CSS into document head
+    const styleId = 'shooting-stars-style';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        .shooting-stars-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 0;
+          overflow: hidden;
+        }
+
+        .shooting-star {
+          position: absolute;
+          width: 3px;
+          height: 3px;
+          background: white;
+          border-radius: 50%;
+          box-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
+          animation: shoot linear forwards;
+          opacity: 1;
+        }
+
+        .shooting-star::before {
+          content: '';
+          position: absolute;
+          width: 100px;
+          height: 2px;
+          background: linear-gradient(90deg, rgba(139, 92, 246, 0.8), transparent);
+          top: 50%;
+          left: -100px;
+          transform: translateY(-50%);
+        }
+
+        @keyframes shoot {
+          0% {
+            opacity: 1;
+            transform: translateX(0) translateY(0) rotate(45deg);
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(1000px) translateY(-1000px) rotate(45deg);
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Get or create container
+    let container = document.getElementById('shooting-stars-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'shooting-stars-container';
+      container.className = 'shooting-stars-container';
+      document.body.appendChild(container);
+    }
+
+    let shootingStarInterval;
+
+    const createShootingStar = () => {
+      const star = document.createElement('div');
+      star.className = 'shooting-star';
+
+      // Random start position (top or left edge)
+      const startX = Math.random() * window.innerWidth;
+      const startY = Math.random() * (window.innerHeight * 0.6); // Top 60% of screen
+
+      star.style.left = startX + 'px';
+      star.style.top = startY + 'px';
+      star.style.animationDuration = (1 + Math.random() * 1) + 's';
+
+      container.appendChild(star);
+
+      // Remove after animation completes
+      setTimeout(() => {
+        star.remove();
+      }, (1 + Math.random()) * 1000);
+    };
+
+    const scheduleNextStar = () => {
+      const delay = 2000 + Math.random() * 4000; // 2-6 seconds
+      shootingStarInterval = setTimeout(() => {
+        createShootingStar();
+        scheduleNextStar();
+      }, delay);
+    };
+
+    // Start the cycle
+    scheduleNextStar();
+
+    return () => {
+      clearTimeout(shootingStarInterval);
+    };
+  }, []);
+
+  return null;
+};
+
 // --- New Component: Falling Stars Animation ---
 const FallingStars = () => {
   useEffect(() => {
@@ -271,7 +377,7 @@ const FallingStars = () => {
       // Check if particles already exist to prevent duplicates on re-renders
       if (container.childElementCount > 0) return;
 
-      const particleCount = 250;
+      const particleCount = 100;
 
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
@@ -2065,6 +2171,9 @@ export default function App() {
   return (
     <div id="app-root" className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 bg-[#050505] text-zinc-200">
       
+      {/* Shooting Stars Animation */}
+      <ShootingStars />
+
       {/* Falling Stars Animation - rendered via portal to document.body */}
       <FallingStars />
       
