@@ -271,7 +271,7 @@ const FallingStars = () => {
       // Check if particles already exist to prevent duplicates on re-renders
       if (container.childElementCount > 0) return;
 
-      const particleCount = 300;
+      const particleCount = 250;
 
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
