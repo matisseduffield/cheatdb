@@ -1,69 +1,68 @@
 #!/usr/bin/env node
 
 /**
- * Sitemap Generator for CheatDB
+ * Sitemap Generator for CheatDB (Web-based)
  * 
- * This script generates a sitemap.xml for all games in the Firestore database.
- * Run this after adding/removing games to keep your sitemap up to date.
+ * This script fetches games from your public Firestore database via the REST API
+ * and generates a sitemap.xml. This avoids service account authentication issues.
  * 
  * Usage: node scripts/generate-sitemap.js
  */
 
-const admin = require('firebase-admin');
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Initialize Firebase Admin (set GOOGLE_APPLICATION_CREDENTIALS env var first)
-// Or use service account JSON if running locally
-const serviceAccount = require('../firebase-service-account.json'); // Optional
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && !serviceAccount) {
-  console.error('Error: Please set GOOGLE_APPLICATION_CREDENTIALS environment variable or add firebase-service-account.json');
-  process.exit(1);
-}
-
-// Initialize Firebase if not already done
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount || require(process.env.GOOGLE_APPLICATION_CREDENTIALS))
-  });
-}
-
-const db = admin.firestore();
 const APP_ID = 'cheatdb-games-v2';
+const PROJECT_ID = 'cheatsdatabase'; // Your Firebase project ID
 const DOMAIN = 'https://cheatdb.org';
 
 async function generateSitemap() {
   try {
-    console.log('Generating sitemap...');
+    console.log('Generating sitemap from Firestore REST API...');
     
-    // Fetch all games from Firestore
-    const snapshot = await db
-      .collection('artifacts')
-      .doc(APP_ID)
-      .collection('public')
-      .doc('data')
-      .collection('games')
-      .orderBy('title')
-      .get();
-
-    if (snapshot.empty) {
+    // Fetch all games using Firestore REST API (no auth needed for public reads)
+    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/artifacts/${APP_ID}/public/data/games`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Firestore API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    const documents = data.documents || [];
+    
+    if (documents.length === 0) {
       console.warn('Warning: No games found in database');
       return;
     }
+
+    // Sort by title
+    documents.sort((a, b) => {
+      const titleA = a.fields.title?.stringValue || '';
+      const titleB = b.fields.title?.stringValue || '';
+      return titleA.localeCompare(titleB);
+    });
 
     // Build XML
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
-    snapshot.forEach(doc => {
-      const game = doc.data();
-      const gameTitle = game.title ? game.title.replace(/\s+/g, '-').toLowerCase() : 'unknown';
-      const lastMod = game.updatedAt ? new Date(game.updatedAt.toDate()).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    documents.forEach(doc => {
+      const fields = doc.fields || {};
+      const gameTitle = fields.title?.stringValue 
+        ? fields.title.stringValue.replace(/\s+/g, '-').toLowerCase() 
+        : 'unknown';
+      const gameId = doc.name.split('/').pop();
+      const today = new Date().toISOString().split('T')[0];
       
       xml += `  <url>\n`;
-      xml += `    <loc>${DOMAIN}/game/${gameTitle}/${doc.id}</loc>\n`;
-      xml += `    <lastmod>${lastMod}</lastmod>\n`;
+      xml += `    <loc>${DOMAIN}/game/${gameTitle}/${gameId}</loc>\n`;
+      xml += `    <lastmod>${today}</lastmod>\n`;
       xml += `    <changefreq>weekly</changefreq>\n`;
       xml += `    <priority>0.8</priority>\n`;
       xml += `  </url>\n`;
@@ -77,13 +76,13 @@ async function generateSitemap() {
     
     console.log(`✅ Sitemap generated successfully!`);
     console.log(`📁 Saved to: ${outputPath}`);
-    console.log(`📊 Total URLs: ${snapshot.size}`);
+    console.log(`📊 Total URLs: ${documents.length}`);
     
     // Also update main sitemap.xml with current date
     updateMainSitemap();
     
   } catch (error) {
-    console.error('Error generating sitemap:', error);
+    console.error('Error generating sitemap:', error.message);
     process.exit(1);
   }
 }
