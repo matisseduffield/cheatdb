@@ -1461,7 +1461,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index 
     </div>
   </div>
   );
-};
+});
 
 const SkeletonCard = ({ index }) => (
   <div 
