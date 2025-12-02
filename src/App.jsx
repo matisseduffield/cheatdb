@@ -1598,16 +1598,32 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     e.preventDefault();
     if (!editingCheat.name || !editingCheat.productLink) return;
     
-    const updatedCheats = [...game.cheats];
-    updatedCheats[editingCheatIndex] = editingCheat;
-    
     const db = getFirestore();
     const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', game.id);
     
     try {
-      await updateDoc(gameRef, { cheats: updatedCheats });
+      await runTransaction(db, async (transaction) => {
+        const gameDoc = await transaction.get(gameRef);
+        if (!gameDoc.exists()) {
+          throw new Error("Game document does not exist");
+        }
+        
+        const cheats = gameDoc.data().cheats || [];
+        
+        // Verify cheat index exists
+        if (editingCheatIndex < 0 || editingCheatIndex >= cheats.length) {
+          throw new Error("Cheat index out of bounds");
+        }
+        
+        // Update the specific cheat at the index
+        const updatedCheats = [...cheats];
+        updatedCheats[editingCheatIndex] = editingCheat;
+        
+        transaction.update(gameRef, { cheats: updatedCheats });
+      });
     } catch (err) {
       console.error("Error updating cheat:", err);
+      alert("Failed to update cheat. Please try again.");
     }
     
     setEditingCheatIndex(null);
@@ -1615,15 +1631,31 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
   };
 
   const handleDeleteCheat = async (index) => {
-    const updatedCheats = game.cheats.filter((_, i) => i !== index);
-    
     const db = getFirestore();
     const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', game.id);
     
     try {
-      await updateDoc(gameRef, { cheats: updatedCheats });
+      await runTransaction(db, async (transaction) => {
+        const gameDoc = await transaction.get(gameRef);
+        if (!gameDoc.exists()) {
+          throw new Error("Game document does not exist");
+        }
+        
+        const cheats = gameDoc.data().cheats || [];
+        
+        // Verify cheat index exists
+        if (index < 0 || index >= cheats.length) {
+          throw new Error("Cheat index out of bounds");
+        }
+        
+        // Filter out the cheat at the given index
+        const updatedCheats = cheats.filter((_, i) => i !== index);
+        
+        transaction.update(gameRef, { cheats: updatedCheats });
+      });
     } catch (err) {
       console.error("Error deleting cheat:", err);
+      alert("Failed to delete cheat. Please try again.");
     }
     
     setEditingCheatIndex(null);
