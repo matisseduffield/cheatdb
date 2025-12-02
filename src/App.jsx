@@ -217,7 +217,7 @@ const ShootingStars = () => {
           width: 100%;
           height: 100%;
           pointer-events: none;
-          z-index: 0;
+          z-index: 1;
           overflow: hidden;
         }
 
@@ -2266,9 +2266,6 @@ export default function App() {
   return (
     <div id="app-root" className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 bg-[#050505] text-zinc-200">
       
-      {/* Shooting Stars Animation */}
-      <ShootingStars />
-
       {/* Falling Stars Animation - rendered via portal to document.body */}
       <FallingStars />
       
@@ -2280,6 +2277,9 @@ export default function App() {
 
       {/* Animated Background Mesh */}
       <AnimatedBackgroundMesh mousePos={mousePos} />
+
+      {/* Shooting Stars Animation */}
+      <ShootingStars />
 
       <div className="relative z-10">
         <Header 
