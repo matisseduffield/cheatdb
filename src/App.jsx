@@ -18,7 +18,8 @@ import {
   doc,
   arrayUnion,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  runTransaction
 } from 'firebase/firestore';
 import { 
   Search, 
@@ -555,32 +556,6 @@ const StatisticsDashboard = ({ games }) => {
         </div>
       </div>
     </div>
-  );
-};
-
-// --- New Component: Particle Effect ---
-const ParticleEffect = ({ x, y }) => {
-  const particles = Array.from({ length: 8 }).map((_, i) => ({
-    id: i,
-    angle: (i / 8) * Math.PI * 2,
-  }));
-
-  return (
-    <>
-      {particles.map((particle) => (
-        <div
-          key={particle.id}
-          className="pointer-events-none fixed w-1 h-1 bg-violet-400 rounded-full"
-          style={{
-            left: `${x}px`,
-            top: `${y}px`,
-            animation: `particle-rise 1s ease-out forwards`,
-            '--tx': `${Math.cos(particle.angle) * 50}px`,
-            animationDelay: `${particle.id * 50}ms`,
-          }}
-        />
-      ))}
-    </>
   );
 };
 
@@ -1602,7 +1577,7 @@ const LoginModal = ({ onClose, onLogin }) => {
   );
 };
 
-const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, user, appId, onCheatUpdate }) => {
+const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, user, appId }) => {
   const [newCheat, setNewCheat] = useState({ name: '', productLink: '', features: [], notes: '', tier: 'FREE', type: 'EXTERNAL' });
   const [isAdding, setIsAdding] = useState(false);
   const [tierFilter, setTierFilter] = useState('ALL');
@@ -1631,11 +1606,6 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     
     try {
       await updateDoc(gameRef, { cheats: updatedCheats });
-      
-      // Call parent callback to update selectedGame immediately
-      if (onCheatUpdate) {
-        onCheatUpdate(updatedCheats);
-      }
     } catch (err) {
       console.error("Error updating cheat:", err);
     }
@@ -1652,11 +1622,6 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     
     try {
       await updateDoc(gameRef, { cheats: updatedCheats });
-      
-      // Call parent callback to update selectedGame immediately
-      if (onCheatUpdate) {
-        onCheatUpdate(updatedCheats);
-      }
     } catch (err) {
       console.error("Error deleting cheat:", err);
     }
@@ -2095,7 +2060,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGame, setSelectedGame] = useState(null);
+  const [selectedGameId, setSelectedGameId] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [toast, setToast] = useState(null);
@@ -2111,6 +2076,9 @@ export default function App() {
       return {};
     }
   });
+
+  // Derive selectedGame from games array for real-time sync
+  const selectedGame = games.find(g => g.id === selectedGameId);
 
   // 1. Auth Listener
   useEffect(() => {
@@ -2152,8 +2120,8 @@ export default function App() {
     const handleKeyDown = (e) => {
       // Esc key: close modals
       if (e.key === 'Escape') {
-        if (selectedGame) {
-          setSelectedGame(null);
+        if (selectedGameId) {
+          setSelectedGameId(null);
           e.preventDefault();
         }
         if (showLogin) {
@@ -2185,7 +2153,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedGame, showLogin, showShortcuts]);
+  }, [selectedGameId, showLogin, showShortcuts]);
 
   // 4. Advanced Filter
   const filteredGames = useMemo(() => {
@@ -2233,12 +2201,6 @@ export default function App() {
           addedAt: Date.now()
         })
       });
-      if (selectedGame && selectedGame.id === gameId) {
-        setSelectedGame(prev => ({
-          ...prev,
-          cheats: [...(prev.cheats || []), cheatData]
-        }));
-      }
       // Trigger confetti on success
       createConfetti();
     } catch (err) {
@@ -2247,7 +2209,7 @@ export default function App() {
       triggerShake('app-root');
       alert("Error adding cheat. Do you have permission?");
     }
-  }, [appId, user, selectedGame]);
+  }, [appId, user]);
 
   const handleVoteCheat = useCallback(async (cheatIdx) => {
     if (!selectedGame) return;
@@ -2257,23 +2219,33 @@ export default function App() {
     
     try {
       const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', selectedGame.id);
-      const cheat = selectedGame.cheats[cheatIdx];
-      const currentVotes = cheat.votes || 0;
-      const newVotes = hasVoted ? Math.max(0, currentVotes - 1) : currentVotes + 1;
       
-      // Update the cheat with new vote count
-      const updatedCheats = [...selectedGame.cheats];
-      updatedCheats[cheatIdx] = { ...cheat, votes: newVotes };
+      // Use transaction to safely update vote count
+      await runTransaction(db, async (transaction) => {
+        const gameDoc = await transaction.get(gameRef);
+        if (!gameDoc.exists()) {
+          throw new Error("Game document does not exist");
+        }
+        
+        const cheats = gameDoc.data().cheats || [];
+        
+        // Verify cheat exists
+        if (cheatIdx < 0 || cheatIdx >= cheats.length) {
+          throw new Error("Cheat index out of bounds");
+        }
+        
+        const cheat = cheats[cheatIdx];
+        const currentVotes = cheat.votes || 0;
+        const newVotes = hasVoted ? Math.max(0, currentVotes - 1) : currentVotes + 1;
+        
+        // Update the specific cheat in the array
+        const updatedCheats = [...cheats];
+        updatedCheats[cheatIdx] = { ...cheat, votes: newVotes };
+        
+        transaction.update(gameRef, { cheats: updatedCheats });
+      });
       
-      await updateDoc(gameRef, { cheats: updatedCheats });
-      
-      // Update local state
-      setSelectedGame(prev => ({
-        ...prev,
-        cheats: updatedCheats
-      }));
-      
-      // Update user votes tracking
+      // Update user votes tracking in localStorage (local-only, no race condition)
       let newUserVotes;
       if (hasVoted) {
         newUserVotes = { ...userVotes };
@@ -2287,6 +2259,7 @@ export default function App() {
       setUserVotes(newUserVotes);
     } catch (err) {
       console.error("Error voting:", err);
+      alert("Failed to vote. Please try again.");
     }
   }, [appId, selectedGame, userVotes]);
 
@@ -2382,7 +2355,7 @@ export default function App() {
                   <GameCard 
                     key={game.id} 
                     game={game} 
-                    onClick={setSelectedGame}
+                    onClick={(game) => setSelectedGameId(game.id)}
                     user={user}
                     onDelete={handleDeleteGame}
                     isEditMode={isEditMode}
@@ -2464,13 +2437,12 @@ export default function App() {
         {selectedGame && (
           <GameDetail 
             game={selectedGame} 
-            onClose={() => setSelectedGame(null)} 
+            onClose={() => setSelectedGameId(null)} 
             onAddCheat={handleAddCheatToGame}
             onVoteCheat={handleVoteCheat}
             userVotedCheat={userVotedCheat}
             user={user}
             appId={appId}
-            onCheatUpdate={(updatedCheats) => setSelectedGame({...selectedGame, cheats: updatedCheats})}
           />
         )}
 
