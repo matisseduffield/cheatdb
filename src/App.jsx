@@ -53,6 +53,31 @@ const firebaseConfig = {
   appId: "1:885527786972:web:dc6dd624a9b82fb4340b19"
 };
 
+/* ═══════════════════════════════════════════════════════════════════
+   FIRESTORE OPTIMIZATION GUIDE
+   ═══════════════════════════════════════════════════════════════════
+   
+   1. INDEXING RECOMMENDATIONS:
+      - Create composite index for: collection="games", fields=["antiCheat" ASC, "title" ASC]
+      - This speeds up filtering by anti-cheat type while maintaining alphabetical order
+      - Firebase Console → Firestore Database → Indexes → Create Index
+   
+   2. QUERY OPTIMIZATION:
+      - Current query: orderBy('title', 'asc') - Good for alphabetical listing
+      - Use: query(collection(db, 'path'), orderBy('title'), limit(50))
+      - Add pagination with startAfter(lastDoc) for large datasets
+   
+   3. CACHING STRATEGY:
+      - onSnapshot() listeners auto-cache in memory
+      - Reuse listeners across components to reduce reads
+      - Use persistence: enableIndexedDbPersistence(db) for offline support
+   
+   4. SECURITY RULES:
+      - Ensure rules match query structure for optimal performance
+      - Example: allow read if request.auth != null || path.exists()
+   
+   ═════════════════════════════════════════════════════════════════ */
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -921,7 +946,7 @@ const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick }) => 
             <h1 className="text-3xl font-black tracking-tighter text-white drop-shadow-lg group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r transition-all duration-500 group-hover:from-violet-400 group-hover:via-pink-400 group-hover:to-purple-400">
               CHEAT<span className="bg-gradient-to-r from-violet-400 via-pink-400 to-fuchsia-400 text-transparent bg-clip-text animate-pulse">DB</span>
             </h1>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] pl-1 h-4">
+            <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.3em] pl-1 h-4">
               <TypewriterText text="v2.0 // Database" />
             </p>
           </div>
@@ -1034,8 +1059,11 @@ const gameLogoMap = {
 
 // Scale multipliers for logos with extra whitespace
 const logoScaleMap = {
-  'Rust': 3,
-  'Call of Duty: Warzone': 3,
+  'Apex Legends': 1.05,
+  'Counter Strike 2': 1.35,
+  'Rust': 1.4,
+  'Call of Duty: Warzone': 1.4,
+  'Team Fortress 2': 1.55,
 };
 
 const GameCard = ({ game, onClick, user, onDelete, isEditMode, index }) => {
@@ -1071,7 +1099,8 @@ const GameCard = ({ game, onClick, user, onDelete, isEditMode, index }) => {
             {gameLogoMap[game.title] ? (
               <img 
                 src={gameLogoMap[game.title]} 
-                alt={game.title} 
+                alt={game.title}
+                loading="lazy"
                 className="w-full h-full object-cover object-center"
                 style={{ transform: `scale(${logoScaleMap[game.title] || 1.5})` }}
                 onError={(e) => {
@@ -1248,6 +1277,8 @@ const GameDetail = ({ game, onClose, onAddCheat, user }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [particles, setParticles] = useState([]);
   const [tierFilter, setTierFilter] = useState('ALL');
+  const [editingCheatIndex, setEditingCheatIndex] = useState(null);
+  const [editingCheat, setEditingCheat] = useState(null);
   const featureTags = ['Aimbot', 'ESP', 'Exploits', 'Configs', 'Misc'];
   const tiers = ['FREE', 'PAID'];
 
@@ -1257,6 +1288,41 @@ const GameDetail = ({ game, onClose, onAddCheat, user }) => {
     await onAddCheat(game.id, newCheat);
     setNewCheat({ name: '', productLink: '', features: [], notes: '', tier: 'FREE' });
     setIsAdding(false);
+  };
+
+  const handleEditCheat = async (e) => {
+    e.preventDefault();
+    if (!editingCheat.name || !editingCheat.productLink) return;
+    
+    const updatedCheats = [...game.cheats];
+    updatedCheats[editingCheatIndex] = editingCheat;
+    
+    const db = getFirestore();
+    const gameRef = doc(db, 'artifacts', __app_id, 'public/data/games', game.id);
+    await updateDoc(gameRef, { cheats: updatedCheats });
+    
+    setEditingCheatIndex(null);
+    setEditingCheat(null);
+  };
+
+  const handleDeleteCheat = async (index) => {
+    const updatedCheats = game.cheats.filter((_, i) => i !== index);
+    
+    const db = getFirestore();
+    const gameRef = doc(db, 'artifacts', __app_id, 'public/data/games', game.id);
+    await updateDoc(gameRef, { cheats: updatedCheats });
+    
+    setEditingCheatIndex(null);
+    setEditingCheat(null);
+  };
+
+  const toggleEditFeature = (feature) => {
+    setEditingCheat(prev => ({
+      ...prev,
+      features: prev.features.includes(feature)
+        ? prev.features.filter(f => f !== feature)
+        : [...prev.features, feature]
+    }));
   };
 
   const filteredCheats = game.cheats ? game.cheats.filter(cheat => 
@@ -1452,62 +1518,142 @@ const GameDetail = ({ game, onClose, onAddCheat, user }) => {
           {/* Cheats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCheats.length > 0 ? (
-              [...filteredCheats].reverse().map((cheat, idx) => (
-                <a
-                  key={idx}
-                  href={cheat.productLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative p-5 border rounded-2xl transition-all duration-300 bg-zinc-900/20 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_15px_40px_-10px_rgba(139,92,246,0.5)] cursor-pointer flex flex-col overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 via-transparent to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                  <div className="relative z-10">
-                    <div className="mb-3">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <h4 className="font-bold text-sm group-hover:text-violet-300 text-zinc-200 flex-1 line-clamp-2 transition-colors">{cheat.name}</h4>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
-                          cheat.tier === 'FREE'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 group-hover:bg-emerald-500/30 group-hover:border-emerald-500/50'
-                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 group-hover:bg-amber-500/30 group-hover:border-amber-500/50'
-                        }`}>
-                          {cheat.tier || 'FREE'}
-                        </span>
+              [...filteredCheats].reverse().map((cheat, idx) => {
+                const actualIdx = game.cheats.indexOf(cheat);
+                const isEditing = editingCheatIndex === actualIdx;
+                
+                return isEditing ? (
+                  // Edit Form
+                  <form onSubmit={handleEditCheat} key={idx} className="col-span-1 p-5 border rounded-2xl animate-in slide-in-from-top-4 bg-zinc-900/60 border-violet-500/40 space-y-4">
+                    <h4 className="font-bold text-sm text-violet-300 mb-4">Edit Cheat</h4>
+                    <div className="space-y-3">
+                      <input
+                        autoFocus
+                        required
+                        placeholder="Program Name"
+                        className="w-full rounded-lg px-3 py-2 outline-none text-sm transition-all focus:ring-1 border bg-black/50 border-white/10 text-white placeholder-zinc-600 focus:ring-violet-500"
+                        value={editingCheat.name}
+                        onChange={e => setEditingCheat({...editingCheat, name: e.target.value})}
+                      />
+                      <input
+                        required
+                        type="url"
+                        placeholder="Product Link"
+                        className="w-full rounded-lg px-3 py-2 outline-none text-sm transition-all focus:ring-1 border bg-black/50 border-white/10 text-white placeholder-zinc-600 focus:ring-violet-500"
+                        value={editingCheat.productLink}
+                        onChange={e => setEditingCheat({...editingCheat, productLink: e.target.value})}
+                      />
+                      <div className="flex gap-2">
+                        {['FREE', 'PAID'].map(tier => (
+                          <button
+                            key={tier}
+                            type="button"
+                            onClick={() => setEditingCheat({...editingCheat, tier})}
+                            className={`flex-1 px-2 py-1.5 rounded text-xs font-bold transition-all ${
+                              editingCheat.tier === tier
+                                ? tier === 'FREE' ? 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200' : 'bg-amber-500/30 border-amber-500/50 text-amber-200'
+                                : 'bg-zinc-700/50 text-zinc-400 hover:bg-zinc-600/50'
+                            }`}
+                          >
+                            {tier}
+                          </button>
+                        ))}
                       </div>
-                      {cheat.notes && <p className="text-xs text-zinc-500 line-clamp-2 group-hover:text-zinc-400 transition-colors">{cheat.notes}</p>}
+                      <textarea
+                        placeholder="Notes"
+                        className="w-full rounded-lg px-3 py-2 outline-none text-sm transition-all focus:ring-1 border bg-black/50 border-white/10 text-white placeholder-zinc-600 focus:ring-violet-500 resize-none"
+                        rows="2"
+                        value={editingCheat.notes || ''}
+                        onChange={e => setEditingCheat({...editingCheat, notes: e.target.value})}
+                      />
                     </div>
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {cheat.features && cheat.features.map((feature, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[10px] font-bold uppercase tracking-wider transition-all group-hover:bg-violet-500/30 group-hover:border-violet-500/50">
-                          {feature}
-                        </span>
-                      ))}
+                    <div className="flex gap-2 pt-2">
+                      <button type="button" onClick={() => setEditingCheatIndex(null)} className="flex-1 px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white transition-colors">Cancel</button>
+                      <button type="submit" className="flex-1 px-3 py-1.5 text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white rounded transition-all">Save</button>
                     </div>
-                    {cheat.addedAt && (
-                      <div className="text-[10px] text-zinc-600 group-hover:text-zinc-500 transition-colors mb-3">
-                        Added {formatTimeAgo(cheat.addedAt)}
+                  </form>
+                ) : (
+                  // Cheat Card
+                  <div
+                    key={idx}
+                    className="group relative p-5 border rounded-2xl transition-all duration-300 bg-zinc-900/20 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_15px_40px_-10px_rgba(139,92,246,0.5)] flex flex-col overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 via-transparent to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                    <div className="relative z-10">
+                      <div className="mb-3">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h4 className="font-bold text-sm group-hover:text-violet-300 text-zinc-200 flex-1 line-clamp-2 transition-colors">{cheat.name}</h4>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
+                            cheat.tier === 'FREE'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 group-hover:bg-emerald-500/30 group-hover:border-emerald-500/50'
+                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 group-hover:bg-amber-500/30 group-hover:border-amber-500/50'
+                          }`}>
+                            {cheat.tier || 'FREE'}
+                          </span>
+                        </div>
+                        {cheat.notes && <p className="text-xs text-zinc-500 line-clamp-2 group-hover:text-zinc-400 transition-colors">{cheat.notes}</p>}
                       </div>
-                    )}
-                    <div className="mt-auto pt-3 border-t border-white/5 flex items-center justify-between text-xs">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          navigator.clipboard.writeText(cheat.productLink);
-                          setToast({ message: 'Link copied to clipboard!', type: 'success' });
-                        }}
-                        className="flex items-center gap-1.5 text-zinc-500 hover:text-cyan-400 transition-colors font-semibold"
-                        title="Copy link"
-                      >
-                        <Copy className="w-3 h-3" />
-                        Copy
-                      </button>
-                      <span className="text-zinc-600 group-hover:text-violet-300 transition-colors font-semibold flex items-center gap-1.5">
-                        View Product
-                        <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                      </span>
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {cheat.features && cheat.features.map((feature, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[10px] font-bold uppercase tracking-wider transition-all group-hover:bg-violet-500/30 group-hover:border-violet-500/50">
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                      {cheat.addedAt && (
+                        <div className="text-[10px] text-zinc-600 group-hover:text-zinc-500 transition-colors mb-3">
+                          Added {formatTimeAgo(cheat.addedAt)}
+                        </div>
+                      )}
+                      <div className="mt-auto pt-3 border-t border-white/5">
+                        <div className="flex items-center justify-between text-xs mb-2">
+                          <a
+                            href={cheat.productLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-1.5 text-zinc-500 hover:text-cyan-400 transition-colors font-semibold"
+                            title="Open link"
+                          >
+                            <Copy className="w-3 h-3" />
+                            View
+                          </a>
+                          <span className="text-zinc-600 group-hover:text-violet-300 transition-colors font-semibold flex items-center gap-1.5">
+                            <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                          </span>
+                        </div>
+                        {user && (
+                          <div className="flex gap-1.5 pt-2 border-t border-white/5">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setEditingCheatIndex(actualIdx);
+                                setEditingCheat({...cheat});
+                              }}
+                              className="flex-1 px-2 py-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded transition-all"
+                              title="Edit"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (confirm('Delete this cheat?')) {
+                                  handleDeleteCheat(actualIdx);
+                                }
+                              }}
+                              className="flex-1 px-2 py-1.5 text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded transition-all"
+                              title="Delete"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </a>
-              ))
+                );
+              })
             ) : (
               <div className="col-span-full text-center py-20 border border-dashed rounded-3xl border-zinc-800 bg-zinc-900/20">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border bg-zinc-900 border-zinc-800">
@@ -1550,9 +1696,13 @@ export default function App() {
   }, []);
 
   // 2. Data Fetching (Independent of User)
+  // NOTE: Query is optimized with orderBy('title', 'asc')
+  // For large datasets (1000+ games), add limit() and pagination
   useEffect(() => {
     const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
     const q = query(gamesRef, orderBy('title', 'asc')); 
+    // OPTIMIZATION: To add pagination, use: query(gamesRef, orderBy('title', 'asc'), limit(50))
+    // Then implement: lastVisible doc for next page, startAfter(lastVisible) for subsequent queries
 
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
