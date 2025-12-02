@@ -207,6 +207,10 @@ const FallingStars = () => {
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
+        html, body {
+          overflow: visible !important;
+        }
+
         .particle-container {
           position: fixed;
           top: 0;
@@ -215,7 +219,7 @@ const FallingStars = () => {
           height: 100%;
           pointer-events: none;
           z-index: 99999;
-          overflow: visible;
+          overflow: visible !important;
         }
 
         .particle {
