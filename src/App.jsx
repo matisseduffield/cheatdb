@@ -1695,7 +1695,15 @@ export default function App() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [displayedGames, setDisplayedGames] = useState(20);
-  const [userVotes, setUserVotes] = useState({}); // Track user votes: { "gameId_cheatIdx": true }
+  const [userVotes, setUserVotes] = useState(() => {
+    // Load votes from localStorage on initialization
+    try {
+      const saved = localStorage.getItem('cheatdb_votes');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
   // 1. Auth Listener
   useEffect(() => {
@@ -1859,13 +1867,17 @@ export default function App() {
       }));
       
       // Update user votes tracking
+      let newUserVotes;
       if (hasVoted) {
-        const newVotes = { ...userVotes };
-        delete newVotes[voteKey];
-        setUserVotes(newVotes);
+        newUserVotes = { ...userVotes };
+        delete newUserVotes[voteKey];
       } else {
-        setUserVotes({ ...userVotes, [voteKey]: true });
+        newUserVotes = { ...userVotes, [voteKey]: true };
       }
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('cheatdb_votes', JSON.stringify(newUserVotes));
+      setUserVotes(newUserVotes);
     } catch (err) {
       console.error("Error voting:", err);
     }
