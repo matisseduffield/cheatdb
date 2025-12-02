@@ -215,7 +215,7 @@ const FallingStars = () => {
           height: 100vh;
           pointer-events: none;
           z-index: 50;
-          overflow: hidden;
+          overflow: visible;
         }
 
         .particle {
@@ -225,25 +225,19 @@ const FallingStars = () => {
           height: var(--particle-height);
           top: -50px;
           border-radius: 50%;
-          opacity: 0;
+          opacity: var(--particle-opacity);
           filter: blur(var(--blur));
-          animation: fall linear forwards;
+          animation: fall linear infinite;
         }
 
         @keyframes fall {
           0% {
-            transform: translateY(-10vh) translateX(0);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
+            transform: translateY(0vh);
+            opacity: var(--particle-opacity);
           }
           100% {
-            transform: translateY(110vh) translateX(20px);
-            opacity: 0;
+            transform: translateY(120vh);
+            opacity: var(--particle-opacity);
           }
         }
       `;
@@ -277,15 +271,16 @@ const FallingStars = () => {
         // Randomize position
         particle.style.left = Math.random() * 100 + 'vw';
 
-        // Randomize speed (longer durations so they stay visible longer)
-        const duration = 15 + Math.random() * 8;
+        // Randomize speed - much longer so particles are visible for full fall
+        const duration = 20 + Math.random() * 15;
         particle.style.animationDuration = duration + 's';
 
-        // Randomize delay so they're staggered
-        particle.style.animationDelay = Math.random() * 3 + 's';
+        // Randomize delay so they stagger
+        particle.style.animationDelay = Math.random() * 5 + 's';
 
         // Randomize opacity for depth
-        particle.style.opacity = Math.random() * 0.6 + 0.4;
+        const opacity = (Math.random() * 0.6 + 0.4).toFixed(2);
+        particle.style.setProperty('--particle-opacity', opacity);
 
         // Apply animation
         particle.style.animationName = 'fall';
@@ -297,8 +292,8 @@ const FallingStars = () => {
     // Create initial particles
     createParticles();
 
-    // Continuously regenerate particles at intervals
-    const interval = setInterval(createParticles, 3000);
+    // Continuously regenerate particles
+    const interval = setInterval(createParticles, 5000);
 
     return () => clearInterval(interval);
   }, []);
