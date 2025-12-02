@@ -310,7 +310,7 @@ const StatisticsDashboard = ({ games }) => {
   const totalCheats = games.reduce((sum, game) => sum + (game.cheats?.length || 0), 0);
   
   return (
-    <div className="relative z-20 mb-8 px-6 py-3 rounded-xl border backdrop-blur-sm transition-all duration-500 bg-zinc-900/40 border-white/10 flex items-center justify-center gap-16">
+    <div className="relative z-20 mb-8 px-6 py-3 rounded-xl border backdrop-blur-xl transition-all duration-500 bg-zinc-900/40 border-white/10 flex items-center justify-center gap-16">
       {/* Total Games */}
       <div className="flex flex-col items-center gap-1 group cursor-pointer">
         <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 group-hover:text-violet-400 transition-colors">Games</span>
@@ -1183,7 +1183,7 @@ const GameCard = ({ game, onClick, user, onDelete, isEditMode, index }) => {
     onClick={() => onClick(game)}
     onMouseEnter={() => setShowPreview(true)}
     onMouseLeave={() => setShowPreview(false)}
-    className="group relative z-20 rounded-3xl p-6 transition-all duration-500 cursor-pointer hover:-translate-y-3 overflow-hidden card-bounce-enter stagger-cascade border bg-zinc-900/30 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)]"
+    className="group relative z-20 rounded-3xl p-6 transition-all duration-500 cursor-pointer hover:-translate-y-3 overflow-hidden card-bounce-enter stagger-cascade border backdrop-blur-xl bg-zinc-900/30 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)]"
     style={{ animationDelay: `${index * 50}ms` }}
   >
     {/* Animated Gradient Background on Hover */}
