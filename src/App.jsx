@@ -209,8 +209,11 @@ const FallingStars = () => {
       size: Math.random() * 3 + 2,
     }));
   });
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    
     // Inject CSS into document head once
     const styleId = 'falling-stars-style';
     if (!document.getElementById(styleId)) {
@@ -221,7 +224,6 @@ const FallingStars = () => {
           0% {
             opacity: 0;
             transform: translateY(-100vh) scale(0.3);
-            filter: blur(1px);
           }
           5% {
             opacity: 1;
@@ -232,20 +234,17 @@ const FallingStars = () => {
           100% {
             opacity: 0;
             transform: translateY(100vh) scale(0);
-            filter: blur(2px);
           }
         }
         
         .falling-star {
           position: fixed;
-          top: -50px;
-          z-index: 9999;
+          z-index: 99999;
           pointer-events: none;
           border-radius: 50%;
-          background: radial-gradient(circle at 30% 30%, rgba(34, 197, 94, 1), rgba(34, 197, 94, 0.3));
-          box-shadow: 0 0 10px rgba(34, 197, 94, 0.8), 0 0 20px rgba(34, 197, 94, 0.6), 0 0 30px rgba(34, 197, 94, 0.4), inset -2px -2px 5px rgba(34, 197, 94, 0.5);
+          background: radial-gradient(circle at 30% 30%, #22c55e, rgba(34, 197, 94, 0.3));
+          box-shadow: 0 0 20px rgba(34, 197, 94, 1), 0 0 40px rgba(34, 197, 94, 0.6);
           animation: fall-and-fade linear forwards;
-          filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.8));
         }
       `;
       document.head.appendChild(style);
@@ -268,14 +267,19 @@ const FallingStars = () => {
     return () => clearInterval(interval);
   }, []);
 
+  if (!mounted) {
+    return null;
+  }
+
   const content = (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 9999 }}>
+    <>
       {stars.map((star) => (
         <div
           key={star.id}
           className="falling-star"
           style={{
             left: `${star.left}%`,
+            top: `-50px`,
             width: `${star.size}px`,
             height: `${star.size}px`,
             animationDuration: `${star.duration}s`,
@@ -283,7 +287,7 @@ const FallingStars = () => {
           }}
         />
       ))}
-    </div>
+    </>
   );
 
   return createPortal(content, document.body);
