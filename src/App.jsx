@@ -200,7 +200,7 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
 
 // --- New Component: Falling Stars Animation ---
 const FallingStars = () => {
-  const containerRef = useRef(null);
+  const [containerElement, setContainerElement] = useState(null);
 
   useEffect(() => {
     // Inject CSS into document head
@@ -247,14 +247,24 @@ const FallingStars = () => {
         }
       `;
       document.head.appendChild(style);
+      console.log('CSS injected');
     }
   }, []);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    // Create container element directly in document body
+    let container = document.getElementById('falling-stars-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'falling-stars-container';
+      container.className = 'particle-container';
+      document.body.appendChild(container);
+      console.log('Container added to body');
+    }
+    setContainerElement(container);
 
     const createParticles = () => {
-      containerRef.current.innerHTML = '';
+      container.innerHTML = '';
       
       const particleCount = 50;
       
@@ -277,10 +287,12 @@ const FallingStars = () => {
         // Random delay
         particle.style.animationDelay = Math.random() * 5 + 's';
         
-        containerRef.current.appendChild(particle);
+        container.appendChild(particle);
       }
+      console.log('Particles created:', particleCount);
     };
 
+    // Create initial particles
     createParticles();
 
     // Regenerate particles periodically
@@ -289,10 +301,7 @@ const FallingStars = () => {
     return () => clearInterval(interval);
   }, []);
 
-  return createPortal(
-    <div ref={containerRef} className="particle-container" />,
-    document.body
-  );
+  return null;
 };
 
 // --- New Component: Statistics Dashboard ---
