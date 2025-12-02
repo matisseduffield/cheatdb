@@ -227,7 +227,7 @@ const FallingStars = () => {
           background: var(--particle-color);
           width: var(--particle-width);
           height: var(--particle-height);
-          top: -10vh;
+          top: -20px;
           border-radius: 50%;
           opacity: 0;
           filter: blur(var(--blur));
@@ -237,16 +237,13 @@ const FallingStars = () => {
         @keyframes fall {
           0% {
             transform: translateY(0);
-            opacity: 0;
-          }
-          10% {
-            opacity: var(--particle-opacity);
+            opacity: 1;
           }
           90% {
-            opacity: var(--particle-opacity);
+            opacity: 1;
           }
           100% {
-            transform: translateY(120vh);
+            transform: translateY(110vh);
             opacity: 0;
           }
         }
@@ -282,13 +279,13 @@ const FallingStars = () => {
 
         particle.style.left = Math.random() * 100 + 'vw';
 
-        // Calculate duration (20s to 35s)
-        const duration = 20 + Math.random() * 15;
+        // Duration (15s to 30s fall time)
+        const duration = 15 + Math.random() * 15;
         particle.style.animationDuration = duration + 's';
 
-        // KEY FIX: Negative Delay
-        // This makes particles appear instantly mid-fall at page load
-        const delay = -Math.random() * duration;
+        // Positive Delay: Stagger the start so particles rain down naturally
+        // Screen starts blank, then particles begin falling at different times
+        const delay = Math.random() * 15;
         particle.style.animationDelay = delay + 's';
 
         const opacity = (Math.random() * 0.6 + 0.4).toFixed(2);
