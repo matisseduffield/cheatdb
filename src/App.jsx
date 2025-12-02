@@ -228,7 +228,7 @@ const FallingStars = () => {
           width: var(--particle-width);
           height: var(--particle-height);
           top: -20px;
-          border-radius: 50%;
+          border-radius: 0 50% 50% 50%;
           opacity: 0;
           filter: blur(var(--blur));
           animation: fall linear infinite;
@@ -236,14 +236,14 @@ const FallingStars = () => {
 
         @keyframes fall {
           0% {
-            transform: translateY(0);
+            transform: translateY(0) rotate(45deg);
             opacity: 1;
           }
           90% {
             opacity: 1;
           }
           100% {
-            transform: translateY(110vh);
+            transform: translateY(110vh) rotate(45deg);
             opacity: 0;
           }
         }
@@ -262,9 +262,9 @@ const FallingStars = () => {
 
     // Set CSS variables
     const root = document.documentElement;
-    root.style.setProperty('--particle-color', '#22c55e');
-    root.style.setProperty('--particle-width', '3px');
-    root.style.setProperty('--particle-height', '3px');
+    root.style.setProperty('--particle-color', 'rgba(174, 194, 224, 0.8)');
+    root.style.setProperty('--particle-width', '8px');
+    root.style.setProperty('--particle-height', '8px');
     root.style.setProperty('--blur', '0px');
 
     const createParticles = () => {
