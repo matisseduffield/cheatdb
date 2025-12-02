@@ -201,7 +201,6 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
 // --- New Component: Falling Stars Animation ---
 const FallingStars = () => {
   const [stars, setStars] = useState(() => {
-    // Initialize stars immediately instead of empty array
     return Array.from({ length: 50 }).map((_, i) => ({
       id: i,
       left: Math.random() * 100,
@@ -212,26 +211,12 @@ const FallingStars = () => {
   });
 
   useEffect(() => {
-    // Add new stars periodically
-    const interval = setInterval(() => {
-      setStars(prev => {
-        const newStars = [...prev];
-        const randomIndex = Math.floor(Math.random() * newStars.length);
-        newStars[randomIndex] = {
-          ...newStars[randomIndex],
-          delay: 0,
-          duration: 10 + Math.random() * 6,
-        };
-        return newStars;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const content = (
-    <>
-      <style>{`
+    // Inject CSS into document head once
+    const styleId = 'falling-stars-style';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
         @keyframes fall-and-fade {
           0% {
             opacity: 0;
@@ -253,8 +238,8 @@ const FallingStars = () => {
         
         .falling-star {
           position: fixed;
-          top: 0;
-          z-index: 50;
+          top: -50px;
+          z-index: 9999;
           pointer-events: none;
           border-radius: 50%;
           background: radial-gradient(circle at 30% 30%, rgba(34, 197, 94, 1), rgba(34, 197, 94, 0.3));
@@ -262,8 +247,29 @@ const FallingStars = () => {
           animation: fall-and-fade linear forwards;
           filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.8));
         }
-      `}</style>
-      
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Add new stars periodically
+    const interval = setInterval(() => {
+      setStars(prev => {
+        const newStars = [...prev];
+        const randomIndex = Math.floor(Math.random() * newStars.length);
+        newStars[randomIndex] = {
+          ...newStars[randomIndex],
+          delay: 0,
+          duration: 10 + Math.random() * 6,
+        };
+        return newStars;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const content = (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 9999 }}>
       {stars.map((star) => (
         <div
           key={star.id}
@@ -272,16 +278,14 @@ const FallingStars = () => {
             left: `${star.left}%`,
             width: `${star.size}px`,
             height: `${star.size}px`,
-            top: '-20px',
             animationDuration: `${star.duration}s`,
             animationDelay: `${star.delay}s`,
           }}
         />
       ))}
-    </>
+    </div>
   );
 
-  // Render directly to body using portal to bypass overflow-x-hidden and z-index stacking issues
   return createPortal(content, document.body);
 };
 
