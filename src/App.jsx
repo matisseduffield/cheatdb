@@ -1273,7 +1273,7 @@ const LoginModal = ({ onClose, onLogin }) => {
   );
 };
 
-const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, user }) => {
+const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, user, appId }) => {
   const [newCheat, setNewCheat] = useState({ name: '', productLink: '', features: [], notes: '', tier: 'FREE', type: 'EXTERNAL' });
   const [isAdding, setIsAdding] = useState(false);
   const [particles, setParticles] = useState([]);
@@ -1299,7 +1299,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     updatedCheats[editingCheatIndex] = editingCheat;
     
     const db = getFirestore();
-    const gameRef = doc(db, 'artifacts', __app_id, 'public/data/games', game.id);
+    const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', game.id);
     await updateDoc(gameRef, { cheats: updatedCheats });
     
     setEditingCheatIndex(null);
@@ -1310,7 +1310,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     const updatedCheats = game.cheats.filter((_, i) => i !== index);
     
     const db = getFirestore();
-    const gameRef = doc(db, 'artifacts', __app_id, 'public/data/games', game.id);
+    const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', game.id);
     await updateDoc(gameRef, { cheats: updatedCheats });
     
     setEditingCheatIndex(null);
@@ -2108,6 +2108,7 @@ export default function App() {
             onVoteCheat={handleVoteCheat}
             userVotedCheat={userVotedCheat}
             user={user}
+            appId={appId}
           />
         )}
 
