@@ -238,13 +238,15 @@ const FallingStars = () => {
         }
         
         .falling-star {
-          position: fixed;
-          z-index: 99999;
-          pointer-events: none;
-          border-radius: 50%;
-          background: radial-gradient(circle at 30% 30%, #22c55e, rgba(34, 197, 94, 0.3));
-          box-shadow: 0 0 20px rgba(34, 197, 94, 1), 0 0 40px rgba(34, 197, 94, 0.6);
-          animation: fall-and-fade linear forwards;
+          position: fixed !important;
+          z-index: 99999 !important;
+          pointer-events: none !important;
+          border-radius: 50% !important;
+          background: radial-gradient(circle at 30% 30%, #22c55e, rgba(34, 197, 94, 0.3)) !important;
+          box-shadow: 0 0 20px rgba(34, 197, 94, 1), 0 0 40px rgba(34, 197, 94, 0.6) !important;
+          animation-name: fall-and-fade !important;
+          animation-timing-function: linear !important;
+          animation-fill-mode: forwards !important;
         }
       `;
       document.head.appendChild(style);
