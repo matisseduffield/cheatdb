@@ -200,8 +200,6 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
 
 // --- New Component: Falling Stars Animation ---
 const FallingStars = () => {
-  const [containerElement, setContainerElement] = useState(null);
-
   useEffect(() => {
     // Inject CSS into document head
     const styleId = 'falling-stars-style';
@@ -213,86 +211,88 @@ const FallingStars = () => {
           position: fixed;
           top: 0;
           left: 0;
-          width: 100vw;
-          height: 100vh;
+          width: 100%;
+          height: 100%;
           pointer-events: none;
           z-index: 50;
         }
 
         .particle {
           position: absolute;
-          background: radial-gradient(circle at 30% 30%, #22c55e, rgba(34, 197, 94, 0.3));
+          background: var(--particle-color);
+          width: var(--particle-width);
+          height: var(--particle-height);
+          top: -50px;
           border-radius: 50%;
           opacity: 0;
-          box-shadow: 0 0 20px rgba(34, 197, 94, 1), 0 0 40px rgba(34, 197, 94, 0.6);
-          animation: fall-particle linear infinite;
-          top: -50px;
+          filter: blur(var(--blur));
+          animation: fall linear infinite;
         }
 
-        @keyframes fall-particle {
+        @keyframes fall {
           0% {
-            transform: translateY(-100vh) scale(0.3);
+            transform: translateY(-10vh) translateX(0);
             opacity: 0;
           }
-          5% {
+          10% {
             opacity: 1;
           }
-          95% {
+          90% {
             opacity: 1;
           }
           100% {
-            transform: translateY(110vh) scale(0);
+            transform: translateY(110vh) translateX(20px);
             opacity: 0;
           }
         }
       `;
       document.head.appendChild(style);
-      console.log('CSS injected');
     }
-  }, []);
 
-  useEffect(() => {
-    // Create container element directly in document body
+    // Get or create container
     let container = document.getElementById('falling-stars-container');
     if (!container) {
       container = document.createElement('div');
       container.id = 'falling-stars-container';
       container.className = 'particle-container';
       document.body.appendChild(container);
-      console.log('Container added to body');
     }
-    setContainerElement(container);
+
+    // Set CSS variables
+    const root = document.documentElement;
+    root.style.setProperty('--particle-color', '#22c55e');
+    root.style.setProperty('--particle-width', '2px');
+    root.style.setProperty('--particle-height', '2px');
+    root.style.setProperty('--blur', '0px');
 
     const createParticles = () => {
       container.innerHTML = '';
-      
       const particleCount = 50;
-      
+
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
         particle.classList.add('particle');
-        
-        // Random horizontal position
+
+        // Randomize position
         particle.style.left = Math.random() * 100 + 'vw';
-        
-        // Random size
-        const size = Math.random() * 3 + 2;
-        particle.style.width = size + 'px';
-        particle.style.height = size + 'px';
-        
-        // Random speed
+
+        // Randomize speed
         const duration = 10 + Math.random() * 6;
         particle.style.animationDuration = duration + 's';
-        
-        // Random delay
+
+        // Randomize delay
         particle.style.animationDelay = Math.random() * 5 + 's';
-        
+
+        // Randomize opacity for depth
+        particle.style.opacity = Math.random() * 0.5 + 0.5;
+
+        // Apply animation
+        particle.style.animationName = 'fall';
+
         container.appendChild(particle);
       }
-      console.log('Particles created:', particleCount);
     };
 
-    // Create initial particles
     createParticles();
 
     // Regenerate particles periodically
