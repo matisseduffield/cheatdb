@@ -201,7 +201,7 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
 // --- New Component: Shooting Stars Animation ---
 const ShootingStars = () => {
   const [stars, setStars] = useState([]);
-  const containerRef = useRef(null);
+  const [container, setContainer] = useState(null);
 
   useEffect(() => {
     // Inject CSS into document head
@@ -298,12 +298,12 @@ const ShootingStars = () => {
       document.head.appendChild(style);
     }
 
-    // Get or create container
-    if (!containerRef.current) {
-      const container = document.createElement('div');
-      container.className = 'shooting-stars-container';
-      document.body.appendChild(container);
-      containerRef.current = container;
+    // Get or create container and set state
+    if (!container) {
+      const newContainer = document.createElement('div');
+      newContainer.className = 'shooting-stars-container';
+      document.body.appendChild(newContainer);
+      setContainer(newContainer);
     }
 
     let shootingStarTimeout;
@@ -366,7 +366,7 @@ const ShootingStars = () => {
     };
   }, []);
 
-  return createPortal(
+  return container ? createPortal(
     <>
       {stars.map(star => (
         <div
@@ -393,8 +393,8 @@ const ShootingStars = () => {
         </div>
       ))}
     </>,
-    document.body
-  );
+    container
+  ) : null;
 };
 
 // --- New Component: Falling Stars Animation ---
@@ -407,7 +407,7 @@ const FallingStars = () => {
       style.id = styleId;
       style.textContent = `
         html, body {
-          overflow: hidden !important;
+          overflow-x: hidden !important;
           height: 100%;
           width: 100%;
         }
@@ -1374,7 +1374,7 @@ const logoScaleMap = {
   'Team Fortress 2': 1.55,
 };
 
-const GameCard = ({ game, onClick, user, onDelete, isEditMode, index }) => {
+const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index }) => {
   const [showPreview, setShowPreview] = useState(false);
   const freeCount = game.cheats?.filter(c => c.tier === 'FREE' || !c.tier).length || 0;
   const paidCount = game.cheats?.filter(c => c.tier === 'PAID').length || 0;
