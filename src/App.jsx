@@ -221,7 +221,7 @@ const ShootingStars = () => {
           overflow: hidden;
         }
 
-        /* Wrapper: Handles diagonal movement across screen */
+        /* Wrapper: Handles movement with CSS variables */
         .shooting-star-wrapper {
           position: absolute;
           width: 300px;
@@ -230,12 +230,12 @@ const ShootingStars = () => {
           animation: shoot-star-move linear forwards;
         }
 
-        /* Rotated Body: Aligns tail behind the star */
+        /* Rotated Body: Dynamic angle based on trajectory */
         .shooting-star-body {
           position: absolute;
           width: 100%;
           height: 100%;
-          transform: rotate(45deg);
+          transform: rotate(var(--angle));
           top: 0;
           left: 0;
         }
@@ -273,15 +273,15 @@ const ShootingStars = () => {
           pointer-events: none;
         }
 
-        /* Animation: Move from top-left to bottom-right diagonally */
+        /* Animation: Dynamic movement with CSS variables */
         @keyframes shoot-star-move {
           0% {
+            transform: translate(var(--sx), var(--sy));
             opacity: 1;
-            transform: translate(0, 0);
           }
           100% {
+            transform: translate(var(--ex), var(--ey));
             opacity: 0;
-            transform: translate(calc(100vw + 400px), calc(100vh + 400px));
           }
         }
 
@@ -309,21 +309,42 @@ const ShootingStars = () => {
     const createShootingStar = () => {
       const starId = Date.now() + Math.random();
       const duration = 3 + Math.random() * 2; // 3-5 seconds
-
-      // Randomize spawn position: 50% from top edge, 50% from left edge
-      let startX, startY;
       
-      if (Math.random() > 0.5) {
-        // Spawn from top edge
-        startX = Math.random() * window.innerWidth;
-        startY = -50;
+      // Random edge: 0=Top, 1=Right, 2=Bottom, 3=Left
+      const edge = Math.floor(Math.random() * 4);
+      
+      let sx, sy, ex, ey;
+      
+      if (edge === 0) {
+        // Top edge: move downward
+        sx = Math.random() * window.innerWidth;
+        sy = -100;
+        ex = sx + (Math.random() - 0.5) * 200; // slight horizontal drift
+        ey = window.innerHeight + 100;
+      } else if (edge === 1) {
+        // Right edge: move leftward
+        sx = window.innerWidth + 100;
+        sy = Math.random() * window.innerHeight;
+        ex = -100;
+        ey = sy + (Math.random() - 0.5) * 200; // slight vertical drift
+      } else if (edge === 2) {
+        // Bottom edge: move upward
+        sx = Math.random() * window.innerWidth;
+        sy = window.innerHeight + 100;
+        ex = sx + (Math.random() - 0.5) * 200; // slight horizontal drift
+        ey = -100;
       } else {
-        // Spawn from left edge
-        startX = -50;
-        startY = Math.random() * window.innerHeight;
+        // Left edge: move rightward
+        sx = -100;
+        sy = Math.random() * window.innerHeight;
+        ex = window.innerWidth + 100;
+        ey = sy + (Math.random() - 0.5) * 200; // slight vertical drift
       }
+      
+      // Calculate rotation angle
+      const angle = Math.atan2(ey - sy, ex - sx) * (180 / Math.PI);
 
-      setStars(prev => [...prev, { id: starId, startX, startY, duration }]);
+      setStars(prev => [...prev, { id: starId, sx, sy, ex, ey, angle, duration }]);
 
       // Remove from DOM after animation completes
       setTimeout(() => {
@@ -354,8 +375,11 @@ const ShootingStars = () => {
           key={star.id}
           className="shooting-star-wrapper"
           style={{
-            left: `${star.startX}px`,
-            top: `${star.startY}px`,
+            '--sx': `${star.sx}px`,
+            '--sy': `${star.sy}px`,
+            '--ex': `${star.ex}px`,
+            '--ey': `${star.ey}px`,
+            '--angle': `${star.angle}deg`,
             animationDuration: `${star.duration}s`,
           }}
         >
