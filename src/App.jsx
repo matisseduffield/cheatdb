@@ -235,7 +235,7 @@ const ShootingStars = () => {
           position: absolute;
           width: 100%;
           height: 100%;
-          transform: rotate(-45deg);
+          transform: rotate(45deg);
           top: 0;
           left: 0;
         }
@@ -247,10 +247,11 @@ const ShootingStars = () => {
           top: 50%;
           width: 250px;
           height: 2px;
-          background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), rgba(139, 92, 246, 0.8), rgba(255, 255, 255, 0.6));
+          background: linear-gradient(to right, transparent 0%, rgba(139, 92, 246, 0.4) 40%, rgba(255, 255, 255, 0.8) 100%);
           transform: translateY(-50%);
           filter: blur(1px);
           pointer-events: none;
+          animation: tail-fade ease-in-out forwards;
         }
 
         /* Head: 5-pointed star at the front */
@@ -282,6 +283,13 @@ const ShootingStars = () => {
             opacity: 0;
             transform: translate(calc(100vw + 400px), calc(100vh + 400px));
           }
+        }
+
+        /* Tail fade animation: Shrinking and burning out */
+        @keyframes tail-fade {
+          0% { width: 0; opacity: 0; }
+          10% { width: 250px; opacity: 1; }
+          100% { width: 0; opacity: 0; }
         }
       `;
       document.head.appendChild(style);
@@ -342,7 +350,12 @@ const ShootingStars = () => {
           }}
         >
           <div className="shooting-star-body">
-            <div className="shooting-star-tail" />
+            <div 
+              className="shooting-star-tail"
+              style={{
+                animationDuration: `${star.duration}s`,
+              }}
+            />
             <div className="shooting-star-head" />
           </div>
         </div>
