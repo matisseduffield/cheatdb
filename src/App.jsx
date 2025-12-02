@@ -1918,7 +1918,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                 
                 return isEditing ? (
                   // Edit Form
-                  <form onSubmit={handleEditCheat} key={cheat.id} className="col-span-1 p-5 border rounded-2xl animate-in slide-in-from-top-4 bg-zinc-900/60 border-violet-500/40 space-y-4">
+                  <form onSubmit={handleEditCheat} key={cheat.id || idx} className="col-span-1 p-5 border rounded-2xl animate-in slide-in-from-top-4 bg-zinc-900/60 border-violet-500/40 space-y-4">
                     <h4 className="font-bold text-sm text-violet-300 mb-4">Edit Cheat</h4>
                     <div className="space-y-3">
                       <input
@@ -1985,8 +1985,9 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                 ) : (
                   // Cheat Card
                   <div
-                    key={cheat.id}
+                    key={cheat.id || idx}
                     className="group relative p-4 sm:p-5 border rounded-2xl transition-all duration-300 bg-zinc-900/20 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_15px_40px_-10px_rgba(139,92,246,0.5)] flex flex-col overflow-hidden"
+                    style={{ opacity: cheat.id ? 1 : 0.5 }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 via-transparent to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     <div className="relative z-10">
@@ -2044,8 +2045,13 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                               e.preventDefault();
                               onVoteCheat(cheat.id);
                             }}
-                            className="flex items-center gap-1 px-2 py-1 rounded text-zinc-500 hover:text-violet-400 bg-zinc-800/30 hover:bg-violet-500/20 transition-all active:scale-95 flex-shrink-0"
-                            title={`Votes: ${cheat.votes || 0}`}
+                            disabled={!cheat.id}
+                            className={`flex items-center gap-1 px-2 py-1 rounded transition-all active:scale-95 flex-shrink-0 ${
+                              cheat.id
+                                ? 'text-zinc-500 hover:text-violet-400 bg-zinc-800/30 hover:bg-violet-500/20 cursor-pointer'
+                                : 'text-zinc-600 bg-zinc-800/20 cursor-not-allowed'
+                            }`}
+                            title={cheat.id ? `Votes: ${cheat.votes || 0}` : 'Migrating...'}
                           >
                             <ThumbsUp className={`w-3 h-3 transition-colors ${userVotedCheat(cheat.id) ? 'fill-violet-400 text-violet-400' : ''}`} />
                             <span className="text-[9px] font-bold">{cheat.votes || 0}</span>
@@ -2059,8 +2065,13 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                                 setEditingCheatId(cheat.id);
                                 setEditingCheat({...cheat});
                               }}
-                              className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded transition-all active:scale-95"
-                              title="Edit"
+                              disabled={!cheat.id}
+                              className={`flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold rounded transition-all active:scale-95 ${
+                                cheat.id
+                                  ? 'text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 cursor-pointer'
+                                  : 'text-zinc-500 bg-zinc-500/10 cursor-not-allowed'
+                              }`}
+                              title={cheat.id ? "Edit" : "Migrating..."}
                             >
                               Edit
                             </button>
@@ -2071,8 +2082,13 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                                   handleDeleteCheat(cheat.id);
                                 }
                               }}
-                              className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded transition-all active:scale-95"
-                              title="Delete"
+                              disabled={!cheat.id}
+                              className={`flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold rounded transition-all active:scale-95 ${
+                                cheat.id
+                                  ? 'text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 cursor-pointer'
+                                  : 'text-zinc-500 bg-zinc-500/10 cursor-not-allowed'
+                              }`}
+                              title={cheat.id ? "Delete" : "Migrating..."}
                             >
                               Delete
                             </button>
