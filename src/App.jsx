@@ -224,8 +224,10 @@ const ShootingStars = () => {
         /* Wrapper: Handles movement with CSS variables */
         .shooting-star-wrapper {
           position: absolute;
-          width: 300px;
-          height: 300px;
+          top: 0;
+          left: 0;
+          width: 0;
+          height: 0;
           pointer-events: none;
           animation: shoot-star-move linear forwards;
         }
@@ -308,39 +310,41 @@ const ShootingStars = () => {
 
     const createShootingStar = () => {
       const starId = Date.now() + Math.random();
-      const duration = 2 + Math.random() * 3; // 2-5 seconds
-      
-      // 0 = Top, 1 = Right, 2 = Left (Bottom removed)
+      const duration = 2 + Math.random() * 2; // 2-4 seconds
+
+      // 0 = Top, 1 = Right, 2 = Left
       const edge = Math.floor(Math.random() * 3);
-      
+
       let sx, sy, ex, ey;
-      
+
+      // Screen dimensions
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+
       if (edge === 0) {
-        // TOP EDGE: Spawns top, ends somewhere on the bottom half
-        sx = Math.random() * window.innerWidth;
-        sy = -100;
-        ex = Math.random() * window.innerWidth; // Random X destination
-        ey = window.innerHeight + 100;
+        // TOP: Start above screen, end well below
+        sx = Math.random() * W;
+        sy = -50; 
+        ex = Math.random() * W; 
+        ey = H + 200; 
       } else if (edge === 1) {
-        // RIGHT EDGE: Spawns right, ends somewhere on the left side
-        sx = window.innerWidth + 100;
-        sy = Math.random() * (window.innerHeight * 0.5); // Top 50% only
-        ex = -100;
-        ey = Math.random() * window.innerHeight; // Random Y destination
+        // RIGHT: Start right of screen, end left
+        sx = W + 50;
+        sy = Math.random() * (H * 0.5); // Top half only
+        ex = -200;
+        ey = Math.random() * H;
       } else {
-        // LEFT EDGE: Spawns left, ends somewhere on the right side
-        sx = -100;
-        sy = Math.random() * (window.innerHeight * 0.5); // Top 50% only
-        ex = window.innerWidth + 100;
-        ey = Math.random() * window.innerHeight; // Random Y destination
+        // LEFT: Start left of screen, end right
+        sx = -50;
+        sy = Math.random() * (H * 0.5); // Top half only
+        ex = W + 200;
+        ey = Math.random() * H;
       }
-      
-      // Calculate angle (Same as before)
+
       const angle = Math.atan2(ey - sy, ex - sx) * (180 / Math.PI);
 
       setStars(prev => [...prev, { id: starId, sx, sy, ex, ey, angle, duration }]);
 
-      // Remove from DOM after animation completes
       setTimeout(() => {
         setStars(prev => prev.filter(s => s.id !== starId));
       }, duration * 1000);
