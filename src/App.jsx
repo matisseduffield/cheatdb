@@ -214,8 +214,8 @@ const ShootingStars = () => {
           position: fixed;
           top: 0;
           left: 0;
-          width: 100vw;
-          height: 100vh;
+          width: 100%;
+          height: 100%;
           pointer-events: none;
           z-index: 0;
           overflow: hidden;
@@ -308,40 +308,34 @@ const ShootingStars = () => {
 
     const createShootingStar = () => {
       const starId = Date.now() + Math.random();
-      const duration = 3 + Math.random() * 2; // 3-5 seconds
+      const duration = 2 + Math.random() * 3; // 2-5 seconds
       
-      // Random edge: 0=Top, 1=Right, 2=Bottom, 3=Left
-      const edge = Math.floor(Math.random() * 4);
+      // 0 = Top, 1 = Right, 2 = Left (Bottom removed)
+      const edge = Math.floor(Math.random() * 3);
       
       let sx, sy, ex, ey;
       
       if (edge === 0) {
-        // Top edge: move downward
+        // TOP EDGE: Spawns top, ends somewhere on the bottom half
         sx = Math.random() * window.innerWidth;
         sy = -100;
-        ex = sx + (Math.random() - 0.5) * 200; // slight horizontal drift
+        ex = Math.random() * window.innerWidth; // Random X destination
         ey = window.innerHeight + 100;
       } else if (edge === 1) {
-        // Right edge: move leftward
+        // RIGHT EDGE: Spawns right, ends somewhere on the left side
         sx = window.innerWidth + 100;
-        sy = Math.random() * (window.innerHeight * 0.7);
+        sy = Math.random() * (window.innerHeight * 0.5); // Top 50% only
         ex = -100;
-        ey = sy + (Math.random() - 0.5) * 200; // slight vertical drift
-      } else if (edge === 2) {
-        // Bottom edge: move upward
-        sx = Math.random() * window.innerWidth;
-        sy = window.innerHeight + 100;
-        ex = sx + (Math.random() - 0.5) * 200; // slight horizontal drift
-        ey = -100;
+        ey = Math.random() * window.innerHeight; // Random Y destination
       } else {
-        // Left edge: move rightward
+        // LEFT EDGE: Spawns left, ends somewhere on the right side
         sx = -100;
-        sy = Math.random() * (window.innerHeight * 0.7);
+        sy = Math.random() * (window.innerHeight * 0.5); // Top 50% only
         ex = window.innerWidth + 100;
-        ey = sy + (Math.random() - 0.5) * 200; // slight vertical drift
+        ey = Math.random() * window.innerHeight; // Random Y destination
       }
       
-      // Calculate rotation angle
+      // Calculate angle (Same as before)
       const angle = Math.atan2(ey - sy, ex - sx) * (180 / Math.PI);
 
       setStars(prev => [...prev, { id: starId, sx, sy, ex, ey, angle, duration }]);
