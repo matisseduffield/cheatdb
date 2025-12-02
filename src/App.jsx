@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -228,7 +229,7 @@ const FallingStars = () => {
     return () => clearInterval(interval);
   }, []);
 
-  return (
+  const content = (
     <>
       <style>{`
         @keyframes fall-and-fade {
@@ -279,6 +280,9 @@ const FallingStars = () => {
       ))}
     </>
   );
+
+  // Render directly to body using portal to bypass overflow-x-hidden and z-index stacking issues
+  return createPortal(content, document.body);
 };
 
 // --- New Component: Statistics Dashboard ---
@@ -2043,7 +2047,7 @@ export default function App() {
   return (
     <div id="app-root" className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 bg-[#050505] text-zinc-200">
       
-      {/* Falling Stars Animation */}
+      {/* Falling Stars Animation - rendered via portal to document.body */}
       <FallingStars />
       
       {/* Blob Background Animation */}
