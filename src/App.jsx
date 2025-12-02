@@ -200,6 +200,9 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
 
 // --- New Component: Shooting Stars Animation ---
 const ShootingStars = () => {
+  const [stars, setStars] = useState([]);
+  const containerRef = useRef(null);
+
   useEffect(() => {
     // Inject CSS into document head
     const styleId = 'shooting-stars-style';
@@ -220,34 +223,46 @@ const ShootingStars = () => {
 
         .shooting-star {
           position: absolute;
-          width: 3px;
-          height: 3px;
-          background: white;
-          border-radius: 50%;
-          box-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
-          animation: shoot linear forwards;
-          opacity: 1;
+          width: 12px;
+          height: 12px;
+          pointer-events: none;
+          animation: shoot-star linear forwards;
         }
 
+        /* 5-pointed star shape */
         .shooting-star::before {
           content: '';
           position: absolute;
-          width: 100px;
-          height: 2px;
-          background: linear-gradient(90deg, rgba(139, 92, 246, 0.8), transparent);
-          top: 50%;
-          left: -100px;
-          transform: translateY(-50%);
+          width: 100%;
+          height: 100%;
+          background: white;
+          clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+          box-shadow: 0 0 15px rgba(139, 92, 246, 0.9), 0 0 30px rgba(139, 92, 246, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.5);
+          filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.7));
         }
 
-        @keyframes shoot {
+        /* Long fading trail */
+        .shooting-star::after {
+          content: '';
+          position: absolute;
+          width: 200px;
+          height: 3px;
+          left: -200px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.6), rgba(255, 255, 255, 0.4), white);
+          filter: blur(2px);
+          pointer-events: none;
+        }
+
+        @keyframes shoot-star {
           0% {
             opacity: 1;
-            transform: translateX(0) translateY(0) rotate(45deg);
+            transform: translate(0, 0);
           }
           100% {
             opacity: 0;
-            transform: translateX(1000px) translateY(-1000px) rotate(45deg);
+            transform: translate(calc(100vw + 500px), calc(100vh + 500px));
           }
         }
       `;
@@ -255,39 +270,34 @@ const ShootingStars = () => {
     }
 
     // Get or create container
-    let container = document.getElementById('shooting-stars-container');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'shooting-stars-container';
+    if (!containerRef.current) {
+      const container = document.createElement('div');
       container.className = 'shooting-stars-container';
       document.body.appendChild(container);
+      containerRef.current = container;
     }
 
-    let shootingStarInterval;
+    let shootingStarTimeout;
 
     const createShootingStar = () => {
-      const star = document.createElement('div');
-      star.className = 'shooting-star';
+      const starId = Date.now() + Math.random();
+      const duration = 3 + Math.random() * 2; // 3-5 seconds
 
-      // Random start position (top or left edge)
-      const startX = Math.random() * window.innerWidth;
-      const startY = Math.random() * (window.innerHeight * 0.6); // Top 60% of screen
+      // Spawn off-screen: top-left corner
+      const startX = -100;
+      const startY = -100;
 
-      star.style.left = startX + 'px';
-      star.style.top = startY + 'px';
-      star.style.animationDuration = (1 + Math.random() * 1) + 's';
+      setStars(prev => [...prev, { id: starId, startX, startY, duration }]);
 
-      container.appendChild(star);
-
-      // Remove after animation completes
+      // Remove from DOM after animation completes
       setTimeout(() => {
-        star.remove();
-      }, (1 + Math.random()) * 1000);
+        setStars(prev => prev.filter(s => s.id !== starId));
+      }, duration * 1000);
     };
 
     const scheduleNextStar = () => {
-      const delay = 2000 + Math.random() * 4000; // 2-6 seconds
-      shootingStarInterval = setTimeout(() => {
+      const delay = 4000 + Math.random() * 4000; // 4-8 seconds between stars
+      shootingStarTimeout = setTimeout(() => {
         createShootingStar();
         scheduleNextStar();
       }, delay);
@@ -297,11 +307,26 @@ const ShootingStars = () => {
     scheduleNextStar();
 
     return () => {
-      clearTimeout(shootingStarInterval);
+      clearTimeout(shootingStarTimeout);
     };
   }, []);
 
-  return null;
+  return createPortal(
+    <>
+      {stars.map(star => (
+        <div
+          key={star.id}
+          className="shooting-star"
+          style={{
+            left: `${star.startX}px`,
+            top: `${star.startY}px`,
+            animationDuration: `${star.duration}s`,
+          }}
+        />
+      ))}
+    </>,
+    document.body
+  );
 };
 
 // --- New Component: Falling Stars Animation ---
