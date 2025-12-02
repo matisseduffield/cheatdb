@@ -199,19 +199,18 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
 
 // --- New Component: Falling Stars Animation ---
 const FallingStars = () => {
-  const [stars, setStars] = useState([]);
-
-  useEffect(() => {
-    // Generate initial stars
-    const initialStars = Array.from({ length: 50 }).map((_, i) => ({
+  const [stars, setStars] = useState(() => {
+    // Initialize stars immediately instead of empty array
+    return Array.from({ length: 50 }).map((_, i) => ({
       id: i,
       left: Math.random() * 100,
       delay: Math.random() * 5,
       duration: 10 + Math.random() * 6,
       size: Math.random() * 3 + 2,
     }));
-    setStars(initialStars);
+  });
 
+  useEffect(() => {
     // Add new stars periodically
     const interval = setInterval(() => {
       setStars(prev => {
@@ -254,6 +253,7 @@ const FallingStars = () => {
         .falling-star {
           position: fixed;
           top: 0;
+          z-index: 50;
           pointer-events: none;
           border-radius: 50%;
           background: radial-gradient(circle at 30% 30%, rgba(34, 197, 94, 1), rgba(34, 197, 94, 0.3));
