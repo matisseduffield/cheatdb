@@ -1586,6 +1586,39 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
   const featureTags = ['Aimbot', 'ESP', 'Exploits', 'Configs', 'Misc'];
   const tiers = ['FREE', 'PAID'];
 
+  // Auto-Migration: Detect and fix legacy data without IDs
+  useEffect(() => {
+    const migrateOldData = async () => {
+      if (!game.cheats || game.cheats.length === 0) return;
+      
+      // Check if any cheats are missing IDs
+      const hasLegacyData = game.cheats.some(cheat => !cheat.id);
+      if (!hasLegacyData) return;
+      
+      console.log('🔄 Migrating legacy data for:', game.title);
+      
+      try {
+        const db = getFirestore();
+        const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', game.id);
+        
+        // Create updated cheats array with IDs for any missing ones
+        const updatedCheats = game.cheats.map(cheat => ({
+          ...cheat,
+          id: cheat.id || crypto.randomUUID()
+        }));
+        
+        // Atomic update to Firestore
+        await updateDoc(gameRef, { cheats: updatedCheats });
+        
+        console.log('✅ Migration complete for:', game.title);
+      } catch (err) {
+        console.error('❌ Migration failed:', err);
+      }
+    };
+    
+    migrateOldData();
+  }, [game.id, game.cheats, game.title, appId]);
+
   const handleAddCheat = async (e) => {
     e.preventDefault();
     if (!newCheat.name || !newCheat.productLink) return;
@@ -1880,15 +1913,12 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
           {/* Cheats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCheats.length > 0 ? (
-              [...filteredCheats].reverse().map((cheat, idx) => {
-                // Backward compatibility: if cheat doesn't have an ID, generate a temporary one for rendering
-                const cheatId = cheat.id || `legacy_${idx}_${cheat.name}`;
-                const isEditing = editingCheatId === cheatId;
-                const isLegacy = !cheat.id;
+              [...filteredCheats].reverse().map((cheat) => {
+                const isEditing = editingCheatId === cheat.id;
                 
                 return isEditing ? (
                   // Edit Form
-                  <form onSubmit={handleEditCheat} key={idx} className="col-span-1 p-5 border rounded-2xl animate-in slide-in-from-top-4 bg-zinc-900/60 border-violet-500/40 space-y-4">
+                  <form onSubmit={handleEditCheat} key={cheat.id} className="col-span-1 p-5 border rounded-2xl animate-in slide-in-from-top-4 bg-zinc-900/60 border-violet-500/40 space-y-4">
                     <h4 className="font-bold text-sm text-violet-300 mb-4">Edit Cheat</h4>
                     <div className="space-y-3">
                       <input
@@ -1955,7 +1985,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                 ) : (
                   // Cheat Card
                   <div
-                    key={idx}
+                    key={cheat.id}
                     className="group relative p-4 sm:p-5 border rounded-2xl transition-all duration-300 bg-zinc-900/20 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_15px_40px_-10px_rgba(139,92,246,0.5)] flex flex-col overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 via-transparent to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
@@ -2026,16 +2056,11 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
-                                setEditingCheatId(cheatId);
+                                setEditingCheatId(cheat.id);
                                 setEditingCheat({...cheat});
                               }}
-                              disabled={isLegacy}
-                              className={`flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold rounded transition-all active:scale-95 ${
-                                isLegacy
-                                  ? 'text-zinc-500 bg-zinc-500/10 cursor-not-allowed opacity-50'
-                                  : 'text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20'
-                              }`}
-                              title={isLegacy ? "Legacy data (no ID)" : "Edit"}
+                              className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded transition-all active:scale-95"
+                              title="Edit"
                             >
                               Edit
                             </button>
@@ -2043,16 +2068,11 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                               onClick={(e) => {
                                 e.preventDefault();
                                 if (confirm('Delete this cheat?')) {
-                                  handleDeleteCheat(cheatId);
+                                  handleDeleteCheat(cheat.id);
                                 }
                               }}
-                              disabled={isLegacy}
-                              className={`flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold rounded transition-all active:scale-95 ${
-                                isLegacy
-                                  ? 'text-zinc-500 bg-zinc-500/10 cursor-not-allowed opacity-50'
-                                  : 'text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20'
-                              }`}
-                              title={isLegacy ? "Legacy data (no ID)" : "Delete"}
+                              className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded transition-all active:scale-95"
+                              title="Delete"
                             >
                               Delete
                             </button>
