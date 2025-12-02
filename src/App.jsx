@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -363,6 +363,15 @@ const ShootingStars = () => {
 
     return () => {
       clearTimeout(shootingStarTimeout);
+      // Cleanup: Remove injected style tag
+      const styleElement = document.getElementById('shooting-stars-style');
+      if (styleElement && document.head.contains(styleElement)) {
+        document.head.removeChild(styleElement);
+      }
+      // Cleanup: Remove container div from body
+      if (container && document.body.contains(container)) {
+        document.body.removeChild(container);
+      }
     };
   }, []);
 
@@ -499,6 +508,19 @@ const FallingStars = () => {
 
     // Create initial particles once - CSS animation handles the infinite loop
     createParticles();
+
+    return () => {
+      // Cleanup: Remove injected style tag
+      const styleElement = document.getElementById('falling-stars-style');
+      if (styleElement && document.head.contains(styleElement)) {
+        document.head.removeChild(styleElement);
+      }
+      // Cleanup: Remove container div from body
+      const containerElement = document.getElementById('falling-stars-container');
+      if (containerElement && document.body.contains(containerElement)) {
+        document.body.removeChild(containerElement);
+      }
+    };
   }, []);
 
   return null;
@@ -1583,7 +1605,6 @@ const LoginModal = ({ onClose, onLogin }) => {
 const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, user, appId, onCheatUpdate }) => {
   const [newCheat, setNewCheat] = useState({ name: '', productLink: '', features: [], notes: '', tier: 'FREE', type: 'EXTERNAL' });
   const [isAdding, setIsAdding] = useState(false);
-  const [particles, setParticles] = useState([]);
   const [tierFilter, setTierFilter] = useState('ALL');
   const [editingCheatIndex, setEditingCheatIndex] = useState(null);
   const [editingCheat, setEditingCheat] = useState(null);
@@ -1677,12 +1698,6 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
         borderColor: 'rgba(255,255,255,0.1)',
         ringColor: 'rgba(255,255,255,0.1)',
       }}>
-        
-        {/* Particles */}
-        {particles.map(particle => (
-          <ParticleEffect key={particle.id} x={particle.x} y={particle.y} />
-        ))}
-        
         {/* Header */}
         <div className="flex items-start justify-between px-8 py-8 border-b transition-colors border-white/5 bg-gradient-to-b from-zinc-900/50 to-transparent">
           <div>
@@ -2054,6 +2069,24 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
   );
 };
 
+// --- New Component: Mouse Effects (Background Animations) ---
+const MouseEffects = () => {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  return (
+    <>
+      {/* Blob Background Animation */}
+      <BlobBackground mousePos={mousePos} />
+      
+      {/* Cursor Glow */}
+      <CursorGlow onMouseMove={setMousePos} />
+
+      {/* Animated Background Mesh */}
+      <AnimatedBackgroundMesh mousePos={mousePos} />
+    </>
+  );
+};
+
 // --- Main App ---
 
 export default function App() {
@@ -2065,7 +2098,6 @@ export default function App() {
   const [selectedGame, setSelectedGame] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [toast, setToast] = useState(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
@@ -2183,15 +2215,15 @@ export default function App() {
     setIsEditMode(false); // Reset edit mode on logout
   };
 
-  const handleDeleteGame = async (gameId) => {
+  const handleDeleteGame = useCallback(async (gameId) => {
     try {
       await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'games', gameId));
     } catch (err) {
       console.error("Error deleting:", err);
     }
-  };
+  }, [appId]);
 
-  const handleAddCheatToGame = async (gameId, cheatData) => {
+  const handleAddCheatToGame = useCallback(async (gameId, cheatData) => {
     if (!user) return;
     try {
       const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', gameId);
@@ -2215,9 +2247,9 @@ export default function App() {
       triggerShake('app-root');
       alert("Error adding cheat. Do you have permission?");
     }
-  };
+  }, [appId, user, selectedGame]);
 
-  const handleVoteCheat = async (cheatIdx) => {
+  const handleVoteCheat = useCallback(async (cheatIdx) => {
     if (!selectedGame) return;
     
     const voteKey = `${selectedGame.id}_${cheatIdx}`;
@@ -2256,7 +2288,7 @@ export default function App() {
     } catch (err) {
       console.error("Error voting:", err);
     }
-  };
+  }, [appId, selectedGame, userVotes]);
 
   const userVotedCheat = (cheatIdx) => {
     if (!selectedGame) return false;
@@ -2269,14 +2301,8 @@ export default function App() {
       {/* Falling Stars Animation - rendered via portal to document.body */}
       <FallingStars />
       
-      {/* Blob Background Animation */}
-      <BlobBackground mousePos={mousePos} />
-      
-      {/* ADDED CURSOR GLOW HERE */}
-      <CursorGlow onMouseMove={setMousePos} />
-
-      {/* Animated Background Mesh */}
-      <AnimatedBackgroundMesh mousePos={mousePos} />
+      {/* Mouse Effects (includes Blob Background, Cursor Glow, and Animated Background Mesh) */}
+      <MouseEffects />
 
       {/* Shooting Stars Animation */}
       <ShootingStars />
