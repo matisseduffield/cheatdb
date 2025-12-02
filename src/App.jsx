@@ -40,7 +40,8 @@ import {
   Pencil,
   Check,
   Sparkles,
-  Shield
+  Shield,
+  ThumbsUp
 } from 'lucide-react';
 
 // --- Firebase Configuration ---
@@ -1272,7 +1273,7 @@ const LoginModal = ({ onClose, onLogin }) => {
   );
 };
 
-const GameDetail = ({ game, onClose, onAddCheat, user }) => {
+const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, user }) => {
   const [newCheat, setNewCheat] = useState({ name: '', productLink: '', features: [], notes: '', tier: 'FREE' });
   const [isAdding, setIsAdding] = useState(false);
   const [particles, setParticles] = useState([]);
@@ -1576,14 +1577,14 @@ const GameDetail = ({ game, onClose, onAddCheat, user }) => {
                   // Cheat Card
                   <div
                     key={idx}
-                    className="group relative p-5 border rounded-2xl transition-all duration-300 bg-zinc-900/20 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_15px_40px_-10px_rgba(139,92,246,0.5)] flex flex-col overflow-hidden"
+                    className="group relative p-4 sm:p-5 border rounded-2xl transition-all duration-300 bg-zinc-900/20 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_15px_40px_-10px_rgba(139,92,246,0.5)] flex flex-col overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 via-transparent to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     <div className="relative z-10">
                       <div className="mb-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="font-bold text-sm group-hover:text-violet-300 text-zinc-200 flex-1 line-clamp-2 transition-colors">{cheat.name}</h4>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
+                          <h4 className="font-bold text-xs sm:text-sm group-hover:text-violet-300 text-zinc-200 flex-1 line-clamp-2 transition-colors">{cheat.name}</h4>
+                          <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
                             cheat.tier === 'FREE'
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 group-hover:bg-emerald-500/30 group-hover:border-emerald-500/50'
                               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 group-hover:bg-amber-500/30 group-hover:border-amber-500/50'
@@ -1591,36 +1592,44 @@ const GameDetail = ({ game, onClose, onAddCheat, user }) => {
                             {cheat.tier || 'FREE'}
                           </span>
                         </div>
-                        {cheat.notes && <p className="text-xs text-zinc-500 line-clamp-2 group-hover:text-zinc-400 transition-colors">{cheat.notes}</p>}
+                        {cheat.notes && <p className="text-[10px] sm:text-xs text-zinc-500 line-clamp-2 group-hover:text-zinc-400 transition-colors">{cheat.notes}</p>}
                       </div>
-                      <div className="flex flex-wrap gap-1.5 mb-3">
+                      <div className="flex flex-wrap gap-1 mb-3">
                         {cheat.features && cheat.features.map((feature, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[10px] font-bold uppercase tracking-wider transition-all group-hover:bg-violet-500/30 group-hover:border-violet-500/50">
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider transition-all group-hover:bg-violet-500/30 group-hover:border-violet-500/50">
                             {feature}
                           </span>
                         ))}
                       </div>
                       {cheat.addedAt && (
-                        <div className="text-[10px] text-zinc-600 group-hover:text-zinc-500 transition-colors mb-3">
+                        <div className="text-[9px] sm:text-[10px] text-zinc-600 group-hover:text-zinc-500 transition-colors mb-3">
                           Added {formatTimeAgo(cheat.addedAt)}
                         </div>
                       )}
                       <div className="mt-auto pt-3 border-t border-white/5">
-                        <div className="flex items-center justify-between text-xs mb-2">
+                        <div className="flex items-center justify-between text-[11px] sm:text-xs mb-2 gap-1">
                           <a
                             href={cheat.productLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-1.5 text-zinc-500 hover:text-cyan-400 transition-colors font-semibold"
+                            className="flex items-center gap-1 text-zinc-500 hover:text-cyan-400 transition-colors font-semibold flex-1 min-w-0"
                             title="Open link"
                           >
-                            <Copy className="w-3 h-3" />
-                            View
+                            <Copy className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">View</span>
                           </a>
-                          <span className="text-zinc-600 group-hover:text-violet-300 transition-colors font-semibold flex items-center gap-1.5">
-                            <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              onVoteCheat(actualIdx);
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-zinc-500 hover:text-violet-400 bg-zinc-800/30 hover:bg-violet-500/20 transition-all active:scale-95 flex-shrink-0"
+                            title={`Votes: ${cheat.votes || 0}`}
+                          >
+                            <ThumbsUp className={`w-3 h-3 transition-colors ${userVotedCheat(actualIdx) ? 'fill-violet-400 text-violet-400' : ''}`} />
+                            <span className="text-[9px] font-bold">{cheat.votes || 0}</span>
+                          </button>
                         </div>
                         {user && (
                           <div className="flex gap-1.5 pt-2 border-t border-white/5">
@@ -1630,7 +1639,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user }) => {
                                 setEditingCheatIndex(actualIdx);
                                 setEditingCheat({...cheat});
                               }}
-                              className="flex-1 px-2 py-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded transition-all"
+                              className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded transition-all active:scale-95"
                               title="Edit"
                             >
                               Edit
@@ -1642,7 +1651,7 @@ const GameDetail = ({ game, onClose, onAddCheat, user }) => {
                                   handleDeleteCheat(actualIdx);
                                 }
                               }}
-                              className="flex-1 px-2 py-1.5 text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded transition-all"
+                              className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded transition-all active:scale-95"
                               title="Delete"
                             >
                               Delete
@@ -1686,6 +1695,7 @@ export default function App() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [displayedGames, setDisplayedGames] = useState(20);
+  const [userVotes, setUserVotes] = useState({}); // Track user votes: { "gameId_cheatIdx": true }
 
   // 1. Auth Listener
   useEffect(() => {
@@ -1822,6 +1832,48 @@ export default function App() {
       triggerShake('app-root');
       alert("Error adding cheat. Do you have permission?");
     }
+  };
+
+  const handleVoteCheat = async (cheatIdx) => {
+    if (!selectedGame) return;
+    
+    const voteKey = `${selectedGame.id}_${cheatIdx}`;
+    const hasVoted = userVotes[voteKey];
+    
+    try {
+      const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', selectedGame.id);
+      const cheat = selectedGame.cheats[cheatIdx];
+      const currentVotes = cheat.votes || 0;
+      const newVotes = hasVoted ? Math.max(0, currentVotes - 1) : currentVotes + 1;
+      
+      // Update the cheat with new vote count
+      const updatedCheats = [...selectedGame.cheats];
+      updatedCheats[cheatIdx] = { ...cheat, votes: newVotes };
+      
+      await updateDoc(gameRef, { cheats: updatedCheats });
+      
+      // Update local state
+      setSelectedGame(prev => ({
+        ...prev,
+        cheats: updatedCheats
+      }));
+      
+      // Update user votes tracking
+      if (hasVoted) {
+        const newVotes = { ...userVotes };
+        delete newVotes[voteKey];
+        setUserVotes(newVotes);
+      } else {
+        setUserVotes({ ...userVotes, [voteKey]: true });
+      }
+    } catch (err) {
+      console.error("Error voting:", err);
+    }
+  };
+
+  const userVotedCheat = (cheatIdx) => {
+    if (!selectedGame) return false;
+    return userVotes[`${selectedGame.id}_${cheatIdx}`] || false;
   };
 
   return (
@@ -1995,6 +2047,8 @@ export default function App() {
             game={selectedGame} 
             onClose={() => setSelectedGame(null)} 
             onAddCheat={handleAddCheatToGame}
+            onVoteCheat={handleVoteCheat}
+            userVotedCheat={userVotedCheat}
             user={user}
           />
         )}
