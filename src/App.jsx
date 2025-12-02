@@ -279,13 +279,13 @@ const FallingStars = () => {
 
         particle.style.left = Math.random() * 100 + 'vw';
 
-        // Duration (8s to 15s fall time)
-        const duration = 8 + Math.random() * 7;
+        // Duration (4s to 8s fall time)
+        const duration = 4 + Math.random() * 4;
         particle.style.animationDuration = duration + 's';
 
         // Positive Delay: Stagger the start so particles rain down naturally
         // Screen starts blank, then particles begin falling at different times
-        const delay = Math.random() * 8;
+        const delay = Math.random() * 4;
         particle.style.animationDelay = delay + 's';
 
         const opacity = (Math.random() * 0.6 + 0.4).toFixed(2);
