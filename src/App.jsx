@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -200,30 +200,39 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
 
 // --- New Component: Falling Stars Animation ---
 const FallingStars = () => {
-  const [stars, setStars] = useState(() => {
-    return Array.from({ length: 50 }).map((_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      delay: Math.random() * 5,
-      duration: 10 + Math.random() * 6,
-      size: Math.random() * 3 + 2,
-    }));
-  });
-  const [mounted, setMounted] = useState(false);
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    setMounted(true);
-    
-    // Inject CSS into document head once
+    // Inject CSS into document head
     const styleId = 'falling-stars-style';
     if (!document.getElementById(styleId)) {
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
-        @keyframes fall-and-fade {
+        .particle-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          pointer-events: none;
+          z-index: 50;
+        }
+
+        .particle {
+          position: absolute;
+          background: radial-gradient(circle at 30% 30%, #22c55e, rgba(34, 197, 94, 0.3));
+          border-radius: 50%;
+          opacity: 0;
+          box-shadow: 0 0 20px rgba(34, 197, 94, 1), 0 0 40px rgba(34, 197, 94, 0.6);
+          animation: fall-particle linear infinite;
+          top: -50px;
+        }
+
+        @keyframes fall-particle {
           0% {
-            opacity: 0;
             transform: translateY(-100vh) scale(0.3);
+            opacity: 0;
           }
           5% {
             opacity: 1;
@@ -232,67 +241,58 @@ const FallingStars = () => {
             opacity: 1;
           }
           100% {
+            transform: translateY(110vh) scale(0);
             opacity: 0;
-            transform: translateY(100vh) scale(0);
           }
-        }
-        
-        .falling-star {
-          position: fixed !important;
-          z-index: 99999 !important;
-          pointer-events: none !important;
-          border-radius: 50% !important;
-          background: radial-gradient(circle at 30% 30%, #22c55e, rgba(34, 197, 94, 0.3)) !important;
-          box-shadow: 0 0 20px rgba(34, 197, 94, 1), 0 0 40px rgba(34, 197, 94, 0.6) !important;
-          animation-name: fall-and-fade !important;
-          animation-timing-function: linear !important;
-          animation-fill-mode: forwards !important;
         }
       `;
       document.head.appendChild(style);
     }
+  }, []);
 
-    // Add new stars periodically
-    const interval = setInterval(() => {
-      setStars(prev => {
-        const newStars = [...prev];
-        const randomIndex = Math.floor(Math.random() * newStars.length);
-        newStars[randomIndex] = {
-          ...newStars[randomIndex],
-          delay: 0,
-          duration: 10 + Math.random() * 6,
-        };
-        return newStars;
-      });
-    }, 1000);
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const createParticles = () => {
+      containerRef.current.innerHTML = '';
+      
+      const particleCount = 50;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        
+        // Random horizontal position
+        particle.style.left = Math.random() * 100 + 'vw';
+        
+        // Random size
+        const size = Math.random() * 3 + 2;
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        
+        // Random speed
+        const duration = 10 + Math.random() * 6;
+        particle.style.animationDuration = duration + 's';
+        
+        // Random delay
+        particle.style.animationDelay = Math.random() * 5 + 's';
+        
+        containerRef.current.appendChild(particle);
+      }
+    };
+
+    createParticles();
+
+    // Regenerate particles periodically
+    const interval = setInterval(createParticles, 2000);
 
     return () => clearInterval(interval);
   }, []);
 
-  if (!mounted) {
-    return null;
-  }
-
-  const content = (
-    <>
-      {stars.map((star) => (
-        <div
-          key={star.id}
-          className="falling-star"
-          style={{
-            left: `${star.left}%`,
-            top: `-50px`,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-            animationDuration: `${star.duration}s`,
-            animationDelay: `${star.delay}s`,
-          }}
-        />
-      ))}
-    </>
+  return createPortal(
+    <div ref={containerRef} className="particle-container" />,
+    document.body
   );
-
-  return createPortal(content, document.body);
 };
 
 // --- New Component: Statistics Dashboard ---
