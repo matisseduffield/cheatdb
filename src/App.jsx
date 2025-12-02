@@ -265,7 +265,9 @@ const FallingStars = () => {
     root.style.setProperty('--blur', '0px');
 
     const createParticles = () => {
-      container.innerHTML = '';
+      // Check if particles already exist to prevent duplicates on re-renders
+      if (container.childElementCount > 0) return;
+
       const particleCount = 80;
 
       for (let i = 0; i < particleCount; i++) {
@@ -293,13 +295,8 @@ const FallingStars = () => {
       }
     };
 
-    // Create initial particles
+    // Create initial particles once - CSS animation handles the infinite loop
     createParticles();
-
-    // Continuously regenerate particles
-    const interval = setInterval(createParticles, 5000);
-
-    return () => clearInterval(interval);
   }, []);
 
   return null;
