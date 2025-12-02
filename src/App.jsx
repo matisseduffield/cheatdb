@@ -880,18 +880,18 @@ const CommandPalette = ({ onClose, games, onSelectGame, user }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const commands = [
+  const commands = useMemo(() => [
     { id: 'search', label: 'Search Games', icon: '🔍', action: () => {} },
     user && { id: 'login', label: 'Logout', icon: '🚪', action: () => {} },
     !user && { id: 'login', label: 'Admin Login', icon: '🔐', action: () => {} },
     { id: 'shortcuts', label: 'Show Keyboard Shortcuts', icon: '⌨️', action: () => {} },
-  ].filter(Boolean);
+  ].filter(Boolean), [user]);
 
-  const gameResults = query.trim() ? games.filter(g => 
+  const gameResults = useMemo(() => query.trim() ? games.filter(g => 
     g.title.toLowerCase().includes(query.toLowerCase())
-  ).slice(0, 5) : [];
+  ).slice(0, 5) : [], [query, games]);
 
-  const allResults = [...commands, ...gameResults];
+  const allResults = useMemo(() => [...commands, ...gameResults], [commands, gameResults]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1610,14 +1610,15 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
         
         const cheats = gameDoc.data().cheats || [];
         
-        // Verify cheat index exists
-        if (editingCheatIndex < 0 || editingCheatIndex >= cheats.length) {
-          throw new Error("Cheat index out of bounds");
+        // Find cheat by ID
+        const cheatIndex = cheats.findIndex(c => c.id === editingCheat.id);
+        if (cheatIndex === -1) {
+          throw new Error("Cheat not found");
         }
         
-        // Update the specific cheat at the index
+        // Update the specific cheat by ID
         const updatedCheats = [...cheats];
-        updatedCheats[editingCheatIndex] = editingCheat;
+        updatedCheats[cheatIndex] = editingCheat;
         
         transaction.update(gameRef, { cheats: updatedCheats });
       });
@@ -1630,7 +1631,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     setEditingCheat(null);
   };
 
-  const handleDeleteCheat = async (index) => {
+  const handleDeleteCheat = async (cheatId) => {
     const db = getFirestore();
     const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', game.id);
     
@@ -1643,13 +1644,13 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
         
         const cheats = gameDoc.data().cheats || [];
         
-        // Verify cheat index exists
-        if (index < 0 || index >= cheats.length) {
-          throw new Error("Cheat index out of bounds");
+        // Verify cheat exists by ID
+        if (!cheats.some(c => c.id === cheatId)) {
+          throw new Error("Cheat not found");
         }
         
-        // Filter out the cheat at the given index
-        const updatedCheats = cheats.filter((_, i) => i !== index);
+        // Filter out the cheat with the given ID
+        const updatedCheats = cheats.filter(c => c.id !== cheatId);
         
         transaction.update(gameRef, { cheats: updatedCheats });
       });
@@ -2009,12 +2010,12 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                           <button
                             onClick={(e) => {
                               e.preventDefault();
-                              onVoteCheat(actualIdx);
+                              onVoteCheat(cheat.id);
                             }}
                             className="flex items-center gap-1 px-2 py-1 rounded text-zinc-500 hover:text-violet-400 bg-zinc-800/30 hover:bg-violet-500/20 transition-all active:scale-95 flex-shrink-0"
                             title={`Votes: ${cheat.votes || 0}`}
                           >
-                            <ThumbsUp className={`w-3 h-3 transition-colors ${userVotedCheat(actualIdx) ? 'fill-violet-400 text-violet-400' : ''}`} />
+                            <ThumbsUp className={`w-3 h-3 transition-colors ${userVotedCheat(cheat.id) ? 'fill-violet-400 text-violet-400' : ''}`} />
                             <span className="text-[9px] font-bold">{cheat.votes || 0}</span>
                           </button>
                         </div>
@@ -2023,7 +2024,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
-                                setEditingCheatIndex(actualIdx);
+                                setEditingCheatIndex(idx);
                                 setEditingCheat({...cheat});
                               }}
                               className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded transition-all active:scale-95"
@@ -2035,7 +2036,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                               onClick={(e) => {
                                 e.preventDefault();
                                 if (confirm('Delete this cheat?')) {
-                                  handleDeleteCheat(actualIdx);
+                                  handleDeleteCheat(cheat.id);
                                 }
                               }}
                               className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded transition-all active:scale-95"
@@ -2230,6 +2231,7 @@ export default function App() {
       await updateDoc(gameRef, {
         cheats: arrayUnion({
           ...cheatData,
+          id: Date.now().toString(),
           addedAt: Date.now()
         })
       });
@@ -2243,10 +2245,10 @@ export default function App() {
     }
   }, [appId, user]);
 
-  const handleVoteCheat = useCallback(async (cheatIdx) => {
+  const handleVoteCheat = useCallback(async (cheatId) => {
     if (!selectedGame) return;
     
-    const voteKey = `${selectedGame.id}_${cheatIdx}`;
+    const voteKey = `${selectedGame.id}_${cheatId}`;
     const hasVoted = userVotes[voteKey];
     
     try {
@@ -2261,18 +2263,19 @@ export default function App() {
         
         const cheats = gameDoc.data().cheats || [];
         
-        // Verify cheat exists
-        if (cheatIdx < 0 || cheatIdx >= cheats.length) {
-          throw new Error("Cheat index out of bounds");
+        // Find cheat by ID
+        const cheatIndex = cheats.findIndex(c => c.id === cheatId);
+        if (cheatIndex === -1) {
+          throw new Error("Cheat not found");
         }
         
-        const cheat = cheats[cheatIdx];
+        const cheat = cheats[cheatIndex];
         const currentVotes = cheat.votes || 0;
         const newVotes = hasVoted ? Math.max(0, currentVotes - 1) : currentVotes + 1;
         
         // Update the specific cheat in the array
         const updatedCheats = [...cheats];
-        updatedCheats[cheatIdx] = { ...cheat, votes: newVotes };
+        updatedCheats[cheatIndex] = { ...cheat, votes: newVotes };
         
         transaction.update(gameRef, { cheats: updatedCheats });
       });
@@ -2295,9 +2298,9 @@ export default function App() {
     }
   }, [appId, selectedGame, userVotes]);
 
-  const userVotedCheat = (cheatIdx) => {
+  const userVotedCheat = (cheatId) => {
     if (!selectedGame) return false;
-    return userVotes[`${selectedGame.id}_${cheatIdx}`] || false;
+    return userVotes[`${selectedGame.id}_${cheatId}`] || false;
   };
 
   return (
