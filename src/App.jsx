@@ -1022,14 +1022,14 @@ const AntiCheatBadge = ({ ac }) => {
 
 // Logo mapping for games
 const gameLogoMap = {
-  'Apex Legends': '/logos/apex.svg',
-  'Call of Duty: Black Ops 7': '/logos/cod.svg',
-  'Call of Duty: Warzone': '/logos/warzone.svg',
-  'Counter Strike 2': '/logos/cs2.svg',
-  'Escape from Tarkov': '/logos/eft.svg',
-  'Overwatch 2': '/logos/ow2.svg',
-  'Rust': '/logos/rust.svg',
-  'Team Fortress 2': '/logos/tf2.svg',
+  'Apex Legends': '/logos/apex.png',
+  'Call of Duty: Black Ops 7': '/logos/cod.png',
+  'Call of Duty: Warzone': '/logos/warzone.png',
+  'Counter Strike 2': '/logos/cs2.png',
+  'Escape from Tarkov': '/logos/eft.png',
+  'Overwatch 2': '/logos/ow2.png',
+  'Rust': '/logos/rust.png',
+  'Team Fortress 2': '/logos/tf2.png',
 };
 
 // Scale multipliers for logos with extra whitespace
