@@ -232,11 +232,11 @@ const FallingStars = () => {
 
         @keyframes fall {
           0% {
-            transform: translateY(0vh);
+            transform: translateY(-100vh);
             opacity: var(--particle-opacity);
           }
           100% {
-            transform: translateY(120vh);
+            transform: translateY(100vh);
             opacity: var(--particle-opacity);
           }
         }
