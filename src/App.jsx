@@ -203,12 +203,12 @@ const FallingStars = () => {
 
   useEffect(() => {
     // Generate initial stars
-    const initialStars = Array.from({ length: 20 }).map((_, i) => ({
+    const initialStars = Array.from({ length: 50 }).map((_, i) => ({
       id: i,
       left: Math.random() * 100,
       delay: Math.random() * 5,
-      duration: 8 + Math.random() * 4,
-      size: Math.random() * 2 + 1,
+      duration: 10 + Math.random() * 6,
+      size: Math.random() * 3 + 2,
     }));
     setStars(initialStars);
 
@@ -220,11 +220,11 @@ const FallingStars = () => {
         newStars[randomIndex] = {
           ...newStars[randomIndex],
           delay: 0,
-          duration: 8 + Math.random() * 4,
+          duration: 10 + Math.random() * 6,
         };
         return newStars;
       });
-    }, 2000);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -235,27 +235,31 @@ const FallingStars = () => {
         @keyframes fall-and-fade {
           0% {
             opacity: 0;
-            transform: translateY(-100vh) scale(0.5);
+            transform: translateY(-100vh) scale(0.3);
+            filter: blur(1px);
           }
-          10% {
+          5% {
             opacity: 1;
           }
-          90% {
+          95% {
             opacity: 1;
           }
           100% {
             opacity: 0;
             transform: translateY(100vh) scale(0);
+            filter: blur(2px);
           }
         }
         
         .falling-star {
           position: fixed;
+          top: 0;
           pointer-events: none;
           border-radius: 50%;
-          background: radial-gradient(circle at 30% 30%, rgba(139, 92, 246, 0.8), rgba(139, 92, 246, 0.2));
-          box-shadow: 0 0 10px rgba(139, 92, 246, 0.6), 0 0 20px rgba(139, 92, 246, 0.3);
+          background: radial-gradient(circle at 30% 30%, rgba(34, 197, 94, 1), rgba(34, 197, 94, 0.3));
+          box-shadow: 0 0 10px rgba(34, 197, 94, 0.8), 0 0 20px rgba(34, 197, 94, 0.6), 0 0 30px rgba(34, 197, 94, 0.4), inset -2px -2px 5px rgba(34, 197, 94, 0.5);
           animation: fall-and-fade linear forwards;
+          filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.8));
         }
       `}</style>
       
