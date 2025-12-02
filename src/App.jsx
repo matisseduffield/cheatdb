@@ -1274,7 +1274,7 @@ const LoginModal = ({ onClose, onLogin }) => {
 };
 
 const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, user }) => {
-  const [newCheat, setNewCheat] = useState({ name: '', productLink: '', features: [], notes: '', tier: 'FREE' });
+  const [newCheat, setNewCheat] = useState({ name: '', productLink: '', features: [], notes: '', tier: 'FREE', type: 'EXTERNAL' });
   const [isAdding, setIsAdding] = useState(false);
   const [particles, setParticles] = useState([]);
   const [tierFilter, setTierFilter] = useState('ALL');
@@ -1287,7 +1287,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     e.preventDefault();
     if (!newCheat.name || !newCheat.productLink) return;
     await onAddCheat(game.id, newCheat);
-    setNewCheat({ name: '', productLink: '', features: [], notes: '', tier: 'FREE' });
+    setNewCheat({ name: '', productLink: '', features: [], notes: '', tier: 'FREE', type: 'EXTERNAL' });
     setIsAdding(false);
   };
 
@@ -1463,6 +1463,27 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                       </div>
                     </div>
                     <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Type</label>
+                      <div className="flex gap-3">
+                        {['INTERNAL', 'EXTERNAL'].map(type => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => setNewCheat({...newCheat, type})}
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                              newCheat.type === type
+                                ? type === 'INTERNAL'
+                                  ? 'bg-blue-500/30 border-blue-500/50 text-blue-200'
+                                  : 'bg-purple-500/30 border-purple-500/50 text-purple-200'
+                                : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/50'
+                            }`}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
                       <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Notes (Optional)</label>
                       <textarea
                         placeholder="Additional information..."
@@ -1560,6 +1581,22 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                           </button>
                         ))}
                       </div>
+                      <div className="flex gap-2">
+                        {['INTERNAL', 'EXTERNAL'].map(type => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => setEditingCheat({...editingCheat, type})}
+                            className={`flex-1 px-2 py-1.5 rounded text-xs font-bold transition-all ${
+                              editingCheat.type === type
+                                ? type === 'INTERNAL' ? 'bg-blue-500/30 border-blue-500/50 text-blue-200' : 'bg-purple-500/30 border-purple-500/50 text-purple-200'
+                                : 'bg-zinc-700/50 text-zinc-400 hover:bg-zinc-600/50'
+                            }`}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
                       <textarea
                         placeholder="Notes"
                         className="w-full rounded-lg px-3 py-2 outline-none text-sm transition-all focus:ring-1 border bg-black/50 border-white/10 text-white placeholder-zinc-600 focus:ring-violet-500 resize-none"
@@ -1584,13 +1621,22 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                       <div className="mb-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h4 className="font-bold text-xs sm:text-sm group-hover:text-violet-300 text-zinc-200 flex-1 line-clamp-2 transition-colors">{cheat.name}</h4>
-                          <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
-                            cheat.tier === 'FREE'
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 group-hover:bg-emerald-500/30 group-hover:border-emerald-500/50'
-                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 group-hover:bg-amber-500/30 group-hover:border-amber-500/50'
-                          }`}>
-                            {cheat.tier || 'FREE'}
-                          </span>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
+                              cheat.tier === 'FREE'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 group-hover:bg-emerald-500/30 group-hover:border-emerald-500/50'
+                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 group-hover:bg-amber-500/30 group-hover:border-amber-500/50'
+                            }`}>
+                              {cheat.tier || 'FREE'}
+                            </span>
+                            <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
+                              cheat.type === 'INTERNAL'
+                                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30 group-hover:bg-blue-500/30 group-hover:border-blue-500/50'
+                                : 'bg-purple-500/20 text-purple-300 border border-purple-500/30 group-hover:bg-purple-500/30 group-hover:border-purple-500/50'
+                            }`}>
+                              {cheat.type || 'EXTERNAL'}
+                            </span>
+                          </div>
                         </div>
                         {cheat.notes && <p className="text-[10px] sm:text-xs text-zinc-500 line-clamp-2 group-hover:text-zinc-400 transition-colors">{cheat.notes}</p>}
                       </div>
