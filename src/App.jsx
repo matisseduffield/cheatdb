@@ -1273,7 +1273,7 @@ const LoginModal = ({ onClose, onLogin }) => {
   );
 };
 
-const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, user, appId }) => {
+const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, user, appId, onCheatUpdate }) => {
   const [newCheat, setNewCheat] = useState({ name: '', productLink: '', features: [], notes: '', tier: 'FREE', type: 'EXTERNAL' });
   const [isAdding, setIsAdding] = useState(false);
   const [particles, setParticles] = useState([]);
@@ -1300,7 +1300,17 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     
     const db = getFirestore();
     const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', game.id);
-    await updateDoc(gameRef, { cheats: updatedCheats });
+    
+    try {
+      await updateDoc(gameRef, { cheats: updatedCheats });
+      
+      // Call parent callback to update selectedGame immediately
+      if (onCheatUpdate) {
+        onCheatUpdate(updatedCheats);
+      }
+    } catch (err) {
+      console.error("Error updating cheat:", err);
+    }
     
     setEditingCheatIndex(null);
     setEditingCheat(null);
@@ -1311,7 +1321,17 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     
     const db = getFirestore();
     const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', game.id);
-    await updateDoc(gameRef, { cheats: updatedCheats });
+    
+    try {
+      await updateDoc(gameRef, { cheats: updatedCheats });
+      
+      // Call parent callback to update selectedGame immediately
+      if (onCheatUpdate) {
+        onCheatUpdate(updatedCheats);
+      }
+    } catch (err) {
+      console.error("Error deleting cheat:", err);
+    }
     
     setEditingCheatIndex(null);
     setEditingCheat(null);
@@ -2109,6 +2129,7 @@ export default function App() {
             userVotedCheat={userVotedCheat}
             user={user}
             appId={appId}
+            onCheatUpdate={(updatedCheats) => setSelectedGame({...selectedGame, cheats: updatedCheats})}
           />
         )}
 
