@@ -247,7 +247,7 @@ const ShootingStars = () => {
           top: 50%;
           width: 250px;
           height: 2px;
-          background: linear-gradient(to right, transparent 0%, rgba(139, 92, 246, 0.4) 40%, rgba(255, 255, 255, 0.8) 100%);
+          background: linear-gradient(to left, rgba(255, 255, 255, 0.8) 0%, rgba(139, 92, 246, 0.5) 30%, transparent 100%);
           transform: translateY(-50%);
           filter: blur(1px);
           pointer-events: none;
