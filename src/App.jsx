@@ -214,8 +214,8 @@ const ShootingStars = () => {
           position: fixed;
           top: 0;
           left: 0;
-          width: 100%;
-          height: 100%;
+          width: 100vw;
+          height: 100vh;
           pointer-events: none;
           z-index: 0;
           overflow: hidden;
@@ -324,7 +324,7 @@ const ShootingStars = () => {
       } else if (edge === 1) {
         // Right edge: move leftward
         sx = window.innerWidth + 100;
-        sy = Math.random() * window.innerHeight;
+        sy = Math.random() * (window.innerHeight * 0.7);
         ex = -100;
         ey = sy + (Math.random() - 0.5) * 200; // slight vertical drift
       } else if (edge === 2) {
@@ -336,7 +336,7 @@ const ShootingStars = () => {
       } else {
         // Left edge: move rightward
         sx = -100;
-        sy = Math.random() * window.innerHeight;
+        sy = Math.random() * (window.innerHeight * 0.7);
         ex = window.innerWidth + 100;
         ey = sy + (Math.random() - 0.5) * 200; // slight vertical drift
       }
@@ -409,7 +409,9 @@ const FallingStars = () => {
       style.id = styleId;
       style.textContent = `
         html, body {
-          overflow: visible !important;
+          overflow: hidden !important;
+          height: 100%;
+          width: 100%;
         }
 
         .particle-container {
