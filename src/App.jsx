@@ -197,6 +197,86 @@ const AnimatedBackgroundMesh = ({ mousePos }) => {
   );
 };
 
+// --- New Component: Falling Stars Animation ---
+const FallingStars = () => {
+  const [stars, setStars] = useState([]);
+
+  useEffect(() => {
+    // Generate initial stars
+    const initialStars = Array.from({ length: 20 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 5,
+      duration: 8 + Math.random() * 4,
+      size: Math.random() * 2 + 1,
+    }));
+    setStars(initialStars);
+
+    // Add new stars periodically
+    const interval = setInterval(() => {
+      setStars(prev => {
+        const newStars = [...prev];
+        const randomIndex = Math.floor(Math.random() * newStars.length);
+        newStars[randomIndex] = {
+          ...newStars[randomIndex],
+          delay: 0,
+          duration: 8 + Math.random() * 4,
+        };
+        return newStars;
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      <style>{`
+        @keyframes fall-and-fade {
+          0% {
+            opacity: 0;
+            transform: translateY(-100vh) scale(0.5);
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(100vh) scale(0);
+          }
+        }
+        
+        .falling-star {
+          position: fixed;
+          pointer-events: none;
+          border-radius: 50%;
+          background: radial-gradient(circle at 30% 30%, rgba(139, 92, 246, 0.8), rgba(139, 92, 246, 0.2));
+          box-shadow: 0 0 10px rgba(139, 92, 246, 0.6), 0 0 20px rgba(139, 92, 246, 0.3);
+          animation: fall-and-fade linear forwards;
+        }
+      `}</style>
+      
+      {stars.map((star) => (
+        <div
+          key={star.id}
+          className="falling-star"
+          style={{
+            left: `${star.left}%`,
+            width: `${star.size}px`,
+            height: `${star.size}px`,
+            top: '-20px',
+            animationDuration: `${star.duration}s`,
+            animationDelay: `${star.delay}s`,
+          }}
+        />
+      ))}
+    </>
+  );
+};
+
 // --- New Component: Statistics Dashboard ---
 const StatisticsDashboard = ({ games }) => {
   // Calculate statistics
@@ -1958,6 +2038,9 @@ export default function App() {
 
   return (
     <div id="app-root" className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 bg-[#050505] text-zinc-200">
+      
+      {/* Falling Stars Animation */}
+      <FallingStars />
       
       {/* Blob Background Animation */}
       <BlobBackground mousePos={mousePos} />
