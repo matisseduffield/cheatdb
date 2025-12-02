@@ -1,0 +1,21 @@
+# CheatDB - SEO Robots Configuration
+# Allow all search engines to crawl the site
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /*.json$
+Crawl-delay: 1
+
+# Google-specific rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing
+User-agent: Bingbot
+Allow: /
+
+# Sitemap
+Sitemap: https://cheatdb.org/sitemap.xml
+Sitemap: https://cheatdb.org/sitemap-games.xml

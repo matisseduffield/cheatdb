@@ -1,0 +1,14 @@
+/* Security Headers */
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+/* Performance Headers */
+Cache-Control: public, max-age=3600
+Vary: Accept-Encoding
+
+/* Preload critical resources */
+Link: </assets/index.css>; rel=preload; as=style
+Link: </assets/index.js>; rel=preload; as=script

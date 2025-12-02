@@ -1,0 +1,10 @@
+# Cloudflare Pages Redirects
+
+# Redirect www to non-www
+https://www.cheatdb.org/* https://cheatdb.org/:splat 301
+
+# Ensure HTTPS
+http://cheatdb.org/* https://cheatdb.org/:splat 301
+
+# SPA fallback - redirect all routes to index.html
+/* /index.html 200
