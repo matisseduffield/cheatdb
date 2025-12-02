@@ -1581,7 +1581,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
   const [newCheat, setNewCheat] = useState({ name: '', productLink: '', features: [], notes: '', tier: 'FREE', type: 'EXTERNAL' });
   const [isAdding, setIsAdding] = useState(false);
   const [tierFilter, setTierFilter] = useState('ALL');
-  const [editingCheatIndex, setEditingCheatIndex] = useState(null);
+  const [editingCheatId, setEditingCheatId] = useState(null);
   const [editingCheat, setEditingCheat] = useState(null);
   const featureTags = ['Aimbot', 'ESP', 'Exploits', 'Configs', 'Misc'];
   const tiers = ['FREE', 'PAID'];
@@ -1627,7 +1627,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
       alert("Failed to update cheat. Please try again.");
     }
     
-    setEditingCheatIndex(null);
+    setEditingCheatId(null);
     setEditingCheat(null);
   };
 
@@ -1659,7 +1659,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
       alert("Failed to delete cheat. Please try again.");
     }
     
-    setEditingCheatIndex(null);
+    setEditingCheatId(null);
     setEditingCheat(null);
   };
 
@@ -1881,8 +1881,10 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCheats.length > 0 ? (
               [...filteredCheats].reverse().map((cheat, idx) => {
-                const actualIdx = game.cheats.indexOf(cheat);
-                const isEditing = editingCheatIndex === actualIdx;
+                // Backward compatibility: if cheat doesn't have an ID, generate a temporary one for rendering
+                const cheatId = cheat.id || `legacy_${idx}_${cheat.name}`;
+                const isEditing = editingCheatId === cheatId;
+                const isLegacy = !cheat.id;
                 
                 return isEditing ? (
                   // Edit Form
@@ -1946,7 +1948,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                       />
                     </div>
                     <div className="flex gap-2 pt-2">
-                      <button type="button" onClick={() => setEditingCheatIndex(null)} className="flex-1 px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white transition-colors">Cancel</button>
+                      <button type="button" onClick={() => setEditingCheatId(null)} className="flex-1 px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white transition-colors">Cancel</button>
                       <button type="submit" className="flex-1 px-3 py-1.5 text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white rounded transition-all">Save</button>
                     </div>
                   </form>
@@ -2024,11 +2026,16 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
-                                setEditingCheatIndex(idx);
+                                setEditingCheatId(cheatId);
                                 setEditingCheat({...cheat});
                               }}
-                              className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded transition-all active:scale-95"
-                              title="Edit"
+                              disabled={isLegacy}
+                              className={`flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold rounded transition-all active:scale-95 ${
+                                isLegacy
+                                  ? 'text-zinc-500 bg-zinc-500/10 cursor-not-allowed opacity-50'
+                                  : 'text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20'
+                              }`}
+                              title={isLegacy ? "Legacy data (no ID)" : "Edit"}
                             >
                               Edit
                             </button>
@@ -2036,11 +2043,16 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                               onClick={(e) => {
                                 e.preventDefault();
                                 if (confirm('Delete this cheat?')) {
-                                  handleDeleteCheat(cheat.id);
+                                  handleDeleteCheat(cheatId);
                                 }
                               }}
-                              className="flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded transition-all active:scale-95"
-                              title="Delete"
+                              disabled={isLegacy}
+                              className={`flex-1 px-2 py-1.5 text-[9px] sm:text-xs font-bold rounded transition-all active:scale-95 ${
+                                isLegacy
+                                  ? 'text-zinc-500 bg-zinc-500/10 cursor-not-allowed opacity-50'
+                                  : 'text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20'
+                              }`}
+                              title={isLegacy ? "Legacy data (no ID)" : "Delete"}
                             >
                               Delete
                             </button>
@@ -2231,7 +2243,7 @@ export default function App() {
       await updateDoc(gameRef, {
         cheats: arrayUnion({
           ...cheatData,
-          id: Date.now().toString(),
+          id: crypto.randomUUID(),
           addedAt: Date.now()
         })
       });
