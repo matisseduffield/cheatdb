@@ -221,48 +221,66 @@ const ShootingStars = () => {
           overflow: hidden;
         }
 
-        .shooting-star {
+        /* Wrapper: Handles diagonal movement across screen */
+        .shooting-star-wrapper {
           position: absolute;
-          width: 12px;
-          height: 12px;
+          width: 300px;
+          height: 300px;
           pointer-events: none;
-          animation: shoot-star linear forwards;
+          animation: shoot-star-move linear forwards;
         }
 
-        /* 5-pointed star shape */
-        .shooting-star::before {
-          content: '';
+        /* Rotated Body: Aligns tail behind the star */
+        .shooting-star-body {
           position: absolute;
           width: 100%;
           height: 100%;
-          background: white;
-          clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-          box-shadow: 0 0 15px rgba(139, 92, 246, 0.9), 0 0 30px rgba(139, 92, 246, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.5);
-          filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.7));
+          transform: rotate(-45deg);
+          top: 0;
+          left: 0;
         }
 
-        /* Long fading trail */
-        .shooting-star::after {
-          content: '';
+        /* Tail: Long gradient line pointing backward */
+        .shooting-star-tail {
           position: absolute;
-          width: 200px;
-          height: 3px;
-          left: -200px;
+          left: 0;
           top: 50%;
+          width: 250px;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), rgba(139, 92, 246, 0.8), rgba(255, 255, 255, 0.6));
           transform: translateY(-50%);
-          background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.6), rgba(255, 255, 255, 0.4), white);
-          filter: blur(2px);
+          filter: blur(1px);
           pointer-events: none;
         }
 
-        @keyframes shoot-star {
+        /* Head: 5-pointed star at the front */
+        .shooting-star-head {
+          position: absolute;
+          right: 0;
+          top: 50%;
+          width: 14px;
+          height: 14px;
+          transform: translateY(-50%);
+          background: white;
+          clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+          box-shadow: 
+            0 0 10px rgba(139, 92, 246, 1),
+            0 0 20px rgba(139, 92, 246, 0.8),
+            0 0 30px rgba(139, 92, 246, 0.6),
+            inset 0 0 8px rgba(255, 255, 255, 0.6);
+          filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.8));
+          pointer-events: none;
+        }
+
+        /* Animation: Move from top-left to bottom-right diagonally */
+        @keyframes shoot-star-move {
           0% {
             opacity: 1;
             transform: translate(0, 0);
           }
           100% {
             opacity: 0;
-            transform: translate(calc(100vw + 500px), calc(100vh + 500px));
+            transform: translate(calc(100vw + 400px), calc(100vh + 400px));
           }
         }
       `;
@@ -284,8 +302,8 @@ const ShootingStars = () => {
       const duration = 3 + Math.random() * 2; // 3-5 seconds
 
       // Spawn off-screen: top-left corner
-      const startX = -100;
-      const startY = -100;
+      const startX = -150;
+      const startY = -150;
 
       setStars(prev => [...prev, { id: starId, startX, startY, duration }]);
 
@@ -316,13 +334,18 @@ const ShootingStars = () => {
       {stars.map(star => (
         <div
           key={star.id}
-          className="shooting-star"
+          className="shooting-star-wrapper"
           style={{
             left: `${star.startX}px`,
             top: `${star.startY}px`,
             animationDuration: `${star.duration}s`,
           }}
-        />
+        >
+          <div className="shooting-star-body">
+            <div className="shooting-star-tail" />
+            <div className="shooting-star-head" />
+          </div>
+        </div>
       ))}
     </>,
     document.body
