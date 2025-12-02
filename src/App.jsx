@@ -223,7 +223,7 @@ const FallingStars = () => {
           background: var(--particle-color);
           width: var(--particle-width);
           height: var(--particle-height);
-          top: -50px;
+          top: 0;
           border-radius: 50%;
           opacity: var(--particle-opacity);
           filter: blur(var(--blur));
@@ -232,7 +232,7 @@ const FallingStars = () => {
 
         @keyframes fall {
           0% {
-            transform: translateY(-100vh);
+            transform: translateY(-50px);
             opacity: var(--particle-opacity);
           }
           100% {
