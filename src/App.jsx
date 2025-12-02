@@ -219,7 +219,7 @@ const FallingStars = () => {
           height: 100%;
           pointer-events: none;
           z-index: 99999;
-          overflow: visible !important;
+          overflow: hidden;
         }
 
         .particle {
@@ -227,21 +227,27 @@ const FallingStars = () => {
           background: var(--particle-color);
           width: var(--particle-width);
           height: var(--particle-height);
-          top: 0;
+          top: -10vh;
           border-radius: 50%;
-          opacity: var(--particle-opacity);
+          opacity: 0;
           filter: blur(var(--blur));
           animation: fall linear infinite;
         }
 
         @keyframes fall {
           0% {
-            transform: translateY(-50px);
+            transform: translateY(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: var(--particle-opacity);
+          }
+          90% {
             opacity: var(--particle-opacity);
           }
           100% {
-            transform: translateY(100vh);
-            opacity: var(--particle-opacity);
+            transform: translateY(120vh);
+            opacity: 0;
           }
         }
       `;
@@ -274,23 +280,21 @@ const FallingStars = () => {
         const particle = document.createElement('div');
         particle.classList.add('particle');
 
-        // Randomize position
         particle.style.left = Math.random() * 100 + 'vw';
 
-        // Randomize speed - much longer so particles are visible for full fall
+        // Calculate duration (20s to 35s)
         const duration = 20 + Math.random() * 15;
         particle.style.animationDuration = duration + 's';
 
-        // Randomize delay so they stagger
-        particle.style.animationDelay = Math.random() * 5 + 's';
+        // KEY FIX: Negative Delay
+        // This makes particles appear instantly mid-fall at page load
+        const delay = -Math.random() * duration;
+        particle.style.animationDelay = delay + 's';
 
-        // Randomize opacity for depth
         const opacity = (Math.random() * 0.6 + 0.4).toFixed(2);
         particle.style.setProperty('--particle-opacity', opacity);
 
-        // Apply animation
         particle.style.animationName = 'fall';
-
         container.appendChild(particle);
       }
     };
