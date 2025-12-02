@@ -1649,13 +1649,15 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                             }`}>
                               {cheat.tier || 'FREE'}
                             </span>
-                            <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
-                              cheat.type === 'INTERNAL'
-                                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30 group-hover:bg-blue-500/30 group-hover:border-blue-500/50'
-                                : 'bg-purple-500/20 text-purple-300 border border-purple-500/30 group-hover:bg-purple-500/30 group-hover:border-purple-500/50'
-                            }`}>
-                              {cheat.type || 'EXTERNAL'}
-                            </span>
+                            {cheat.type && (
+                              <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all ${
+                                cheat.type === 'INTERNAL'
+                                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30 group-hover:bg-blue-500/30 group-hover:border-blue-500/50'
+                                  : 'bg-purple-500/20 text-purple-300 border border-purple-500/30 group-hover:bg-purple-500/30 group-hover:border-purple-500/50'
+                              }`}>
+                                {cheat.type}
+                              </span>
+                            )}
                           </div>
                         </div>
                         {cheat.notes && <p className="text-[10px] sm:text-xs text-zinc-500 line-clamp-2 group-hover:text-zinc-400 transition-colors">{cheat.notes}</p>}
