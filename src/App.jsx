@@ -310,9 +310,18 @@ const ShootingStars = () => {
       const starId = Date.now() + Math.random();
       const duration = 3 + Math.random() * 2; // 3-5 seconds
 
-      // Spawn off-screen: top-left corner
-      const startX = -150;
-      const startY = -150;
+      // Randomize spawn position: 50% from top edge, 50% from left edge
+      let startX, startY;
+      
+      if (Math.random() > 0.5) {
+        // Spawn from top edge
+        startX = Math.random() * window.innerWidth;
+        startY = -50;
+      } else {
+        // Spawn from left edge
+        startX = -50;
+        startY = Math.random() * window.innerHeight;
+      }
 
       setStars(prev => [...prev, { id: starId, startX, startY, duration }]);
 
