@@ -410,7 +410,7 @@ const FeaturesPage = () => {
                 }}></div>
 
                 {/* Enemy Model */}
-                <div className="relative w-64 h-96">
+                <div className="relative w-80 h-96">
                   {/* Box with Health Bar */}
                   {espFeatures.box && (
                     <>
@@ -436,26 +436,50 @@ const FeaturesPage = () => {
 
                   {/* Skeleton */}
                   {espFeatures.skeleton && (
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 256 384">
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 320 480" preserveAspectRatio="xMidYMid meet">
                       {/* Head */}
-                      <circle cx="128" cy="48" r="24" fill="none" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
-                      {/* Body */}
-                      <line x1="128" y1="72" x2="128" y2="180" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
-                      {/* Left Arm */}
-                      <line x1="128" y1="100" x2="60" y2="160" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
-                      {/* Right Arm */}
-                      <line x1="128" y1="100" x2="196" y2="160" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
-                      {/* Left Leg */}
-                      <line x1="128" y1="180" x2="90" y2="320" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
-                      {/* Right Leg */}
-                      <line x1="128" y1="180" x2="166" y2="320" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
+                      <circle cx="160" cy="60" r="28" fill="none" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2.5"/>
+                      {/* Neck */}
+                      <line x1="160" y1="88" x2="160" y2="110" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Spine/Body */}
+                      <line x1="160" y1="110" x2="160" y2="240" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Left Shoulder */}
+                      <line x1="160" y1="120" x2="100" y2="120" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Left Arm Upper */}
+                      <line x1="100" y1="120" x2="70" y2="200" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Left Arm Lower */}
+                      <line x1="70" y1="200" x2="50" y2="280" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Right Shoulder */}
+                      <line x1="160" y1="120" x2="220" y2="120" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Right Arm Upper */}
+                      <line x1="220" y1="120" x2="250" y2="200" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Right Arm Lower */}
+                      <line x1="250" y1="200" x2="270" y2="280" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Left Hip */}
+                      <line x1="160" y1="240" x2="120" y2="240" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Left Leg Upper */}
+                      <line x1="120" y1="240" x2="100" y2="360" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Left Leg Lower */}
+                      <line x1="100" y1="360" x2="100" y2="460" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Right Hip */}
+                      <line x1="160" y1="240" x2="200" y2="240" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Right Leg Upper */}
+                      <line x1="200" y1="240" x2="220" y2="360" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                      {/* Right Leg Lower */}
+                      <line x1="220" y1="360" x2="220" y2="460" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
                       {/* Joint circles */}
-                      <circle cx="128" cy="48" r="4" fill="rgba(34, 197, 94, 0.9)"/>
-                      <circle cx="128" cy="100" r="4" fill="rgba(34, 197, 94, 0.9)"/>
-                      <circle cx="60" cy="160" r="4" fill="rgba(34, 197, 94, 0.9)"/>
-                      <circle cx="196" cy="160" r="4" fill="rgba(34, 197, 94, 0.9)"/>
-                      <circle cx="90" cy="320" r="4" fill="rgba(34, 197, 94, 0.9)"/>
-                      <circle cx="166" cy="320" r="4" fill="rgba(34, 197, 94, 0.9)"/>
+                      <circle cx="160" cy="60" r="5" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="160" cy="110" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="100" cy="120" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="70" cy="200" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="50" cy="280" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="220" cy="120" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="250" cy="200" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="270" cy="280" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="120" cy="240" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="100" cy="360" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="200" cy="240" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      <circle cx="220" cy="360" r="4" fill="rgba(34, 197, 94, 0.95)"/>
                     </svg>
                   )}
 
