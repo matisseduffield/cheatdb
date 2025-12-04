@@ -2127,7 +2127,7 @@ const AntiCheatBadge = ({ ac, onClick }) => {
         e.stopPropagation();
         onClick?.();
       }}
-      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md transition-all duration-300 hover:scale-110 cursor-pointer flex items-center gap-1 ${styles[acName] || styles.None}`}
+      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1 ${styles[acName] || styles.None}`}
     >
       <Info className="w-3 h-3" />
       {acName}
@@ -2259,7 +2259,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
         e.stopPropagation();
         onToggleFavorite?.(game.id);
       }}
-      className="absolute top-4 right-4 z-30 p-2 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 hover:border-yellow-500/50 transition-all hover:scale-110"
+      className="absolute top-4 right-4 z-30 p-2 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 hover:border-yellow-500/50 transition-all hover:scale-105 active:scale-95"
       title={isFavorited ? "Remove from favorites" : "Add to favorites"}
     >
       <Star className={`w-4 h-4 transition-colors ${isFavorited ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-500'}`} />
@@ -2308,7 +2308,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
                 e.stopPropagation();
                 createRipple(e);
               }}
-              className="p-2 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 hover:text-blue-300 rounded-xl transition-all border border-blue-500/20 hover:scale-110 shadow-lg shadow-blue-500/10 animate-in zoom-in duration-200 ripple-button"
+              className="p-2 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 hover:text-blue-300 rounded-xl transition-all border border-blue-500/20 hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/10 animate-in zoom-in duration-200 ripple-button"
               title="Edit Game"
             >
               <Pencil className="w-4 h-4" />
@@ -2322,7 +2322,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
                 e.stopPropagation();
                 createRipple(e);
               }}
-              className="p-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all border border-red-500/20 hover:scale-110 shadow-lg shadow-red-500/10 animate-in zoom-in duration-200 ripple-button"
+              className="p-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all border border-red-500/20 hover:scale-105 active:scale-95 shadow-lg shadow-red-500/10 animate-in zoom-in duration-200 ripple-button"
               title="Delete Game"
             >
               <Trash2 className="w-4 h-4" />
@@ -2344,7 +2344,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
 
       <div className="mt-auto pt-5 border-t flex items-center justify-between text-sm transition-colors border-white/5 text-zinc-500 group-hover:text-violet-300">
         <span className="text-xs font-bold uppercase tracking-wider">Access Database</span>
-        <div className="p-1.5 rounded-full transition-all bg-white/5 group-hover:bg-violet-500/20 group-hover:scale-110">
+        <div className="p-1.5 rounded-full transition-all bg-white/5 group-hover:bg-violet-500/20 group-hover:scale-105">
           <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
@@ -2634,7 +2634,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
           </div>
           <button 
             onClick={onClose}
-            className="p-3 rounded-full transition-all hover:rotate-90 hover:scale-110 active:scale-95 duration-300 text-zinc-400 hover:bg-violet-500/20 hover:text-white border border-transparent hover:border-violet-500/30"
+            className="p-3 rounded-full transition-all hover:rotate-90 hover:scale-105 active:scale-95 duration-300 text-zinc-400 hover:bg-violet-500/20 hover:text-white border border-transparent hover:border-violet-500/30"
             title="Close (Keyboard: Esc)"
           >
             <X className="w-6 h-6" />
@@ -4034,7 +4034,7 @@ export default function App() {
         {user && (
           <button
             onClick={() => setShowLogin(true)}
-            className="fixed bottom-8 right-8 p-4 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-2xl shadow-violet-500/40 hover:scale-110 active:scale-95 transition-all duration-300 fab-float animate-in fade-in slide-in-from-bottom-4 z-40"
+            className="fixed bottom-8 right-8 p-4 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-2xl shadow-violet-500/40 hover:scale-105 active:scale-95 transition-all duration-300 fab-float animate-in fade-in slide-in-from-bottom-4 z-40"
             title="Add New Game (Coming Soon)"
           >
             <Plus className="w-6 h-6" />
@@ -4125,7 +4125,7 @@ export default function App() {
         {user && !selectedGameId && (
           <button
             onClick={() => setShowQuickAdd(true)}
-            className="fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-r from-violet-600 to-pink-600 text-white rounded-full shadow-2xl hover:shadow-violet-500/50 hover:scale-110 active:scale-95 transition-all duration-300 group"
+            className="fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-r from-violet-600 to-pink-600 text-white rounded-full shadow-2xl hover:shadow-violet-500/50 hover:scale-105 active:scale-95 transition-all duration-300 group"
             title="Quick Add Game (Ctrl/Cmd + N)"
           >
             <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
