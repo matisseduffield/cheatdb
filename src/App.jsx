@@ -1951,7 +1951,7 @@ const TypewriterText = ({ text = "v2.0 // Database" }) => {
   );
 };
 
-const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick }) => {
+const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick, onFeaturesClick }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   return (
@@ -2025,6 +2025,14 @@ const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick }) => 
               </code>
             </div>
           )}
+
+          <button 
+            onClick={onFeaturesClick}
+            className="p-3 bg-zinc-900/50 border border-white/5 rounded-xl text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 hover:border-cyan-500/20 transition-all duration-300 hover:shadow-[0_0_15px_-3px_rgba(34,211,238,0.3)]"
+            title="Features Guide"
+          >
+            <Info className="w-5 h-5" />
+          </button>
 
           {user ? (
             <button 
@@ -3257,6 +3265,218 @@ const AnalyticsDashboard = ({ onClose }) => {
   );
 };
 
+// Features Guide Modal - Interactive Aimbot Explanation
+const FeaturesGuideModal = ({ onClose }) => {
+  const [targetPosition, setTargetPosition] = useState({ x: 50, y: 50 });
+  const [crosshairPosition, setCrosshairPosition] = useState({ x: 50, y: 50 });
+  const [isAimbotEnabled, setIsAimbotEnabled] = useState(false);
+  const [smoothness, setSmoothness] = useState(50);
+  const [fov, setFov] = useState(30);
+  
+  // Simulate aimbot movement
+  useEffect(() => {
+    if (!isAimbotEnabled) return;
+    
+    const interval = setInterval(() => {
+      setCrosshairPosition(prev => {
+        const dx = targetPosition.x - prev.x;
+        const dy = targetPosition.y - prev.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 2) return prev;
+        
+        const speed = (100 - smoothness) / 100;
+        return {
+          x: prev.x + (dx * speed * 0.1),
+          y: prev.y + (dy * speed * 0.1)
+        };
+      });
+    }, 16);
+    
+    return () => clearInterval(interval);
+  }, [isAimbotEnabled, targetPosition, smoothness]);
+  
+  // Move target randomly
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTargetPosition({
+        x: 20 + Math.random() * 60,
+        y: 20 + Math.random() * 60
+      });
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
+      <div className="relative bg-zinc-900/95 border border-violet-500/20 rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-3xl font-black text-white mb-2">Features Guide</h2>
+            <p className="text-zinc-400">Learn how cheat features work with interactive demonstrations</p>
+          </div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
+        {/* Aimbot Section */}
+        <div className="space-y-6">
+          <div className="bg-zinc-800/50 border border-white/10 rounded-xl p-6">
+            <h3 className="text-2xl font-bold text-violet-400 mb-3 flex items-center gap-2">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                <line x1="12" y1="2" x2="12" y2="6" strokeWidth="2"/>
+                <line x1="12" y1="18" x2="12" y2="22" strokeWidth="2"/>
+                <line x1="2" y1="12" x2="6" y2="12" strokeWidth="2"/>
+                <line x1="18" y1="12" x2="22" y2="12" strokeWidth="2"/>
+              </svg>
+              Aimbot
+            </h3>
+            <p className="text-zinc-300 mb-6">
+              Automatically aims your crosshair at enemy players. Uses memory reading to detect player positions and smoothly moves your aim towards targets within your Field of View (FOV).
+            </p>
+            
+            {/* Interactive Demo */}
+            <div className="bg-zinc-900 border border-white/10 rounded-lg p-4 mb-4">
+              <div className="relative w-full h-64 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg overflow-hidden border border-violet-500/20">
+                {/* FOV Circle */}
+                <div 
+                  className="absolute border-2 border-violet-500/30 rounded-full pointer-events-none transition-all"
+                  style={{
+                    left: `${crosshairPosition.x}%`,
+                    top: `${crosshairPosition.y}%`,
+                    width: `${fov * 2}%`,
+                    height: `${fov * 2}%`,
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                />
+                
+                {/* Target (Enemy) */}
+                <div 
+                  className="absolute w-8 h-8 transition-all duration-500"
+                  style={{
+                    left: `${targetPosition.x}%`,
+                    top: `${targetPosition.y}%`,
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                >
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                    <div className="relative bg-red-500 w-8 h-8 rounded-full border-2 border-red-300 shadow-lg shadow-red-500/50"></div>
+                  </div>
+                </div>
+                
+                {/* Crosshair */}
+                <div 
+                  className="absolute transition-all pointer-events-none"
+                  style={{
+                    left: `${crosshairPosition.x}%`,
+                    top: `${crosshairPosition.y}%`,
+                    transform: 'translate(-50%, -50%)',
+                    transitionDuration: isAimbotEnabled ? '0ms' : '300ms'
+                  }}
+                >
+                  <div className="relative">
+                    {/* Horizontal line */}
+                    <div className="absolute w-6 h-0.5 bg-green-400 shadow-lg shadow-green-500/50" style={{ left: '-12px', top: '0' }}></div>
+                    {/* Vertical line */}
+                    <div className="absolute w-0.5 h-6 bg-green-400 shadow-lg shadow-green-500/50" style={{ left: '0', top: '-12px' }}></div>
+                    {/* Center dot */}
+                    <div className="absolute w-1 h-1 bg-green-400 rounded-full" style={{ left: '-2px', top: '-2px' }}></div>
+                  </div>
+                </div>
+                
+                {/* Instructions overlay */}
+                <div className="absolute top-4 left-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-3 py-2 rounded-lg">
+                  {isAimbotEnabled ? '🎯 Aimbot Active - Tracking Target' : '⏸️ Aimbot Disabled - Manual Aim'}
+                </div>
+              </div>
+              
+              {/* Controls */}
+              <div className="mt-4 space-y-4">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setIsAimbotEnabled(!isAimbotEnabled)}
+                    className={`px-6 py-2.5 rounded-xl font-bold transition-all ${
+                      isAimbotEnabled 
+                        ? 'bg-green-500/20 border-green-500/50 text-green-300 border' 
+                        : 'bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700'
+                    }`}
+                  >
+                    {isAimbotEnabled ? 'Disable Aimbot' : 'Enable Aimbot'}
+                  </button>
+                  <span className="text-sm text-zinc-500">Toggle to see how aimbot automatically tracks the target</span>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-bold text-zinc-400 mb-2 block">Smoothness: {smoothness}%</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={smoothness}
+                    onChange={(e) => setSmoothness(Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-zinc-500 mt-1">Higher = Slower, more natural movement (less detectable)</p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-bold text-zinc-400 mb-2 block">FOV (Field of View): {fov}%</label>
+                  <input
+                    type="range"
+                    min="10"
+                    max="50"
+                    value={fov}
+                    onChange={(e) => setFov(Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-zinc-500 mt-1">Circle radius - only locks onto targets within this area</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Technical Details */}
+            <div className="bg-zinc-800/30 border border-violet-500/20 rounded-lg p-4">
+              <h4 className="text-sm font-bold text-violet-300 mb-2 flex items-center gap-2">
+                <Info className="w-4 h-4" />
+                How It Works
+              </h4>
+              <ul className="text-sm text-zinc-400 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-violet-400">•</span>
+                  <span>Reads game memory to locate enemy player positions in 3D space</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-violet-400">•</span>
+                  <span>Calculates the required mouse movement to align crosshair with target</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-violet-400">•</span>
+                  <span>Smoothness controls how quickly the aim snaps (lower = instant, higher = gradual)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-violet-400">•</span>
+                  <span>FOV limits the activation radius to make it less obvious</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          {/* More features coming soon */}
+          <div className="text-center text-zinc-500 text-sm">
+            More features (ESP, Exploits, etc.) coming soon...
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [games, setGames] = useState([]);
@@ -3280,6 +3500,7 @@ export default function App() {
   const [selectedGames, setSelectedGames] = useState([]);
   const [focusedGameIndex, setFocusedGameIndex] = useState(-1);
   const [showAntiCheatInfo, setShowAntiCheatInfo] = useState(null);
+  const [showFeaturesGuide, setShowFeaturesGuide] = useState(false);
   const [sortBy, setSortBy] = useState('title'); // title, cheats, popular
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [filterAntiCheat, setFilterAntiCheat] = useState('ALL');
@@ -3750,6 +3971,7 @@ export default function App() {
           user={user}
           onLoginClick={() => setShowLogin(true)}
           onLogoutClick={handleLogout}
+          onFeaturesClick={() => setShowFeaturesGuide(true)}
         />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -4105,6 +4327,11 @@ export default function App() {
             onClose={() => setShowLogin(false)}
             onLogin={handleLogin}
           />
+        )}
+
+        {/* Features Guide Modal */}
+        {showFeaturesGuide && (
+          <FeaturesGuideModal onClose={() => setShowFeaturesGuide(false)} />
         )}
 
         {/* Toast Notifications Queue */}
