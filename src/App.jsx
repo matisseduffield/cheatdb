@@ -3826,17 +3826,23 @@ export default function App() {
           {!loading && games.length > 0 && (
             <div className="mb-6 flex flex-wrap items-center gap-3">
               {/* Sort Dropdown */}
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-zinc-500" />
+              <div className="relative">
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-zinc-900/50 backdrop-blur-sm border border-white/10 text-white rounded-xl px-4 py-2 text-sm font-bold focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 focus:outline-none cursor-pointer hover:bg-zinc-900/80 hover:border-violet-500/30 transition-all appearance-none pr-10 bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3cpath%20d%3D%22M7%207l3-3%203%203m0%206l-3%203-3-3%22%20stroke%3D%22%239CA3AF%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3c%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.5rem_center] bg-no-repeat"
+                  className="bg-zinc-900/80 backdrop-blur-sm border border-white/10 text-white rounded-xl pl-4 pr-10 py-2.5 text-sm font-bold focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none cursor-pointer hover:bg-zinc-900 hover:border-violet-500/30 transition-all appearance-none shadow-lg shadow-black/20"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a78bfa' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em'
+                  }}
                 >
-                  <option value="title" className="bg-zinc-900 text-white">A-Z</option>
-                  <option value="cheats" className="bg-zinc-900 text-white">Most Cheats</option>
-                  <option value="popular" className="bg-zinc-900 text-white">Most Popular</option>
+                  <option value="title">A-Z</option>
+                  <option value="cheats">Most Cheats</option>
+                  <option value="popular">Most Popular</option>
                 </select>
+                <Filter className="w-4 h-4 text-violet-400 absolute left-[-1.75rem] top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Anti-Cheat Filter */}

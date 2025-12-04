@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* Custom dropdown styling for better dark theme support */
+  select option {
+    background-color: #18181b;
+    color: white;
+    padding: 0.75rem 1rem;
+  }
+  
+  select option:hover,
+  select option:focus,
+  select option:checked {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+    color: #e9d5ff;
+  }
+}
