@@ -83,7 +83,7 @@ async function generateSitemap() {
     
   } catch (error) {
     console.error('Error generating sitemap:', error.message);
-    process.exit(1);
+    globalThis.process.exit(1);
   }
 }
 
@@ -108,7 +108,7 @@ function updateMainSitemap() {
 }
 
 // Run the generator
-generateSitemap().then(() => process.exit(0)).catch(err => {
+generateSitemap().then(() => globalThis.process.exit(0)).catch(err => {
   console.error(err);
-  process.exit(1);
+  globalThis.process.exit(1);
 });

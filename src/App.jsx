@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -17,8 +17,6 @@ import {
   deleteDoc,
   doc,
   arrayUnion,
-  addDoc,
-  serverTimestamp,
   runTransaction
 } from 'firebase/firestore';
 import { 
@@ -43,7 +41,9 @@ import {
   Check,
   Sparkles,
   Shield,
-  ThumbsUp
+  ThumbsUp,
+  List,
+  Grid
 } from 'lucide-react';
 
 // --- Firebase Configuration ---
@@ -84,7 +84,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'cheatdb-games-v2';
+const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'cheatdb-games-v2';
 
 // --- Utility Functions for Visual Effects ---
 const createConfetti = () => {
@@ -117,6 +117,23 @@ const triggerShake = (elementId) => {
   }
 };
 
+// Custom hook for debounced value
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 // Format timestamp to relative time (e.g., "2 hours ago")
 const formatTimeAgo = (timestamp) => {
   if (!timestamp) return '';
@@ -139,8 +156,7 @@ const formatTimeAgo = (timestamp) => {
 
 // --- New Component: Animated Background Mesh ---
 const AnimatedBackgroundMesh = ({ mousePos }) => {
-  const getOrbPosition = (baseX, baseY, intensity = 1) => {
-    const offset = 40 * intensity;
+  const getOrbPosition = (baseX, baseY) => {
     const x = baseX + (mousePos.x - window.innerWidth / 2) * 0.05;
     const y = baseY + (mousePos.y - window.innerHeight / 2) * 0.05;
     return { x, y };
@@ -205,6 +221,8 @@ const ShootingStars = () => {
   const [container, setContainer] = useState(null);
 
   useEffect(() => {
+    let containerRef = null;
+    
     // Inject CSS into document head
     const styleId = 'shooting-stars-style';
     if (!document.getElementById(styleId)) {
@@ -299,11 +317,13 @@ const ShootingStars = () => {
       document.head.appendChild(style);
     }
 
-    // Get or create container and set state
-    if (!container) {
+    // Get or create container
+    if (!containerRef) {
       const newContainer = document.createElement('div');
       newContainer.className = 'shooting-stars-container';
       document.body.appendChild(newContainer);
+      containerRef = newContainer;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setContainer(newContainer);
     }
 
@@ -370,8 +390,8 @@ const ShootingStars = () => {
         document.head.removeChild(styleElement);
       }
       // Cleanup: Remove container div from body
-      if (container && document.body.contains(container)) {
-        document.body.removeChild(container);
+      if (containerRef && document.body.contains(containerRef)) {
+        document.body.removeChild(containerRef);
       }
     };
   }, []);
@@ -606,6 +626,7 @@ const CursorGlow = ({ onMouseMove }) => {
       window.removeEventListener('mousemove', updatePos);
       document.removeEventListener('mouseleave', handleMouseLeave);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onMouseMove]);
 
   if (!isVisible) return null;
@@ -824,20 +845,46 @@ const CursorGlow = ({ onMouseMove }) => {
   );
 };
 
-// Toast Notification Component
-const Toast = ({ message, type = 'success', onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
+// Enhanced Toast Notification Component with Queue System
+const Toast = ({ toasts, onClose }) => {
+  return (
+    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[70] flex flex-col gap-2 items-center">
+      {toasts.map((toast, index) => (
+        <ToastItem key={toast.id} toast={toast} onClose={() => onClose(toast.id)} index={index} />
+      ))}
+    </div>
+  );
+};
 
-  const bgColor = type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' : 
-                 type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-300' :
-                 'bg-blue-500/20 border-blue-500/30 text-blue-300';
+const ToastItem = ({ toast, onClose, index }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, toast.duration || 3000);
+    return () => clearTimeout(timer);
+  }, [onClose, toast.duration]);
+
+  const styles = {
+    success: 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300',
+    error: 'bg-red-500/20 border-red-500/30 text-red-300',
+    info: 'bg-blue-500/20 border-blue-500/30 text-blue-300',
+    warning: 'bg-amber-500/20 border-amber-500/30 text-amber-300'
+  };
+
+  const icons = {
+    success: Check,
+    error: X,
+    info: Sparkles,
+    warning: AlertTriangle
+  };
+
+  const Icon = icons[toast.type] || Sparkles;
 
   return (
-    <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl border backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-300 font-semibold text-sm z-[70] ${bgColor}`}>
-      {message}
+    <div 
+      className={`px-6 py-3 rounded-xl border backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-300 font-semibold text-sm flex items-center gap-3 ${styles[toast.type] || styles.info}`}
+      style={{ animationDelay: `${index * 100}ms` }}
+    >
+      <Icon className="w-4 h-4" />
+      {toast.message}
     </div>
   );
 };
@@ -915,6 +962,7 @@ const CommandPalette = ({ onClose, games, onSelectGame, user }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIndex, allResults]);
 
   return (
@@ -988,6 +1036,239 @@ const CommandPalette = ({ onClose, games, onSelectGame, user }) => {
 
 // --- Components ---
 
+// Edit Game Modal Component
+const EditGameModal = ({ game, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    title: game.title || '',
+    antiCheat: game.antiCheat || 'None',
+    nicknames: game.nicknames || []
+  });
+  const [newNickname, setNewNickname] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const antiCheatOptions = ['EAC', 'BattlEye', 'Vanguard', 'VAC', 'Ricochet', 'None'];
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    await onSave(game.id, formData);
+    setIsSaving(false);
+    onClose();
+  };
+
+  const addNickname = () => {
+    if (newNickname.trim() && !formData.nicknames.includes(newNickname.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        nicknames: [...prev.nicknames, newNickname.trim()]
+      }));
+      setNewNickname('');
+    }
+  };
+
+  const removeNickname = (nickname) => {
+    setFormData(prev => ({
+      ...prev,
+      nicknames: prev.nicknames.filter(n => n !== nickname)
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
+      <div className="relative bg-zinc-900/95 border border-violet-500/20 rounded-2xl p-8 max-w-2xl w-full animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+            <Pencil className="w-6 h-6 text-violet-400" />
+            Edit Game Details
+          </h2>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Title */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">Game Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              className="w-full rounded-xl px-4 py-3 bg-black/50 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-500"
+            />
+          </div>
+
+          {/* Anti-Cheat */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">Anti-Cheat</label>
+            <div className="grid grid-cols-3 gap-2">
+              {antiCheatOptions.map(ac => (
+                <button
+                  key={ac}
+                  onClick={() => setFormData(prev => ({ ...prev, antiCheat: ac }))}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                    formData.antiCheat === ac
+                      ? 'bg-violet-500/30 border-violet-500/50 text-violet-200 border'
+                      : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50'
+                  }`}
+                >
+                  {ac}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Nicknames */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">Nicknames (for search)</label>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={newNickname}
+                onChange={(e) => setNewNickname(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addNickname()}
+                placeholder="Add nickname (e.g., cs2, cod)"
+                className="flex-1 rounded-xl px-4 py-2 bg-black/50 border border-white/10 text-white text-sm outline-none focus:ring-1 focus:ring-violet-500"
+              />
+              <button
+                onClick={addNickname}
+                className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-all"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {formData.nicknames.map(nickname => (
+                <span key={nickname} className="px-3 py-1 bg-zinc-800/50 text-zinc-300 text-sm rounded-lg flex items-center gap-2">
+                  {nickname}
+                  <button
+                    onClick={() => removeNickname(nickname)}
+                    className="text-zinc-500 hover:text-red-400 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-8">
+          <button
+            onClick={onClose}
+            className="px-6 py-3 text-zinc-400 hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                Save Changes
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Pagination Controls Component
+const PaginationControls = ({ currentPage, totalPages, onPageChange, displayedCount, totalCount }) => {
+  const maxVisiblePages = 5;
+  const halfVisible = Math.floor(maxVisiblePages / 2);
+  
+  let startPage = Math.max(1, currentPage - halfVisible);
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  
+  if (endPage - startPage < maxVisiblePages - 1) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+  
+  const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+
+  return (
+    <div className="flex flex-col items-center gap-4 mt-8">
+      <div className="text-sm text-zinc-500 font-medium">
+        Showing <span className="text-violet-400 font-bold">{displayedCount}</span> of <span className="text-violet-400 font-bold">{totalCount}</span> games
+      </div>
+      
+      <div className="flex items-center gap-2">
+        {/* Previous Button */}
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-violet-500/20 text-zinc-400 hover:text-violet-400"
+          title="Previous Page"
+        >
+          <ChevronRight className="w-5 h-5 rotate-180" />
+        </button>
+
+        {/* First Page */}
+        {startPage > 1 && (
+          <>
+            <button
+              onClick={() => onPageChange(1)}
+              className="px-3 py-1 rounded-lg text-sm font-bold transition-all hover:bg-violet-500/20 text-zinc-400 hover:text-violet-400"
+            >
+              1
+            </button>
+            {startPage > 2 && <span className="text-zinc-600">...</span>}
+          </>
+        )}
+
+        {/* Page Numbers */}
+        {pages.map(page => (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`px-3 py-1 rounded-lg text-sm font-bold transition-all ${
+              page === currentPage
+                ? 'bg-violet-500/30 text-violet-300 border border-violet-500/50'
+                : 'hover:bg-violet-500/20 text-zinc-400 hover:text-violet-400'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {/* Last Page */}
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="text-zinc-600">...</span>}
+            <button
+              onClick={() => onPageChange(totalPages)}
+              className="px-3 py-1 rounded-lg text-sm font-bold transition-all hover:bg-violet-500/20 text-zinc-400 hover:text-violet-400"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+
+        {/* Next Button */}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-violet-500/20 text-zinc-400 hover:text-violet-400"
+          title="Next Page"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Ripple Effect Handler
 const createRipple = (event) => {
   const button = event.currentTarget;
@@ -1039,63 +1320,68 @@ const BlobBackground = ({ mousePos }) => {
   }, []);
 
   useEffect(() => {
-    // Blob 1 (Cyan) position - top left
-    const blob1X = window.innerWidth * 0.15 + blob1Float.x;
-    const blob1Y = window.innerHeight * 0.1 + blob1Float.y;
-    const distX1 = mousePos.x - blob1X;
-    const distY1 = mousePos.y - blob1Y;
-    const distance1 = Math.sqrt(distX1 * distX1 + distY1 * distY1);
-    
-    if (distance1 < 300) {
-      const pushForce = (300 - distance1) / 300;
-      const angle1 = Math.atan2(distY1, distX1);
-      setBlob1Offset({
-        x: -Math.cos(angle1) * pushForce * 150,
-        y: -Math.sin(angle1) * pushForce * 150,
-        scale: 1 + pushForce * 0.8,
-        brightness: 1 + pushForce * 2
-      });
+    // Use callback to batch state updates
+    const updateBlobs = () => {
+      // Blob 1 (Cyan) position - top left
+      const blob1X = window.innerWidth * 0.15 + blob1Float.x;
+      const blob1Y = window.innerHeight * 0.1 + blob1Float.y;
+      const distX1 = mousePos.x - blob1X;
+      const distY1 = mousePos.y - blob1Y;
+      const distance1 = Math.sqrt(distX1 * distX1 + distY1 * distY1);
       
-      // Add ripples more frequently
-      if (distance1 < 150 && Math.random() > 0.5) {
-        const rippleId = Date.now() + Math.random();
-        setRipples1(prev => [...prev, { id: rippleId, x: distX1, y: distY1 }]);
-        setTimeout(() => {
-          setRipples1(prev => prev.filter(r => r.id !== rippleId));
-        }, 1000);
+      if (distance1 < 300) {
+        const pushForce = (300 - distance1) / 300;
+        const angle1 = Math.atan2(distY1, distX1);
+        setBlob1Offset({
+          x: -Math.cos(angle1) * pushForce * 150,
+          y: -Math.sin(angle1) * pushForce * 150,
+          scale: 1 + pushForce * 0.8,
+          brightness: 1 + pushForce * 2
+        });
+        
+        // Add ripples more frequently
+        if (distance1 < 150 && Math.random() > 0.5) {
+          const rippleId = Date.now() + Math.random();
+          setRipples1(prev => [...prev, { id: rippleId, x: distX1, y: distY1 }]);
+          setTimeout(() => {
+            setRipples1(prev => prev.filter(r => r.id !== rippleId));
+          }, 1000);
+        }
+      } else {
+        setBlob1Offset({ x: 0, y: 0, scale: 1, brightness: 1 });
       }
-    } else {
-      setBlob1Offset({ x: 0, y: 0, scale: 1, brightness: 1 });
-    }
 
-    // Blob 2 (Pink) position - bottom right
-    const blob2X = window.innerWidth * 0.85 + blob2Float.x;
-    const blob2Y = window.innerHeight * 0.75 + blob2Float.y;
-    const distX2 = mousePos.x - blob2X;
-    const distY2 = mousePos.y - blob2Y;
-    const distance2 = Math.sqrt(distX2 * distX2 + distY2 * distY2);
-    
-    if (distance2 < 300) {
-      const pushForce = (300 - distance2) / 300;
-      const angle2 = Math.atan2(distY2, distX2);
-      setBlob2Offset({
-        x: -Math.cos(angle2) * pushForce * 150,
-        y: -Math.sin(angle2) * pushForce * 150,
-        scale: 1 + pushForce * 0.8,
-        brightness: 1 + pushForce * 2
-      });
+      // Blob 2 (Pink) position - bottom right
+      const blob2X = window.innerWidth * 0.85 + blob2Float.x;
+      const blob2Y = window.innerHeight * 0.75 + blob2Float.y;
+      const distX2 = mousePos.x - blob2X;
+      const distY2 = mousePos.y - blob2Y;
+      const distance2 = Math.sqrt(distX2 * distX2 + distY2 * distY2);
       
-      // Add ripples more frequently
-      if (distance2 < 150 && Math.random() > 0.5) {
-        const rippleId = Date.now() + Math.random();
-        setRipples2(prev => [...prev, { id: rippleId, x: distX2, y: distY2 }]);
-        setTimeout(() => {
-          setRipples2(prev => prev.filter(r => r.id !== rippleId));
-        }, 1000);
+      if (distance2 < 300) {
+        const pushForce = (300 - distance2) / 300;
+        const angle2 = Math.atan2(distY2, distX2);
+        setBlob2Offset({
+          x: -Math.cos(angle2) * pushForce * 150,
+          y: -Math.sin(angle2) * pushForce * 150,
+          scale: 1 + pushForce * 0.8,
+          brightness: 1 + pushForce * 2
+        });
+        
+        // Add ripples more frequently
+        if (distance2 < 150 && Math.random() > 0.5) {
+          const rippleId = Date.now() + Math.random();
+          setRipples2(prev => [...prev, { id: rippleId, x: distX2, y: distY2 }]);
+          setTimeout(() => {
+            setRipples2(prev => prev.filter(r => r.id !== rippleId));
+          }, 1000);
+        }
+      } else {
+        setBlob2Offset({ x: 0, y: 0, scale: 1, brightness: 1 });
       }
-    } else {
-      setBlob2Offset({ x: 0, y: 0, scale: 1, brightness: 1 });
-    }
+    };
+    
+    updateBlobs();
   }, [mousePos, blob1Float, blob2Float]);
 
   return (
@@ -1219,6 +1505,7 @@ const TypewriterText = ({ text = "v2.0 // Database" }) => {
       }, deletingSpeed);
     } else if (isDeleting && displayText === '') {
       // Start typing again
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDeleting(false);
     }
     
@@ -1371,7 +1658,51 @@ const logoScaleMap = {
   'Team Fortress 2': 1.55,
 };
 
-const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index }) => {
+// Lazy Loading Image Component
+const LazyImage = ({ src, alt, className, style, onError }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const imgRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '50px' }
+    );
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={imgRef} className={className} style={style}>
+      {!isLoaded && (
+        <div className="w-full h-full animate-pulse bg-zinc-800/50 rounded" />
+      )}
+      {isInView && (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+          style={style}
+          onLoad={() => setIsLoaded(true)}
+          onError={onError}
+        />
+      )}
+    </div>
+  );
+};
+
+const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index, onEdit }) => {
   const [showPreview, setShowPreview] = useState(false);
   const freeCount = game.cheats?.filter(c => c.tier === 'FREE' || !c.tier).length || 0;
   const paidCount = game.cheats?.filter(c => c.tier === 'PAID').length || 0;
@@ -1402,10 +1733,9 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index 
         <div className="flex items-center gap-3">
           <div className="p-1 rounded-2xl border shadow-inner group-hover:scale-110 transition-transform duration-300 bg-white/90 border-white/5 overflow-hidden flex items-center justify-center" style={{ width: '40px', height: '40px' }}>
             {gameLogoMap[game.title] ? (
-              <img 
+              <LazyImage
                 src={gameLogoMap[game.title]} 
                 alt={game.title}
-                loading="lazy"
                 className="w-full h-full object-cover object-center"
                 style={{ transform: `scale(${logoScaleMap[game.title] || 1.5})` }}
                 onError={(e) => {
@@ -1419,22 +1749,38 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index 
           <AntiCheatBadge ac={game.antiCheat} />
         </div>
         
-        {/* DELETE BUTTON (Admin Only + Edit Mode) */}
+        {/* EDIT & DELETE BUTTONS (Admin Only + Edit Mode) */}
         {user && isEditMode && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); 
-              onDelete(game.id);
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              createRipple(e);
-            }}
-            className="p-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all border border-red-500/20 hover:scale-110 shadow-lg shadow-red-500/10 animate-in zoom-in duration-200 ripple-button"
-            title="Delete Game"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); 
+                onEdit(game);
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                createRipple(e);
+              }}
+              className="p-2 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 hover:text-blue-300 rounded-xl transition-all border border-blue-500/20 hover:scale-110 shadow-lg shadow-blue-500/10 animate-in zoom-in duration-200 ripple-button"
+              title="Edit Game"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); 
+                onDelete(game.id);
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                createRipple(e);
+              }}
+              className="p-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all border border-red-500/20 hover:scale-110 shadow-lg shadow-red-500/10 animate-in zoom-in duration-200 ripple-button"
+              title="Delete Game"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
       
@@ -1696,15 +2042,6 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     setEditingCheat(null);
   };
 
-  const toggleEditFeature = (feature) => {
-    setEditingCheat(prev => ({
-      ...prev,
-      features: prev.features.includes(feature)
-        ? prev.features.filter(f => f !== feature)
-        : [...prev.features, feature]
-    }));
-  };
-
   const filteredCheats = game.cheats ? game.cheats.filter(cheat => 
     tierFilter === 'ALL' || cheat.tier === tierFilter
   ) : [];
@@ -1918,7 +2255,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                 
                 return isEditing ? (
                   // Edit Form
-                  <form onSubmit={handleEditCheat} key={cheat.id || idx} className="col-span-1 p-5 border rounded-2xl animate-in slide-in-from-top-4 bg-zinc-900/60 border-violet-500/40 space-y-4">
+                  <form onSubmit={handleEditCheat} key={cheat.id} className="col-span-1 p-5 border rounded-2xl animate-in slide-in-from-top-4 bg-zinc-900/60 border-violet-500/40 space-y-4">
                     <h4 className="font-bold text-sm text-violet-300 mb-4">Edit Cheat</h4>
                     <div className="space-y-3">
                       <input
@@ -1985,7 +2322,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                 ) : (
                   // Cheat Card
                   <div
-                    key={cheat.id || idx}
+                    key={cheat.id}
                     className="group relative p-4 sm:p-5 border rounded-2xl transition-all duration-300 bg-zinc-900/20 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_15px_40px_-10px_rgba(139,92,246,0.5)] flex flex-col overflow-hidden"
                     style={{ opacity: cheat.id ? 1 : 0.5 }}
                   >
@@ -2135,19 +2472,229 @@ const MouseEffects = () => {
 
 // --- Main App ---
 
+// Analytics utility functions
+const analytics = {
+  track: (event, data = {}) => {
+    try {
+      const analytics = JSON.parse(localStorage.getItem('cheatdb_analytics') || '{}');
+      const now = Date.now();
+      
+      if (!analytics[event]) {
+        analytics[event] = [];
+      }
+      
+      analytics[event].push({ ...data, timestamp: now });
+      
+      // Keep only last 1000 events per type
+      if (analytics[event].length > 1000) {
+        analytics[event] = analytics[event].slice(-1000);
+      }
+      
+      localStorage.setItem('cheatdb_analytics', JSON.stringify(analytics));
+    } catch (err) {
+      console.error('Analytics tracking error:', err);
+    }
+  },
+  
+  getStats: () => {
+    try {
+      const analytics = JSON.parse(localStorage.getItem('cheatdb_analytics') || '{}');
+      const now = Date.now();
+      const dayAgo = now - (24 * 60 * 60 * 1000);
+      const weekAgo = now - (7 * 24 * 60 * 60 * 1000);
+      
+      return {
+        searches: {
+          total: analytics.search?.length || 0,
+          last24h: analytics.search?.filter(e => e.timestamp > dayAgo).length || 0,
+          last7days: analytics.search?.filter(e => e.timestamp > weekAgo).length || 0,
+          topQueries: analytics.search
+            ?.filter(e => e.timestamp > weekAgo)
+            .reduce((acc, e) => {
+              acc[e.query] = (acc[e.query] || 0) + 1;
+              return acc;
+            }, {})
+        },
+        gameViews: {
+          total: analytics.gameView?.length || 0,
+          last24h: analytics.gameView?.filter(e => e.timestamp > dayAgo).length || 0,
+          last7days: analytics.gameView?.filter(e => e.timestamp > weekAgo).length || 0,
+          topGames: analytics.gameView
+            ?.filter(e => e.timestamp > weekAgo)
+            .reduce((acc, e) => {
+              acc[e.gameTitle] = (acc[e.gameTitle] || 0) + 1;
+              return acc;
+            }, {})
+        },
+        votes: {
+          total: analytics.vote?.length || 0,
+          last24h: analytics.vote?.filter(e => e.timestamp > dayAgo).length || 0,
+          last7days: analytics.vote?.filter(e => e.timestamp > weekAgo).length || 0
+        }
+      };
+    } catch (err) {
+      console.error('Analytics stats error:', err);
+      return { searches: {}, gameViews: {}, votes: {} };
+    }
+  }
+};
+
+// Analytics Dashboard Modal
+const AnalyticsDashboard = ({ onClose }) => {
+  const stats = analytics.getStats();
+  
+  const topSearches = Object.entries(stats.searches.topQueries || {})
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
+  
+  const topGames = Object.entries(stats.gameViews.topGames || {})
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
+      <div className="relative bg-zinc-900/95 border border-violet-500/20 rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+            <Database className="w-8 h-8 text-violet-400" />
+            Usage Analytics
+          </h2>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Searches */}
+          <div className="bg-zinc-800/30 border border-white/5 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Search className="w-6 h-6 text-blue-400" />
+              <h3 className="text-lg font-bold text-white">Searches</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">Last 24h</span>
+                <span className="text-xl font-bold text-blue-400">{stats.searches.last24h}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">Last 7 days</span>
+                <span className="text-xl font-bold text-blue-300">{stats.searches.last7days}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">All Time</span>
+                <span className="text-xl font-bold text-blue-200">{stats.searches.total}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Game Views */}
+          <div className="bg-zinc-800/30 border border-white/5 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Gamepad2 className="w-6 h-6 text-violet-400" />
+              <h3 className="text-lg font-bold text-white">Game Views</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">Last 24h</span>
+                <span className="text-xl font-bold text-violet-400">{stats.gameViews.last24h}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">Last 7 days</span>
+                <span className="text-xl font-bold text-violet-300">{stats.gameViews.last7days}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">All Time</span>
+                <span className="text-xl font-bold text-violet-200">{stats.gameViews.total}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Votes */}
+          <div className="bg-zinc-800/30 border border-white/5 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <ThumbsUp className="w-6 h-6 text-emerald-400" />
+              <h3 className="text-lg font-bold text-white">Votes Cast</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">Last 24h</span>
+                <span className="text-xl font-bold text-emerald-400">{stats.votes.last24h}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">Last 7 days</span>
+                <span className="text-xl font-bold text-emerald-300">{stats.votes.last7days}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-500">All Time</span>
+                <span className="text-xl font-bold text-emerald-200">{stats.votes.total}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Searches */}
+        {topSearches.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-amber-400" />
+              Top Searches (Last 7 Days)
+            </h3>
+            <div className="space-y-2">
+              {topSearches.map(([query, count], idx) => (
+                <div key={query} className="flex items-center gap-3 bg-zinc-800/30 border border-white/5 rounded-lg p-3">
+                  <span className="text-lg font-bold text-zinc-600 w-6">{idx + 1}</span>
+                  <span className="flex-1 text-white font-medium">{query}</span>
+                  <span className="text-amber-400 font-bold">{count}×</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Top Games */}
+        {topGames.length > 0 && (
+          <div>
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-pink-400" />
+              Most Viewed Games (Last 7 Days)
+            </h3>
+            <div className="space-y-2">
+              {topGames.map(([game, count], idx) => (
+                <div key={game} className="flex items-center gap-3 bg-zinc-800/30 border border-white/5 rounded-lg p-3">
+                  <span className="text-lg font-bold text-zinc-600 w-6">{idx + 1}</span>
+                  <span className="flex-1 text-white font-medium">{game}</span>
+                  <span className="text-pink-400 font-bold">{count}×</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [selectedGameId, setSelectedGameId] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [toasts, setToasts] = useState([]);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [displayedGames, setDisplayedGames] = useState(20);
+  const [editingGame, setEditingGame] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usePagination, setUsePagination] = useState(false);
+  const gamesPerPage = 20;
   const [userVotes, setUserVotes] = useState(() => {
     // Load votes from localStorage on initialization
     try {
@@ -2157,6 +2704,19 @@ export default function App() {
       return {};
     }
   });
+
+  // Toast queue management
+  const addToast = useCallback((message, type = 'info') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
 
   // Derive selectedGame from games array for real-time sync
   const selectedGame = games.find(g => g.id === selectedGameId);
@@ -2234,25 +2794,38 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedGameId, showLogin, showShortcuts]);
+  }, [selectedGameId, showLogin, showShortcuts, showCommandPalette]);
 
   // 4. Advanced Filter
   const filteredGames = useMemo(() => {
     let result = games;
     
-    // Text search
-    if (searchTerm.trim()) {
-      const lower = searchTerm.toLowerCase();
+    // Text search (use debounced term for performance)
+    if (debouncedSearchTerm.trim()) {
+      const lower = debouncedSearchTerm.toLowerCase();
       result = result.filter(g => {
         const titleMatch = g.title.toLowerCase().includes(lower);
         const nicknameMatch = g.nicknames && g.nicknames.some(nick => nick.toLowerCase().includes(lower));
         const acMatch = g.antiCheat && g.antiCheat.toLowerCase().includes(lower);
         return titleMatch || nicknameMatch || acMatch;
       });
+      
+      // Track search analytics
+      analytics.track('search', { query: debouncedSearchTerm });
     }
     
     return result;
-  }, [games, searchTerm]);
+  }, [games, debouncedSearchTerm]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredGames.length / gamesPerPage);
+  const paginatedGames = useMemo(() => {
+    if (!usePagination) return filteredGames.slice(0, displayedGames);
+    
+    const startIndex = (currentPage - 1) * gamesPerPage;
+    const endIndex = startIndex + gamesPerPage;
+    return filteredGames.slice(startIndex, endIndex);
+  }, [filteredGames, currentPage, gamesPerPage, usePagination, displayedGames]);
 
   // 4. Actions
   const handleLogin = async (email, password) => {
@@ -2264,13 +2837,36 @@ export default function App() {
     setIsEditMode(false); // Reset edit mode on logout
   };
 
+  const handleEditGame = useCallback((game) => {
+    setEditingGame(game);
+  }, []);
+
+  const handleSaveGameEdit = useCallback(async (gameId, updates) => {
+    if (!user) {
+      addToast('You must be logged in to edit games', 'error');
+      return;
+    }
+
+    try {
+      const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', gameId);
+      await updateDoc(gameRef, updates);
+      setEditingGame(null);
+      addToast('Game updated successfully', 'success');
+    } catch (err) {
+      console.error("Error updating game:", err);
+      addToast('Failed to update game', 'error');
+    }
+  }, [user, addToast]);
+
   const handleDeleteGame = useCallback(async (gameId) => {
     try {
       await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'games', gameId));
+      addToast('Game deleted successfully', 'success');
     } catch (err) {
       console.error("Error deleting:", err);
+      addToast('Failed to delete game', 'error');
     }
-  }, [appId]);
+  }, [addToast]);
 
   const handleAddCheatToGame = useCallback(async (gameId, cheatData) => {
     if (!user) return;
@@ -2285,13 +2881,14 @@ export default function App() {
       });
       // Trigger confetti on success
       createConfetti();
+      addToast('Cheat added successfully', 'success');
     } catch (err) {
       console.error(err);
       // Trigger error shake on failure
       triggerShake('app-root');
-      alert("Error adding cheat. Do you have permission?");
+      addToast('Error adding cheat', 'error');
     }
-  }, [appId, user]);
+  }, [user, addToast]);
 
   const handleVoteCheat = useCallback(async (cheatId) => {
     if (!selectedGame) return;
@@ -2301,6 +2898,14 @@ export default function App() {
     
     try {
       const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', selectedGame.id);
+      
+      // Track vote analytics
+      analytics.track('vote', { 
+        gameId: selectedGame.id,
+        gameTitle: selectedGame.title,
+        cheatId,
+        action: hasVoted ? 'unvote' : 'vote'
+      });
       
       // Use transaction to safely update vote count
       await runTransaction(db, async (transaction) => {
@@ -2344,7 +2949,7 @@ export default function App() {
       console.error("Error voting:", err);
       alert("Failed to vote. Please try again.");
     }
-  }, [appId, selectedGame, userVotes]);
+  }, [selectedGame, userVotes]);
 
   const userVotedCheat = (cheatId) => {
     if (!selectedGame) return false;
@@ -2395,6 +3000,14 @@ export default function App() {
             {user && (
               <div className="flex items-center gap-3">
                 <button 
+                  onClick={() => setShowAnalytics(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 shadow-lg bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/5 hover:border-violet-500/30"
+                  title="View Analytics"
+                >
+                  <Database className="w-3 h-3" />
+                  Analytics
+                </button>
+                <button 
                   onClick={() => setIsEditMode(!isEditMode)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 shadow-lg ${
                     isEditMode 
@@ -2413,6 +3026,14 @@ export default function App() {
                       Edit Games
                     </>
                   )}
+                </button>
+                <button 
+                  onClick={() => setUsePagination(!usePagination)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 shadow-lg bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/5 hover:border-cyan-500/30"
+                  title={usePagination ? "Switch to Infinite Scroll" : "Switch to Pagination"}
+                >
+                  {usePagination ? <List className="w-3 h-3" /> : <Grid className="w-3 h-3" />}
+                  {usePagination ? "Paginated" : "Infinite"}
                 </button>
               </div>
             )}
@@ -2434,11 +3055,20 @@ export default function App() {
           ) : filteredGames.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredGames.slice(0, displayedGames).map((game, idx) => (
+                {paginatedGames.map((game, idx) => (
                   <GameCard 
                     key={game.id} 
                     game={game} 
-                    onClick={(game) => setSelectedGameId(game.id)}
+                    onClick={(game) => {
+                      setSelectedGameId(game.id);
+                      // Track game view analytics
+                      analytics.track('gameView', {
+                        gameId: game.id,
+                        gameTitle: game.title,
+                        antiCheat: game.antiCheat
+                      });
+                    }}
+                    onEdit={handleEditGame}
                     user={user}
                     onDelete={handleDeleteGame}
                     isEditMode={isEditMode}
@@ -2447,21 +3077,31 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Infinite Scroll Loader */}
-              {displayedGames < filteredGames.length && (
-                <div className="flex flex-col items-center gap-6 pt-12">
-                  <div className="infinite-scroll-loader">
-                    <div className="loader-dot"></div>
-                    <div className="loader-dot"></div>
-                    <div className="loader-dot"></div>
+              {/* Pagination or Infinite Scroll */}
+              {usePagination ? (
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filteredGames.length}
+                  itemsPerPage={gamesPerPage}
+                />
+              ) : (
+                displayedGames < filteredGames.length && (
+                  <div className="flex flex-col items-center gap-6 pt-12">
+                    <div className="infinite-scroll-loader">
+                      <div className="loader-dot"></div>
+                      <div className="loader-dot"></div>
+                      <div className="loader-dot"></div>
+                    </div>
+                    <button
+                      onClick={() => setDisplayedGames(prev => Math.min(prev + 20, filteredGames.length))}
+                      className="px-8 py-3 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 font-bold text-sm hover:bg-violet-600/30 transition-all"
+                    >
+                      Load More ({displayedGames} / {filteredGames.length})
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setDisplayedGames(prev => Math.min(prev + 20, filteredGames.length))}
-                    className="px-8 py-3 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 font-bold text-sm hover:bg-violet-600/30 transition-all"
-                  >
-                    Load More ({displayedGames} / {filteredGames.length})
-                  </button>
-                </div>
+                )
               )}
             </>
           ) : (
@@ -2536,12 +3176,23 @@ export default function App() {
           />
         )}
 
-        {/* Toast Notification */}
-        {toast && (
-          <Toast 
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
+        {/* Toast Notifications Queue */}
+        <Toast 
+          toasts={toasts}
+          onClose={removeToast}
+        />
+
+        {/* Analytics Dashboard */}
+        {showAnalytics && (
+          <AnalyticsDashboard onClose={() => setShowAnalytics(false)} />
+        )}
+
+        {/* Edit Game Modal */}
+        {editingGame && (
+          <EditGameModal
+            game={editingGame}
+            onClose={() => setEditingGame(null)}
+            onSave={handleSaveGameEdit}
           />
         )}
 
@@ -2555,7 +3206,7 @@ export default function App() {
           <CommandPalette 
             onClose={() => setShowCommandPalette(false)}
             games={filteredGames}
-            onSelectGame={setSelectedGame}
+            onSelectGame={(game) => setSelectedGameId(game.id)}
             user={user}
           />
         )}
