@@ -91,7 +91,7 @@ const AnimatedBackgroundMesh = () => {
 };
 
 const FeaturesPage = () => {
-  const [activeTab, setActiveTab] = useState('aimbot'); // 'aimbot', 'esp', 'wallhack', 'radar', 'triggerbot', 'recoil'
+  const [activeTab, setActiveTab] = useState('aimbot'); // 'aimbot', 'esp', 'radar', 'triggerbot', 'recoil'
   
   // Aimbot Features - Enhanced with multiple targets
   const [targets, setTargets] = useState([
@@ -250,9 +250,6 @@ const FeaturesPage = () => {
           break;
         case 'e':
           setActiveTab('esp');
-          break;
-        case 'w':
-          setActiveTab('wallhack');
           break;
         case 'r':
           setActiveTab('radar');
@@ -550,7 +547,7 @@ const FeaturesPage = () => {
                     🔄 Reset All
                   </button>
                   <div className="flex-1 bg-zinc-800/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-zinc-400">
-                    <strong className="text-zinc-300">Keyboard Shortcuts:</strong> Press <kbd className="px-2 py-1 bg-zinc-700 rounded">A</kbd> for Aimbot, <kbd className="px-2 py-1 bg-zinc-700 rounded">E</kbd> for ESP, <kbd className="px-2 py-1 bg-zinc-700 rounded">W</kbd> for Wallhack, <kbd className="px-2 py-1 bg-zinc-700 rounded">R</kbd> for Radar
+                    <strong className="text-zinc-300">Keyboard Shortcuts:</strong> Press <kbd className="px-2 py-1 bg-zinc-700 rounded">A</kbd> for Aimbot, <kbd className="px-2 py-1 bg-zinc-700 rounded">E</kbd> for ESP, <kbd className="px-2 py-1 bg-zinc-700 rounded">R</kbd> for Radar, <kbd className="px-2 py-1 bg-zinc-700 rounded">T</kbd> for Triggerbot, <kbd className="px-2 py-1 bg-zinc-700 rounded">C</kbd> for Recoil
                   </div>
                 </div>
               </div>
@@ -803,7 +800,7 @@ const FeaturesPage = () => {
               <ul className="text-zinc-400 space-y-3">
                 <li className="flex items-start gap-3">
                   <span className="text-red-400 text-xl">•</span>
-                  <span><strong>VAC:</strong> Scans for rendering modifications and wallhack signatures</span>
+                  <span><strong>VAC:</strong> Scans for rendering modifications and ESP signatures</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-red-400 text-xl">•</span>
@@ -816,201 +813,6 @@ const FeaturesPage = () => {
                 <li className="flex items-start gap-3">
                   <span className="text-red-400 text-xl">•</span>
                   <span><strong>Reason for ban:</strong> Provides complete vision advantage and ruins game balance</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        )}
-
-        {/* Radar Section */}
-        {activeTab === 'radar' && (
-        <div className="space-y-8">
-          <div className="bg-zinc-900/50 border border-orange-500/20 rounded-2xl p-8 backdrop-blur-xl">
-            <h2 className="text-3xl font-bold text-orange-400 mb-4 flex items-center gap-3">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
-                <path d="M8 12h8M12 8v8" strokeWidth="2"/>
-              </svg>
-              Wallhack
-            </h2>
-            <p className="text-zinc-300 mb-8 text-lg">
-              Makes walls and objects transparent, allowing you to see through terrain and buildings. Shows enemy positions even when they're behind solid obstacles.
-            </p>
-            
-            {/* Interactive Demo */}
-            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
-              <div className="relative w-full aspect-video bg-gradient-to-br from-orange-900/20 to-red-900/20 rounded-xl overflow-hidden border border-orange-500/20">
-                {/* Simulated 3D environment */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {/* Wall (solid obstruction) */}
-                  <div 
-                    className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-4 transition-all duration-300"
-                    style={{
-                      background: wallhackEnabled 
-                        ? `linear-gradient(to right, rgba(100, 100, 100, ${1 - wallTransparency / 100}), rgba(80, 80, 80, ${1 - wallTransparency / 100}))`
-                        : 'linear-gradient(to right, #666, #444)',
-                      boxShadow: wallhackEnabled ? 'none' : '0 0 20px rgba(0,0,0,0.5)'
-                    }}
-                  >
-                    <div className="absolute inset-0 opacity-20" style={{
-                      backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)'
-                    }}></div>
-                  </div>
-                  
-                  {/* Enemies behind wall (left side) */}
-                  <div className="absolute left-[20%] top-1/2 transform -translate-y-1/2 space-y-4">
-                    {[1, 2].map((id) => (
-                      <div 
-                        key={id}
-                        className="relative transition-all duration-300"
-                        style={{
-                          opacity: wallhackEnabled ? 1 : 0.2,
-                          filter: wallhackEnabled ? 'none' : 'blur(2px)'
-                        }}
-                      >
-                        <div className="w-12 h-16 bg-red-600 rounded-lg border-2 border-red-400 relative overflow-hidden">
-                          {/* Enemy silhouette */}
-                          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-red-400 rounded-full"></div>
-                          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-500 rounded"></div>
-                          {wallhackEnabled && (
-                            <div className="absolute inset-0 border-2 border-orange-400 animate-pulse"></div>
-                          )}
-                        </div>
-                        {wallhackEnabled && (
-                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-orange-400 font-bold whitespace-nowrap">
-                            [{50 + id * 10}m]
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Enemies visible (right side) */}
-                  <div className="absolute right-[20%] top-1/2 transform -translate-y-1/2 space-y-4">
-                    {[3].map((id) => (
-                      <div key={id} className="relative">
-                        <div className="w-12 h-16 bg-red-600 rounded-lg border-2 border-red-400 relative overflow-hidden">
-                          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-red-400 rounded-full"></div>
-                          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-500 rounded"></div>
-                        </div>
-                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-cyan-400 font-bold">
-                          [28m]
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Player indicator (bottom center) */}
-                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-                    <div className="w-10 h-12 bg-cyan-600 rounded-lg border-2 border-cyan-400 relative overflow-hidden">
-                      <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-cyan-300 rounded-full"></div>
-                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-cyan-500 rounded"></div>
-                    </div>
-                    <div className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-xs text-cyan-300 font-bold">
-                      YOU
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Status indicators */}
-                <div className="absolute top-4 left-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg">
-                  {wallhackEnabled ? '👁️ Wallhack Active - Enemies Visible' : '🚫 Normal Vision - Enemies Hidden'}
-                </div>
-                
-                {/* Performance metrics */}
-                <div className="absolute top-4 right-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-400">●</span>
-                    <span>FPS: {wallhackEnabled ? '120-144' : '144'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-yellow-400">●</span>
-                    <span>GPU: {wallhackEnabled ? '42%' : '28%'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={wallhackEnabled ? 'text-red-400' : 'text-green-400'}>●</span>
-                    <span>Risk: {wallhackEnabled ? 'Critical' : 'None'}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 space-y-4">
-                <div>
-                  <label className="text-sm font-bold text-zinc-400 mb-3 block">Wall Transparency: {wallTransparency}%</label>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    value={wallTransparency} 
-                    onChange={(e) => setWallTransparency(e.target.value)} 
-                    className="w-full accent-orange-500"
-                    disabled={!wallhackEnabled}
-                  />
-                  <p className="text-xs text-zinc-500 mt-2">Adjust how transparent walls appear (only works when wallhack is enabled)</p>
-                </div>
-                <button
-                  onClick={() => setWallhackEnabled(!wallhackEnabled)}
-                  className={`w-full px-6 py-3 rounded-xl font-bold transition-all ${
-                    wallhackEnabled 
-                      ? 'bg-orange-500/20 border-orange-500/50 text-orange-300 border-2' 
-                      : 'bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700'
-                  }`}
-                >
-                  {wallhackEnabled ? '✓ Wallhack Enabled' : 'Enable Wallhack'}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-zinc-800/30 border border-orange-500/20 rounded-xl p-6 mb-6">
-              <h3 className="text-lg font-bold text-orange-300 mb-4 flex items-center gap-2">
-                <Info className="w-5 h-5" />
-                How It Works
-              </h3>
-              <ul className="text-zinc-400 space-y-3">
-                <li className="flex items-start gap-3">
-                  <span className="text-orange-400 text-xl">•</span>
-                  <span>Modifies rendering to skip drawing opaque objects (walls, buildings, terrain)</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-orange-400 text-xl">•</span>
-                  <span>Displays enemies with full visibility regardless of obstacles</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-orange-400 text-xl">•</span>
-                  <span>Often combined with ESP to show enemy positions through all barriers</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-orange-400 text-xl">•</span>
-                  <span>Can render walls as semi-transparent or completely invisible</span>
-                </li>
-              </ul>
-            </div>
-            
-            {/* Anti-Cheat Detection Info */}
-            <div className="bg-red-900/10 border border-red-500/30 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-red-400 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeWidth="2"/>
-                </svg>
-                Why It's Banned & Detection Methods
-              </h3>
-              <ul className="text-zinc-400 space-y-3">
-                <li className="flex items-start gap-3">
-                  <span className="text-red-400 text-xl">•</span>
-                  <span><strong>VAC:</strong> Detects DirectX/OpenGL hooks and texture modifications</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-red-400 text-xl">•</span>
-                  <span><strong>EasyAntiCheat:</strong> Scans for driver-level rendering modifications</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-red-400 text-xl">•</span>
-                  <span><strong>BattlEye:</strong> Monitors graphics pipeline and shader manipulations</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-red-400 text-xl">•</span>
-                  <span><strong>Reason for ban:</strong> Provides complete information advantage, impossible to counter</span>
                 </li>
               </ul>
             </div>
