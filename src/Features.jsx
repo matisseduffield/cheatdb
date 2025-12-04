@@ -119,10 +119,6 @@ const FeaturesPage = () => {
     weapon: false
   });
   
-  // Wallhack Features
-  const [wallhackEnabled, setWallhackEnabled] = useState(false);
-  const [wallTransparency, setWallTransparency] = useState(50);
-  
   // Radar Features
   const [radarEnabled, setRadarEnabled] = useState(false);
   const [radarScale, setRadarScale] = useState(1);
@@ -331,22 +327,6 @@ const FeaturesPage = () => {
                 <path d="M3 9h18M9 21V9" strokeWidth="2"/>
               </svg>
               ESP
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('wallhack')}
-            className={`px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${
-              activeTab === 'wallhack'
-                ? 'bg-orange-500/20 border-2 border-orange-500/50 border-b-0 text-orange-300'
-                : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:bg-zinc-800'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
-                <path d="M8 12h8M12 8v8" strokeWidth="2"/>
-              </svg>
-              Wallhack
             </div>
           </button>
           <button
@@ -843,8 +823,8 @@ const FeaturesPage = () => {
         </div>
         )}
 
-        {/* Wallhack Section */}
-        {activeTab === 'wallhack' && (
+        {/* Radar Section */}
+        {activeTab === 'radar' && (
         <div className="space-y-8">
           <div className="bg-zinc-900/50 border border-orange-500/20 rounded-2xl p-8 backdrop-blur-xl">
             <h2 className="text-3xl font-bold text-orange-400 mb-4 flex items-center gap-3">
@@ -1284,19 +1264,107 @@ const FeaturesPage = () => {
               Automatically fires your weapon when an enemy enters your crosshair. Provides instant reaction time with minimal human delay, perfect for precise targeting scenarios.
             </p>
             
-            {/* Demo Placeholder */}
+            {/* Interactive Demo */}
             <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
-              <div className="relative w-full aspect-video bg-gradient-to-br from-pink-900/20 to-purple-900/20 rounded-xl overflow-hidden border border-pink-500/20 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🎯</div>
-                  <p className="text-zinc-400">Interactive triggerbot simulation coming soon</p>
+              <div className="relative w-full aspect-video bg-gradient-to-br from-pink-900/20 to-purple-900/20 rounded-xl overflow-hidden border border-pink-500/20">
+                {/* Crosshair */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+                  <div className="relative w-8 h-8">
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-0.5 h-2 bg-white"></div>
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0.5 h-2 bg-white"></div>
+                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-2 h-0.5 bg-white"></div>
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-0.5 bg-white"></div>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-white rounded-full"></div>
+                  </div>
                 </div>
+                
+                {/* Moving enemy target */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div 
+                    className="absolute transition-all duration-[3000ms] ease-linear"
+                    style={{
+                      left: '10%',
+                      animation: 'slideAcross 6s ease-in-out infinite'
+                    }}
+                  >
+                    <div className="relative">
+                      <div className="w-16 h-20 bg-red-600 rounded-lg border-2 border-red-400 relative overflow-hidden">
+                        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-5 h-5 bg-red-400 rounded-full"></div>
+                        <div className="absolute top-7 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-500 rounded"></div>
+                      </div>
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-red-400 font-bold whitespace-nowrap">
+                        Enemy
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Fire indicator */}
+                  {triggerbotEnabled && (
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                      <div className="w-32 h-32 rounded-full bg-pink-500/20 animate-ping"></div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Status */}
+                <div className="absolute top-4 left-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  {triggerbotEnabled ? '⚡ Triggerbot Active - Will Auto-Fire' : '🚫 Manual Fire Mode'}
+                </div>
+                
+                {/* Shot counter */}
+                <div className="absolute top-4 right-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className={triggerbotEnabled ? 'text-pink-400' : 'text-zinc-500'}>●</span>
+                    <span>Delay: {triggerDelay}ms</span>
+                  </div>
+                </div>
+                
+                {/* Reaction time comparison */}
+                <div className="absolute bottom-4 left-4 text-xs bg-black/50 backdrop-blur-sm px-4 py-3 rounded-lg space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-400">Human:</span>
+                    <span className="text-yellow-400">~200-300ms</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-400">Triggerbot:</span>
+                    <span className="text-pink-400">{triggerDelay}ms</span>
+                  </div>
+                </div>
+                
+                {/* Performance */}
+                <div className="absolute bottom-4 right-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">●</span>
+                    <span>FPS: {triggerbotEnabled ? '140-144' : '144'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={triggerbotEnabled ? 'text-orange-400' : 'text-green-400'}>●</span>
+                    <span>Risk: {triggerbotEnabled ? 'High' : 'None'}</span>
+                  </div>
+                </div>
+                
+                {/* CSS Animation */}
+                <style>{`
+                  @keyframes slideAcross {
+                    0%, 100% { transform: translateX(0); }
+                    50% { transform: translateX(calc(80vw - 200px)); }
+                  }
+                `}</style>
               </div>
               
               <div className="mt-6 space-y-4">
                 <div>
                   <label className="text-sm font-bold text-zinc-400 mb-3 block">Trigger Delay: {triggerDelay}ms</label>
-                  <input type="range" min="0" max="200" value={triggerDelay} onChange={(e) => setTriggerDelay(e.target.value)} className="w-full" />
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="200" 
+                    value={triggerDelay} 
+                    onChange={(e) => setTriggerDelay(e.target.value)} 
+                    className="w-full accent-pink-500"
+                    disabled={!triggerbotEnabled}
+                  />
+                  <p className="text-xs text-zinc-500 mt-2">Lower delay = faster reaction, but more detectable (only works when enabled)</p>
                 </div>
                 <button
                   onClick={() => setTriggerbotEnabled(!triggerbotEnabled)}
@@ -1311,7 +1379,7 @@ const FeaturesPage = () => {
               </div>
             </div>
 
-            <div className="bg-zinc-800/30 border border-pink-500/20 rounded-xl p-6">
+            <div className="bg-zinc-800/30 border border-pink-500/20 rounded-xl p-6 mb-6">
               <h3 className="text-lg font-bold text-pink-300 mb-4 flex items-center gap-2">
                 <Info className="w-5 h-5" />
                 How It Works
@@ -1327,7 +1395,39 @@ const FeaturesPage = () => {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-pink-400 text-xl">•</span>
-                  <span>Works through walls if combined with wallhack</span>
+                  <span>Reduces reaction time from 200-300ms to under 50ms</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-pink-400 text-xl">•</span>
+                  <span>Often paired with pixel-perfect crosshair detection</span>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Anti-Cheat Detection Info */}
+            <div className="bg-red-900/10 border border-red-500/30 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeWidth="2"/>
+                </svg>
+                Why It's Banned & Detection Methods
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>VAC:</strong> Detects automated input patterns and inhuman reaction times</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>EasyAntiCheat:</strong> Monitors pixel scanning and color detection routines</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>BattlEye:</strong> Analyzes firing patterns for consistent sub-human delays</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>Reason for ban:</strong> Provides unfair advantage through automated gameplay</span>
                 </li>
               </ul>
             </div>
@@ -1350,19 +1450,128 @@ const FeaturesPage = () => {
               Automatically compensates for weapon recoil by adjusting mouse position downward and sideways. Maintains perfect accuracy even during sustained fire with full-auto weapons.
             </p>
             
-            {/* Demo Placeholder */}
+            {/* Interactive Demo */}
             <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
-              <div className="relative w-full aspect-video bg-gradient-to-br from-red-900/20 to-orange-900/20 rounded-xl overflow-hidden border border-red-500/20 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">💥</div>
-                  <p className="text-zinc-400">Interactive recoil compensation pattern coming soon</p>
+              <div className="relative w-full aspect-video bg-gradient-to-br from-red-900/20 to-orange-900/20 rounded-xl overflow-hidden border border-red-500/20">
+                {/* Split view: Without vs With Recoil Control */}
+                <div className="absolute inset-0 flex">
+                  {/* Without Recoil Control (Left) */}
+                  <div className="flex-1 border-r border-white/10 relative">
+                    <div className="absolute top-2 left-2 text-xs text-zinc-400 bg-black/50 px-3 py-1 rounded">
+                      Without Control
+                    </div>
+                    
+                    {/* Bullet spread pattern (scattered) */}
+                    <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2">
+                      <svg width="120" height="180" viewBox="0 0 120 180" className="opacity-70">
+                        {/* Recoil pattern going upward and spreading */}
+                        <circle cx="60" cy="160" r="3" fill="#ef4444"/>
+                        <circle cx="58" cy="145" r="3" fill="#ef4444"/>
+                        <circle cx="65" cy="130" r="3" fill="#ef4444"/>
+                        <circle cx="55" cy="115" r="3" fill="#ef4444"/>
+                        <circle cx="70" cy="100" r="3" fill="#ef4444"/>
+                        <circle cx="50" cy="85" r="3" fill="#ef4444"/>
+                        <circle cx="75" cy="70" r="3" fill="#ef4444"/>
+                        <circle cx="45" cy="55" r="3" fill="#ef4444"/>
+                        <circle cx="80" cy="40" r="3" fill="#ef4444"/>
+                        <circle cx="40" cy="25" r="3" fill="#ef4444"/>
+                        
+                        {/* Connection lines */}
+                        <path d="M60,160 L58,145 L65,130 L55,115 L70,100 L50,85 L75,70 L45,55 L80,40 L40,25" 
+                              stroke="#ef4444" strokeWidth="1" fill="none" opacity="0.3"/>
+                      </svg>
+                      
+                      {/* Target */}
+                      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+                        <div className="w-8 h-10 bg-red-600/50 rounded border border-red-400"></div>
+                      </div>
+                    </div>
+                    
+                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-red-400 bg-black/50 px-2 py-1 rounded">
+                      30% Accuracy
+                    </div>
+                  </div>
+                  
+                  {/* With Recoil Control (Right) */}
+                  <div className="flex-1 relative">
+                    <div className="absolute top-2 left-2 text-xs text-zinc-400 bg-black/50 px-3 py-1 rounded">
+                      {recoilCompensationEnabled ? 'With Control ✓' : 'With Control'}
+                    </div>
+                    
+                    {/* Bullet spread pattern (tight) */}
+                    <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2">
+                      <svg width="120" height="180" viewBox="0 0 120 180" className={recoilCompensationEnabled ? 'opacity-100' : 'opacity-30'}>
+                        {/* Tight grouping */}
+                        <circle cx="60" cy="160" r="3" fill="#22c55e"/>
+                        <circle cx="61" cy="156" r="3" fill="#22c55e"/>
+                        <circle cx="59" cy="152" r="3" fill="#22c55e"/>
+                        <circle cx="62" cy="148" r="3" fill="#22c55e"/>
+                        <circle cx="58" cy="144" r="3" fill="#22c55e"/>
+                        <circle cx="61" cy="140" r="3" fill="#22c55e"/>
+                        <circle cx="59" cy="136" r="3" fill="#22c55e"/>
+                        <circle cx="60" cy="132" r="3" fill="#22c55e"/>
+                        <circle cx="61" cy="128" r="3" fill="#22c55e"/>
+                        <circle cx="59" cy="124" r="3" fill="#22c55e"/>
+                        
+                        {/* Connection lines */}
+                        <path d="M60,160 L61,156 L59,152 L62,148 L58,144 L61,140 L59,136 L60,132 L61,128 L59,124" 
+                              stroke="#22c55e" strokeWidth="1" fill="none" opacity="0.3"/>
+                      </svg>
+                      
+                      {/* Target */}
+                      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+                        <div className="w-8 h-10 bg-green-600/50 rounded border border-green-400"></div>
+                      </div>
+                      
+                      {recoilCompensationEnabled && (
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                          <div className="w-24 h-24 rounded-full border-2 border-green-500/30 animate-ping"></div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className={`absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs ${recoilCompensationEnabled ? 'text-green-400' : 'text-zinc-500'} bg-black/50 px-2 py-1 rounded`}>
+                      {recoilCompensationEnabled ? '95% Accuracy' : '95% Accuracy'}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Status indicator */}
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 text-xs text-zinc-400 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  {recoilCompensationEnabled ? '✓ Recoil Compensation Active' : '⚠️ Natural Recoil Pattern'}
+                </div>
+                
+                {/* Performance metrics */}
+                <div className="absolute bottom-4 right-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">●</span>
+                    <span>FPS: {recoilCompensationEnabled ? '136-144' : '144'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400">●</span>
+                    <span>Compensation: {(recoilStrength * 100).toFixed(0)}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={recoilCompensationEnabled ? 'text-orange-400' : 'text-green-400'}>●</span>
+                    <span>Risk: {recoilCompensationEnabled ? 'Medium' : 'None'}</span>
+                  </div>
                 </div>
               </div>
               
               <div className="mt-6 space-y-4">
                 <div>
-                  <label className="text-sm font-bold text-zinc-400 mb-3 block">Recoil Strength: {recoilStrength}x</label>
-                  <input type="range" min="0.5" max="3" step="0.5" value={recoilStrength} onChange={(e) => setRecoilStrength(e.target.value)} className="w-full" />
+                  <label className="text-sm font-bold text-zinc-400 mb-3 block">Compensation Strength: {recoilStrength}x</label>
+                  <input 
+                    type="range" 
+                    min="0.5" 
+                    max="3" 
+                    step="0.5" 
+                    value={recoilStrength} 
+                    onChange={(e) => setRecoilStrength(e.target.value)} 
+                    className="w-full accent-red-500"
+                    disabled={!recoilCompensationEnabled}
+                  />
+                  <p className="text-xs text-zinc-500 mt-2">Adjust compensation intensity for different weapon types (only works when enabled)</p>
                 </div>
                 <button
                   onClick={() => setRecoilCompensationEnabled(!recoilCompensationEnabled)}
@@ -1377,7 +1586,7 @@ const FeaturesPage = () => {
               </div>
             </div>
 
-            <div className="bg-zinc-800/30 border border-red-500/20 rounded-xl p-6">
+            <div className="bg-zinc-800/30 border border-red-500/20 rounded-xl p-6 mb-6">
               <h3 className="text-lg font-bold text-red-300 mb-4 flex items-center gap-2">
                 <Info className="w-5 h-5" />
                 How It Works
@@ -1385,15 +1594,47 @@ const FeaturesPage = () => {
               <ul className="text-zinc-400 space-y-3">
                 <li className="flex items-start gap-3">
                   <span className="text-red-400 text-xl">•</span>
-                  <span>Calculates weapon recoil patterns based on weapon type and fire mode</span>
+                  <span>Reads current weapon type and fire mode from game memory</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-red-400 text-xl">•</span>
-                  <span>Moves crosshair opposite to recoil direction to keep aim steady</span>
+                  <span>Calculates recoil pattern based on weapon-specific spray patterns</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-red-400 text-xl">•</span>
-                  <span>Enables perfect accuracy during extended firefights</span>
+                  <span>Automatically moves mouse downward/sideways to counter recoil</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span>Maintains crosshair on target during full-auto spray</span>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Anti-Cheat Detection Info */}
+            <div className="bg-red-900/10 border border-red-500/30 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeWidth="2"/>
+                </svg>
+                Why It's Banned & Detection Methods
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>VAC:</strong> Detects perfect recoil patterns inconsistent with human input</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>EasyAntiCheat:</strong> Analyzes mouse movement patterns during firing</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>BattlEye:</strong> Monitors memory reads of weapon data and recoil values</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>Reason for ban:</strong> Eliminates skill-based recoil control mechanic</span>
                 </li>
               </ul>
             </div>
