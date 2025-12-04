@@ -2313,11 +2313,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
                 e.stopPropagation(); 
                 onEdit(game);
               }}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                createRipple(e);
-              }}
-              className="p-2 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 hover:text-blue-300 rounded-xl transition-all border border-blue-500/20 hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/10 animate-in zoom-in duration-200 ripple-button"
+              className="p-2 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 hover:text-blue-300 rounded-xl transition-all border border-blue-500/20 hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/10 animate-in zoom-in duration-200"
               title="Edit Game"
             >
               <Pencil className="w-4 h-4" />
@@ -2327,11 +2323,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
                 e.stopPropagation(); 
                 onDelete(game.id);
               }}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                createRipple(e);
-              }}
-              className="p-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all border border-red-500/20 hover:scale-105 active:scale-95 shadow-lg shadow-red-500/10 animate-in zoom-in duration-200 ripple-button"
+              className="p-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all border border-red-500/20 hover:scale-105 active:scale-95 shadow-lg shadow-red-500/10 animate-in zoom-in duration-200"
               title="Delete Game"
             >
               <Trash2 className="w-4 h-4" />
