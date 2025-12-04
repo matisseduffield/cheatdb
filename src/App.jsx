@@ -3270,8 +3270,19 @@ const FeaturesGuideModal = ({ onClose }) => {
   const [targetPosition, setTargetPosition] = useState({ x: 50, y: 50 });
   const [crosshairPosition, setCrosshairPosition] = useState({ x: 50, y: 50 });
   const [isAimbotEnabled, setIsAimbotEnabled] = useState(false);
-  const [smoothness, setSmoothness] = useState(50);
-  const [fov, setFov] = useState(30);
+  const [smoothness, setSmoothness] = useState(1); // 0=Low, 1=Medium, 2=High
+  const [fov, setFov] = useState(1); // 0=Small, 1=Medium, 2=Large
+  
+  // Smoothness mapping: Low=Fast, Medium=Normal, High=Slow
+  const smoothnessValues = [20, 50, 80]; // Lower = faster aim snap
+  const smoothnessLabels = ['Low (Fast)', 'Medium', 'High (Slow)'];
+  
+  // FOV mapping: Small, Medium, Large radius
+  const fovValues = [15, 25, 40];
+  const fovLabels = ['Small', 'Medium', 'Large'];
+  
+  const currentSmoothness = smoothnessValues[smoothness];
+  const currentFov = fovValues[fov];
   
   // Simulate aimbot movement
   useEffect(() => {
@@ -3283,15 +3294,17 @@ const FeaturesGuideModal = ({ onClose }) => {
         const dy = targetPosition.y - prev.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Check if target is within FOV (distance is in percentage units)
-        if (distance > fov) {
+        // Check if majority of target is within FOV
+        // Target radius is ~4% (half of 8% width), so if distance > (fov + 4), majority is outside
+        const targetRadius = 4;
+        if (distance > currentFov + targetRadius) {
           // Target is outside FOV, don't lock on
           return prev;
         }
         
         if (distance < 2) return prev;
         
-        const speed = (100 - smoothness) / 100;
+        const speed = (100 - currentSmoothness) / 100;
         return {
           x: prev.x + (dx * speed * 0.1),
           y: prev.y + (dy * speed * 0.1)
@@ -3300,7 +3313,7 @@ const FeaturesGuideModal = ({ onClose }) => {
     }, 16);
     
     return () => clearInterval(interval);
-  }, [isAimbotEnabled, targetPosition, smoothness, fov]);
+  }, [isAimbotEnabled, targetPosition, currentSmoothness, currentFov]);
   
   // Move target randomly
   useEffect(() => {
@@ -3355,8 +3368,8 @@ const FeaturesGuideModal = ({ onClose }) => {
                   style={{
                     left: `${crosshairPosition.x}%`,
                     top: `${crosshairPosition.y}%`,
-                    width: `${fov * 2}%`,
-                    height: `${fov * 2}%`,
+                    width: `${currentFov * 2}%`,
+                    height: `${currentFov * 2}%`,
                     transform: 'translate(-50%, -50%)'
                   }}
                 />
@@ -3419,28 +3432,42 @@ const FeaturesGuideModal = ({ onClose }) => {
                 </div>
                 
                 <div>
-                  <label className="text-sm font-bold text-zinc-400 mb-2 block">Smoothness: {smoothness}%</label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={smoothness}
-                    onChange={(e) => setSmoothness(Number(e.target.value))}
-                    className="w-full"
-                  />
+                  <label className="text-sm font-bold text-zinc-400 mb-2 block">Smoothness: {smoothnessLabels[smoothness]}</label>
+                  <div className="flex gap-2">
+                    {smoothnessLabels.map((label, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSmoothness(idx)}
+                        className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                          smoothness === idx
+                            ? 'bg-violet-500/30 border-violet-500/50 text-violet-300 border-2'
+                            : 'bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                   <p className="text-xs text-zinc-500 mt-1">Higher = Slower, more natural movement (less detectable)</p>
                 </div>
                 
                 <div>
-                  <label className="text-sm font-bold text-zinc-400 mb-2 block">FOV (Field of View): {fov}%</label>
-                  <input
-                    type="range"
-                    min="10"
-                    max="50"
-                    value={fov}
-                    onChange={(e) => setFov(Number(e.target.value))}
-                    className="w-full"
-                  />
+                  <label className="text-sm font-bold text-zinc-400 mb-2 block">FOV (Field of View): {fovLabels[fov]}</label>
+                  <div className="flex gap-2">
+                    {fovLabels.map((label, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setFov(idx)}
+                        className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                          fov === idx
+                            ? 'bg-violet-500/30 border-violet-500/50 text-violet-300 border-2'
+                            : 'bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                   <p className="text-xs text-zinc-500 mt-1">Circle radius - only locks onto targets within this area</p>
                 </div>
               </div>
