@@ -233,7 +233,7 @@ const GameCardSkeleton = () => (
 );
 
 const SkeletonGrid = ({ count = 8 }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
     {Array.from({ length: count }).map((_, idx) => (
       <GameCardSkeleton key={idx} />
     ))}
@@ -3560,7 +3560,7 @@ export default function App() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
                 {paginatedGames.map((game, idx) => (
                   <div
                     key={game.id}
