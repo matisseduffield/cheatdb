@@ -16,6 +16,13 @@ export default defineConfig({
         },
       },
     },
+    // Security: Minify and optimize for production
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.log in production
+      },
+    },
     // Increase chunk size warning threshold since we're under control
     chunkSizeWarningLimit: 600,
   },

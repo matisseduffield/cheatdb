@@ -8,6 +8,13 @@ Permissions-Policy: geolocation=(), microphone=(), camera=()
 /* Performance Headers */
 Cache-Control: public, max-age=3600
 Vary: Accept-Encoding
+Content-Encoding: gzip
+
+/assets/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*.css
+  Cache-Control: public, max-age=31536000, immutable
 
 /* Preload critical resources */
 Link: </assets/index.css>; rel=preload; as=style
@@ -25,3 +32,6 @@ Link: </assets/index.js>; rel=preload; as=script
 /robots.txt
   Content-Type: text/plain
   Cache-Control: public, max-age=604800
+
+/favicon.ico
+  Cache-Control: public, max-age=31536000, immutable

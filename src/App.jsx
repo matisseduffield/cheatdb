@@ -13,6 +13,7 @@ import {
   onSnapshot, 
   query, 
   orderBy,
+  limit,
   updateDoc,
   deleteDoc,
   doc,
@@ -53,13 +54,14 @@ import {
 } from 'lucide-react';
 
 // --- Firebase Configuration ---
+// Using environment variables for security - API keys are not exposed in source code
 const firebaseConfig = {
-  apiKey: "AIzaSyBKlRLMFGn2zQJT3bYRykTuSne4TvQU4Y4",
-  authDomain: "cheatsdatabase.firebaseapp.com",
-  projectId: "cheatsdatabase",
-  storageBucket: "cheatsdatabase.firebasestorage.app",
-  messagingSenderId: "885527786972",
-  appId: "1:885527786972:web:dc6dd624a9b82fb4340b19"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -121,6 +123,64 @@ const triggerShake = (elementId) => {
     el.classList.add('shake-error');
     setTimeout(() => el.classList.remove('shake-error'), 500);
   }
+};
+
+// Utility: Safe localStorage operations with quota management
+const safeLocalStorage = {
+  getItem: (key, defaultValue = null) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (e) {
+      console.error(`Failed to read localStorage key "${key}":`, e);
+      return defaultValue;
+    }
+  },
+  setItem: (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      if (e.name === 'QuotaExceededError') {
+        console.warn('localStorage quota exceeded, clearing old analytics data');
+        // Clear analytics if quota exceeded to make room
+        try {
+          localStorage.removeItem('cheatdb_analytics');
+          localStorage.setItem(key, JSON.stringify(value));
+          return true;
+        } catch (retry) {
+          console.error('Failed to save even after cleanup:', retry);
+          return false;
+        }
+      }
+      console.error(`Failed to write localStorage key "${key}":`, e);
+      return false;
+    }
+  }
+};
+
+// Utility: Input sanitization - prevent XSS and injection
+const sanitizeInput = (input) => {
+  if (typeof input !== 'string') return '';
+  // Remove script tags, event handlers, and dangerous HTML
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .trim()
+    .slice(0, 500); // Max 500 chars per field
+};
+
+const sanitizeCheatData = (cheatData) => {
+  return {
+    code: sanitizeInput(cheatData.code || ''),
+    effect: sanitizeInput(cheatData.effect || ''),
+    notes: sanitizeInput(cheatData.notes || ''),
+    name: sanitizeInput(cheatData.name || ''),
+    productLink: sanitizeInput(cheatData.productLink || '').slice(0, 2048),
+    tier: ['FREE', 'PAID'].includes(cheatData.tier) ? cheatData.tier : 'FREE',
+    type: ['INTERNAL', 'EXTERNAL'].includes(cheatData.type) ? cheatData.type : 'INTERNAL',
+    features: Array.isArray(cheatData.features) ? cheatData.features.filter(f => typeof f === 'string').slice(0, 10) : [],
+  };
 };
 
 // Custom hook for debounced value
@@ -1970,6 +2030,7 @@ const LazyImage = ({ src, alt, className, style, onError }) => {
           src={src}
           alt={alt}
           loading="lazy"
+          decoding="async"
           className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
           style={style}
           onLoad={() => setIsLoaded(true)}
@@ -2788,21 +2849,21 @@ const MouseEffects = () => {
 const analytics = {
   track: (event, data = {}) => {
     try {
-      const analytics = JSON.parse(localStorage.getItem('cheatdb_analytics') || '{}');
+      const analyticsData = safeLocalStorage.getItem('cheatdb_analytics', {});
       const now = Date.now();
       
-      if (!analytics[event]) {
-        analytics[event] = [];
+      if (!analyticsData[event]) {
+        analyticsData[event] = [];
       }
       
-      analytics[event].push({ ...data, timestamp: now });
+      analyticsData[event].push({ ...data, timestamp: now });
       
       // Keep only last 1000 events per type
-      if (analytics[event].length > 1000) {
-        analytics[event] = analytics[event].slice(-1000);
+      if (analyticsData[event].length > 1000) {
+        analyticsData[event] = analyticsData[event].slice(-1000);
       }
       
-      localStorage.setItem('cheatdb_analytics', JSON.stringify(analytics));
+      safeLocalStorage.setItem('cheatdb_analytics', analyticsData);
     } catch (err) {
       console.error('Analytics tracking error:', err);
     }
@@ -2810,17 +2871,17 @@ const analytics = {
   
   getStats: () => {
     try {
-      const analytics = JSON.parse(localStorage.getItem('cheatdb_analytics') || '{}');
+      const analyticsData = safeLocalStorage.getItem('cheatdb_analytics', {});
       const now = Date.now();
       const dayAgo = now - (24 * 60 * 60 * 1000);
       const weekAgo = now - (7 * 24 * 60 * 60 * 1000);
       
       return {
         searches: {
-          total: analytics.search?.length || 0,
-          last24h: analytics.search?.filter(e => e.timestamp > dayAgo).length || 0,
-          last7days: analytics.search?.filter(e => e.timestamp > weekAgo).length || 0,
-          topQueries: analytics.search
+          total: analyticsData.search?.length || 0,
+          last24h: analyticsData.search?.filter(e => e.timestamp > dayAgo).length || 0,
+          last7days: analyticsData.search?.filter(e => e.timestamp > weekAgo).length || 0,
+          topQueries: analyticsData.search
             ?.filter(e => e.timestamp > weekAgo)
             .reduce((acc, e) => {
               acc[e.query] = (acc[e.query] || 0) + 1;
@@ -2828,10 +2889,10 @@ const analytics = {
             }, {})
         },
         gameViews: {
-          total: analytics.gameView?.length || 0,
-          last24h: analytics.gameView?.filter(e => e.timestamp > dayAgo).length || 0,
-          last7days: analytics.gameView?.filter(e => e.timestamp > weekAgo).length || 0,
-          topGames: analytics.gameView
+          total: analyticsData.gameView?.length || 0,
+          last24h: analyticsData.gameView?.filter(e => e.timestamp > dayAgo).length || 0,
+          last7days: analyticsData.gameView?.filter(e => e.timestamp > weekAgo).length || 0,
+          topGames: analyticsData.gameView
             ?.filter(e => e.timestamp > weekAgo)
             .reduce((acc, e) => {
               acc[e.gameTitle] = (acc[e.gameTitle] || 0) + 1;
@@ -2839,9 +2900,9 @@ const analytics = {
             }, {})
         },
         votes: {
-          total: analytics.vote?.length || 0,
-          last24h: analytics.vote?.filter(e => e.timestamp > dayAgo).length || 0,
-          last7days: analytics.vote?.filter(e => e.timestamp > weekAgo).length || 0
+          total: analyticsData.vote?.length || 0,
+          last24h: analyticsData.vote?.filter(e => e.timestamp > dayAgo).length || 0,
+          last7days: analyticsData.vote?.filter(e => e.timestamp > weekAgo).length || 0
         }
       };
     } catch (err) {
@@ -3013,12 +3074,7 @@ export default function App() {
   const gamesPerPage = 20;
   const [userVotes, setUserVotes] = useState(() => {
     // Load votes from localStorage on initialization
-    try {
-      const saved = localStorage.getItem('cheatdb_votes');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
+    return safeLocalStorage.getItem('cheatdb_votes', {});
   });
 
   // Toast queue management
@@ -3050,9 +3106,9 @@ export default function App() {
   // For large datasets (1000+ games), add limit() and pagination
   useEffect(() => {
     const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
-    const q = query(gamesRef, orderBy('title', 'asc')); 
-    // OPTIMIZATION: To add pagination, use: query(gamesRef, orderBy('title', 'asc'), limit(50))
-    // Then implement: lastVisible doc for next page, startAfter(lastVisible) for subsequent queries
+    // Performance: Load initial batch of 100 games for better load times
+    const q = query(gamesRef, orderBy('title', 'asc'), limit(100));
+    // Future optimization: Implement pagination with startAfter(lastDoc) for 1000+ games
 
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
@@ -3276,10 +3332,13 @@ export default function App() {
   const handleAddCheatToGame = useCallback(async (gameId, cheatData) => {
     if (!user) return;
     try {
+      // Sanitize input data to prevent XSS
+      const sanitizedData = sanitizeCheatData(cheatData);
+      
       const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', gameId);
       await updateDoc(gameRef, {
         cheats: arrayUnion({
-          ...cheatData,
+          ...sanitizedData,
           id: crypto.randomUUID(),
           addedAt: Date.now()
         })
@@ -3348,7 +3407,7 @@ export default function App() {
       }
       
       // Save to localStorage for persistence
-      localStorage.setItem('cheatdb_votes', JSON.stringify(newUserVotes));
+      safeLocalStorage.setItem('cheatdb_votes', newUserVotes);
       setUserVotes(newUserVotes);
     } catch (err) {
       console.error("Error voting:", err);
