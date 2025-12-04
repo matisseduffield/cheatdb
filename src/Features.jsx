@@ -410,77 +410,62 @@ const FeaturesPage = () => {
                 }}></div>
 
                 {/* Enemy Model */}
-                <div className="relative">
+                <div className="relative w-64 h-96">
                   {/* Box */}
                   {espFeatures.box && (
-                    <div className="absolute inset-0 border-2 border-cyan-400/50 w-16 h-24" style={{
-                      transform: 'translate(-50%, -50%)',
-                      left: '50%',
-                      top: '50%'
+                    <div className="absolute inset-0 border-2 border-cyan-400/50" style={{
+                      width: '100%',
+                      height: '100%'
                     }}></div>
                   )}
 
-                  {/* Player Body */}
-                  <div className="w-16 h-24 relative">
-                    {/* Head */}
-                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gradient-to-b from-pink-400 to-pink-600 rounded-full border border-pink-300 shadow-lg shadow-pink-500/50"></div>
-                    
-                    {/* Body */}
-                    <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-6 h-8 bg-gradient-to-b from-violet-400 to-violet-600 border border-violet-300"></div>
-                    
-                    {/* Left Arm */}
-                    <div className="absolute top-8 left-0 w-3 h-10 bg-gradient-to-b from-pink-300 to-pink-500 border border-pink-200"></div>
-                    
-                    {/* Right Arm */}
-                    <div className="absolute top-8 right-0 w-3 h-10 bg-gradient-to-b from-pink-300 to-pink-500 border border-pink-200"></div>
-                    
-                    {/* Left Leg */}
-                    <div className="absolute bottom-0 left-1 w-3 h-6 bg-gradient-to-b from-slate-400 to-slate-600 border border-slate-300"></div>
-                    
-                    {/* Right Leg */}
-                    <div className="absolute bottom-0 right-1 w-3 h-6 bg-gradient-to-b from-slate-400 to-slate-600 border border-slate-300"></div>
-                  </div>
+                  {/* Player Model Image */}
+                  <img 
+                    src="/logos/model.png" 
+                    alt="Player Model" 
+                    className="w-full h-full object-contain"
+                  />
 
                   {/* Skeleton */}
                   {espFeatures.skeleton && (
-                    <svg className="absolute inset-0 w-16 h-24 pointer-events-none" viewBox="0 0 64 96">
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 256 384">
                       {/* Head */}
-                      <circle cx="32" cy="16" r="8" fill="none" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      <circle cx="128" cy="48" r="24" fill="none" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
                       {/* Body */}
-                      <line x1="32" y1="24" x2="32" y2="48" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      <line x1="128" y1="72" x2="128" y2="180" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
                       {/* Left Arm */}
-                      <line x1="32" y1="32" x2="12" y2="48" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      <line x1="128" y1="100" x2="60" y2="160" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
                       {/* Right Arm */}
-                      <line x1="32" y1="32" x2="52" y2="48" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      <line x1="128" y1="100" x2="196" y2="160" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
                       {/* Left Leg */}
-                      <line x1="32" y1="48" x2="20" y2="80" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      <line x1="128" y1="180" x2="90" y2="320" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
                       {/* Right Leg */}
-                      <line x1="32" y1="48" x2="44" y2="80" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      <line x1="128" y1="180" x2="166" y2="320" stroke="rgba(34, 197, 94, 0.7)" strokeWidth="2"/>
                       {/* Joint circles */}
-                      <circle cx="32" cy="16" r="2" fill="rgba(34, 197, 94, 0.8)"/>
-                      <circle cx="32" cy="32" r="2" fill="rgba(34, 197, 94, 0.8)"/>
-                      <circle cx="12" cy="48" r="2" fill="rgba(34, 197, 94, 0.8)"/>
-                      <circle cx="52" cy="48" r="2" fill="rgba(34, 197, 94, 0.8)"/>
-                      <circle cx="20" cy="80" r="2" fill="rgba(34, 197, 94, 0.8)"/>
-                      <circle cx="44" cy="80" r="2" fill="rgba(34, 197, 94, 0.8)"/>
+                      <circle cx="128" cy="48" r="4" fill="rgba(34, 197, 94, 0.9)"/>
+                      <circle cx="128" cy="100" r="4" fill="rgba(34, 197, 94, 0.9)"/>
+                      <circle cx="60" cy="160" r="4" fill="rgba(34, 197, 94, 0.9)"/>
+                      <circle cx="196" cy="160" r="4" fill="rgba(34, 197, 94, 0.9)"/>
+                      <circle cx="90" cy="320" r="4" fill="rgba(34, 197, 94, 0.9)"/>
+                      <circle cx="166" cy="320" r="4" fill="rgba(34, 197, 94, 0.9)"/>
                     </svg>
                   )}
 
                   {/* Overlay info */}
-                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-center whitespace-nowrap">
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-4 text-center whitespace-nowrap">
                     {espFeatures.names && (
-                      <div className="text-cyan-400 font-bold text-xs mb-1">Enemy Player</div>
+                      <div className="text-cyan-400 font-bold text-sm mb-2">Enemy Player</div>
                     )}
                     {espFeatures.health && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-12 h-2 bg-red-900/50 border border-red-500 rounded">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-16 h-3 bg-red-900/50 border border-red-500 rounded">
                           <div className="h-full bg-red-500 rounded" style={{ width: '65%' }}></div>
                         </div>
-                        <span className="text-red-400 text-xs font-bold">65</span>
+                        <span className="text-red-400 text-sm font-bold">65HP</span>
                       </div>
                     )}
                     {espFeatures.distance && (
-                      <div className="text-yellow-400 text-xs mt-1">45.2m</div>
+                      <div className="text-yellow-400 text-sm">45.2m</div>
                     )}
                   </div>
                 </div>
