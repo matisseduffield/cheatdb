@@ -105,7 +105,7 @@ const FeaturesPage = () => {
     names: false,
     health: false,
     distance: false,
-    teamIndicator: false
+    weapon: false
   });
   
   // Smoothness mapping: Low=Fast, Medium=Normal, High=Slow
@@ -411,12 +411,20 @@ const FeaturesPage = () => {
 
                 {/* Enemy Model */}
                 <div className="relative w-64 h-96">
-                  {/* Box */}
+                  {/* Box with Health Bar */}
                   {espFeatures.box && (
-                    <div className="absolute inset-0 border-2 border-cyan-400/50" style={{
-                      width: '100%',
-                      height: '100%'
-                    }}></div>
+                    <>
+                      <div className="absolute inset-0 border-2 border-cyan-400/50" style={{
+                        width: '100%',
+                        height: '100%'
+                      }}></div>
+                      {/* Health Bar on Right Side */}
+                      {espFeatures.health && (
+                        <div className="absolute right-0 top-0 h-full w-4 bg-red-900/50 border border-red-500 border-l-0 flex flex-col-reverse">
+                          <div className="w-full bg-red-500" style={{ height: '65%' }}></div>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Player Model Image */}
@@ -454,18 +462,13 @@ const FeaturesPage = () => {
                   {/* Overlay info */}
                   <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-4 text-center whitespace-nowrap">
                     {espFeatures.names && (
-                      <div className="text-cyan-400 font-bold text-sm mb-2">Enemy Player</div>
-                    )}
-                    {espFeatures.health && (
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-16 h-3 bg-red-900/50 border border-red-500 rounded">
-                          <div className="h-full bg-red-500 rounded" style={{ width: '65%' }}></div>
-                        </div>
-                        <span className="text-red-400 text-sm font-bold">65HP</span>
+                      <div className="text-cyan-400 font-bold text-sm mb-2">
+                        Enemy Player
+                        {espFeatures.distance && <span className="text-yellow-400 ml-2">[45.2m]</span>}
                       </div>
                     )}
-                    {espFeatures.distance && (
-                      <div className="text-yellow-400 text-sm">45.2m</div>
+                    {espFeatures.weapon && (
+                      <div className="text-orange-400 text-xs mb-1">⚔ Rifle</div>
                     )}
                   </div>
                 </div>
@@ -479,7 +482,7 @@ const FeaturesPage = () => {
                   { key: 'names', label: 'Player Names', color: 'cyan' },
                   { key: 'health', label: 'Health Bar', color: 'red' },
                   { key: 'distance', label: 'Distance', color: 'yellow' },
-                  { key: 'teamIndicator', label: 'Team Color', color: 'blue' }
+                  { key: 'weapon', label: 'Weapon Info', color: 'orange' }
                 ].map(({ key, label, color }) => (
                   <button
                     key={key}
@@ -525,7 +528,7 @@ const FeaturesPage = () => {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-cyan-400 text-xl">•</span>
-                  <span><strong>Team Color:</strong> Color-codes players by team (enemy/ally)</span>
+                  <span><strong>Weapon Info:</strong> Shows weapon type and equipment the enemy is carrying</span>
                 </li>
               </ul>
             </div>
