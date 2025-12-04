@@ -1933,7 +1933,7 @@ const logoScaleMap = {
   'Counter Strike 2': 1.15,
   'Rust': 1.2,
   'Call of Duty: Warzone': 1.2,
-  'Team Fortress 2': 1.25,
+  'Team Fortress 2': 1.2,
 };
 
 // Lazy Loading Image Component
@@ -2062,7 +2062,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
         )}
       </div>
       
-      <h3 className="text-2xl font-black mb-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r transition-all text-white group-hover:from-white group-hover:to-violet-200">
+      <h3 className="text-2xl font-black mb-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r transition-all text-white group-hover:from-white group-hover:to-violet-200 break-words">
         {game.title}
       </h3>
       
