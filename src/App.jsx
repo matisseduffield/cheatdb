@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, Component } from 'react';
 import { createPortal } from 'react-dom';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -17,7 +17,8 @@ import {
   deleteDoc,
   doc,
   arrayUnion,
-  runTransaction
+  runTransaction,
+  addDoc
 } from 'firebase/firestore';
 import { 
   Search, 
@@ -43,7 +44,12 @@ import {
   Shield,
   ThumbsUp,
   List,
-  Grid
+  Grid,
+  Download,
+  Upload,
+  RefreshCw,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 
 // --- Firebase Configuration ---
@@ -153,6 +159,86 @@ const formatTimeAgo = (timestamp) => {
   if (weeks < 4) return `${weeks}w ago`;
   return 'long ago';
 };
+
+// --- Error Boundary Component ---
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+    this.state = { ...this.state, error, errorInfo };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+          <div className="max-w-2xl w-full bg-zinc-900/95 border border-red-500/20 rounded-2xl p-8 text-center">
+            <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-10 h-10 text-red-400" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-3">Something Went Wrong</h1>
+            <p className="text-zinc-400 mb-6">
+              The application encountered an unexpected error. Please refresh the page to try again.
+            </p>
+            {this.state.error && (
+              <details className="text-left bg-zinc-800/50 rounded-xl p-4 mb-6">
+                <summary className="text-red-400 font-mono text-sm cursor-pointer mb-2">
+                  Error Details
+                </summary>
+                <pre className="text-xs text-zinc-500 overflow-auto">
+                  {this.state.error.toString()}
+                  {this.state.errorInfo && this.state.errorInfo.componentStack}
+                </pre>
+              </details>
+            )}
+            <button
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-2 mx-auto bg-gradient-to-r from-violet-600 to-pink-600 text-white px-6 py-3 rounded-xl font-bold hover:from-violet-500 hover:to-pink-500 transition-all"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// --- Loading Skeleton Components ---
+const GameCardSkeleton = () => (
+  <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6 animate-pulse">
+    <div className="flex items-center gap-4 mb-4">
+      <div className="w-16 h-16 bg-zinc-800/50 rounded-xl" />
+      <div className="flex-1">
+        <div className="h-5 bg-zinc-800/50 rounded w-3/4 mb-2" />
+        <div className="h-4 bg-zinc-800/50 rounded w-1/2" />
+      </div>
+    </div>
+    <div className="flex items-center justify-between">
+      <div className="h-4 bg-zinc-800/50 rounded w-20" />
+      <div className="h-6 bg-zinc-800/50 rounded w-16" />
+    </div>
+  </div>
+);
+
+const SkeletonGrid = ({ count = 8 }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {Array.from({ length: count }).map((_, idx) => (
+      <GameCardSkeleton key={idx} />
+    ))}
+  </div>
+);
 
 // --- New Component: Animated Background Mesh ---
 const AnimatedBackgroundMesh = ({ mousePos }) => {
@@ -1269,6 +1355,198 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, displayedCo
   );
 };
 
+// Quick Add Game Modal
+const QuickAddGameModal = ({ onClose, onAdd }) => {
+  const [title, setTitle] = useState('');
+  const [antiCheat, setAntiCheat] = useState('None');
+  const [isAdding, setIsAdding] = useState(false);
+
+  const antiCheats = ['None', 'EAC', 'BattlEye', 'Vanguard', 'VAC', 'Ricochet'];
+
+  const handleAdd = async () => {
+    if (!title.trim()) return;
+    
+    setIsAdding(true);
+    try {
+      await onAdd({ title: title.trim(), antiCheat, cheats: [], nicknames: [] });
+      onClose();
+    } catch (err) {
+      console.error('Error adding game:', err);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
+      <div className="relative bg-zinc-900/95 border border-violet-500/20 rounded-2xl p-8 max-w-md w-full animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+            <Plus className="w-6 h-6 text-violet-400" />
+            Quick Add Game
+          </h2>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-zinc-400 mb-2">Game Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter game name"
+              className="w-full bg-zinc-800/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none transition-colors"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-zinc-400 mb-2">Anti-Cheat</label>
+            <select
+              value={antiCheat}
+              onChange={(e) => setAntiCheat(e.target.value)}
+              className="w-full bg-zinc-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-violet-500/50 focus:outline-none transition-colors"
+            >
+              {antiCheats.map(ac => (
+                <option key={ac} value={ac}>{ac}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="px-6 py-3 text-zinc-400 hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAdd}
+            disabled={!title.trim() || isAdding}
+            className="px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            {isAdding ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Adding...
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                Add Game
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Export/Import Modal
+const ExportImportModal = ({ onClose, games, onImport }) => {
+  const [importData, setImportData] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(games, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cheatdb-backup-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = async () => {
+    try {
+      const data = JSON.parse(importData);
+      if (!Array.isArray(data)) throw new Error('Invalid format');
+      
+      setIsImporting(true);
+      await onImport(data);
+      onClose();
+    } catch (err) {
+      alert('Invalid JSON format. Please check your data.');
+      console.error('Import error:', err);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
+      <div className="relative bg-zinc-900/95 border border-violet-500/20 rounded-2xl p-8 max-w-2xl w-full animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white">Export / Import Data</h2>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+              <Download className="w-5 h-5 text-emerald-400" />
+              Export Data
+            </h3>
+            <p className="text-sm text-zinc-400 mb-3">
+              Download all games and cheats as JSON backup file.
+            </p>
+            <button
+              onClick={handleExport}
+              className="w-full bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 rounded-xl px-6 py-3 font-bold transition-all flex items-center justify-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export All Data ({games.length} games)
+            </button>
+          </div>
+
+          <div className="border-t border-white/5 pt-6">
+            <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+              <Upload className="w-5 h-5 text-amber-400" />
+              Import Data
+            </h3>
+            <p className="text-sm text-zinc-400 mb-3">
+              Paste JSON backup data to restore games. This will add/update games.
+            </p>
+            <textarea
+              value={importData}
+              onChange={(e) => setImportData(e.target.value)}
+              placeholder='Paste JSON data here...'
+              className="w-full h-40 bg-zinc-800/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-mono placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none transition-colors resize-none"
+            />
+            <button
+              onClick={handleImport}
+              disabled={!importData.trim() || isImporting}
+              className="w-full mt-3 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-300 rounded-xl px-6 py-3 font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4" />
+                  Import Data
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Ripple Effect Handler
 const createRipple = (event) => {
   const button = event.currentTarget;
@@ -1929,6 +2207,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
   const [tierFilter, setTierFilter] = useState('ALL');
   const [editingCheatId, setEditingCheatId] = useState(null);
   const [editingCheat, setEditingCheat] = useState(null);
+  const [cheatSearchTerm, setCheatSearchTerm] = useState('');
   const featureTags = ['Aimbot', 'ESP', 'Exploits', 'Configs', 'Misc'];
   const tiers = ['FREE', 'PAID'];
 
@@ -2042,9 +2321,17 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
     setEditingCheat(null);
   };
 
-  const filteredCheats = game.cheats ? game.cheats.filter(cheat => 
-    tierFilter === 'ALL' || cheat.tier === tierFilter
-  ) : [];
+  const filteredCheats = game.cheats ? game.cheats.filter(cheat => {
+    const tierMatch = tierFilter === 'ALL' || cheat.tier === tierFilter;
+    if (!cheatSearchTerm.trim()) return tierMatch;
+    
+    const searchLower = cheatSearchTerm.toLowerCase();
+    const nameMatch = cheat.name?.toLowerCase().includes(searchLower);
+    const featureMatch = cheat.features?.some(f => f.toLowerCase().includes(searchLower));
+    const notesMatch = cheat.notes?.toLowerCase().includes(searchLower);
+    
+    return tierMatch && (nameMatch || featureMatch || notesMatch);
+  }) : [];
 
   const toggleFeature = (feature) => {
     setNewCheat(prev => ({
@@ -2224,27 +2511,52 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
             </>
           )}
 
-          {/* Tier Filter Tabs */}
+          {/* Search and Filter Section */}
           {game.cheats && game.cheats.length > 0 && (
-            <div className="mb-6 flex gap-2 border-b border-white/10 pb-4">
-              {['ALL', 'FREE', 'PAID'].map(tier => (
-                <button
-                  key={tier}
-                  onClick={() => setTierFilter(tier)}
-                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all rounded-lg border ${
-                    tierFilter === tier
-                      ? tier === 'ALL'
-                        ? 'bg-violet-500/30 border-violet-500/50 text-violet-200'
-                        : tier === 'FREE'
-                        ? 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200'
-                        : 'bg-amber-500/30 border-amber-500/50 text-amber-200'
-                      : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/50'
-                  }`}
-                >
-                  {tier === 'ALL' ? `All (${game.cheats.length})` : `${tier} (${game.cheats.filter(c => c.tier === tier).length})`}
-                </button>
-              ))}
-            </div>
+            <>
+              {/* Cheat Search Bar */}
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <input
+                    type="text"
+                    placeholder="Search cheats by name, features, or notes..."
+                    value={cheatSearchTerm}
+                    onChange={(e) => setCheatSearchTerm(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-zinc-800/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none transition-colors text-sm"
+                  />
+                  {cheatSearchTerm && (
+                    <button
+                      onClick={() => setCheatSearchTerm('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Tier Filter Tabs */}
+              <div className="mb-6 flex gap-2 border-b border-white/10 pb-4">
+                {['ALL', 'FREE', 'PAID'].map(tier => (
+                  <button
+                    key={tier}
+                    onClick={() => setTierFilter(tier)}
+                    className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all rounded-lg border ${
+                      tierFilter === tier
+                        ? tier === 'ALL'
+                          ? 'bg-violet-500/30 border-violet-500/50 text-violet-200'
+                          : tier === 'FREE'
+                          ? 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200'
+                          : 'bg-amber-500/30 border-amber-500/50 text-amber-200'
+                        : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/50'
+                    }`}
+                  >
+                    {tier === 'ALL' ? `All (${game.cheats.length})` : `${tier} (${game.cheats.filter(c => c.tier === tier).length})`}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
           {/* Cheats Grid */}
@@ -2694,6 +3006,10 @@ export default function App() {
   const [editingGame, setEditingGame] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [usePagination, setUsePagination] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showExportImport, setShowExportImport] = useState(false);
+  const [selectedGames, setSelectedGames] = useState([]);
+  const [focusedGameIndex, setFocusedGameIndex] = useState(-1);
   const gamesPerPage = 20;
   const [userVotes, setUserVotes] = useState(() => {
     // Load votes from localStorage on initialization
@@ -2756,47 +3072,8 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 3. Keyboard Shortcuts & Command Palette
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Esc key: close modals
-      if (e.key === 'Escape') {
-        if (selectedGameId) {
-          setSelectedGameId(null);
-          e.preventDefault();
-        }
-        if (showLogin) {
-          setShowLogin(false);
-          e.preventDefault();
-        }
-        if (showShortcuts) {
-          setShowShortcuts(false);
-          e.preventDefault();
-        }
-        if (showCommandPalette) {
-          setShowCommandPalette(false);
-          e.preventDefault();
-        }
-      }
-      
-      // ? key: show shortcuts
-      if (e.key === '?' && !showShortcuts && !showCommandPalette) {
-        setShowShortcuts(true);
-        e.preventDefault();
-      }
-      
-      // Ctrl/Cmd + K: open command palette
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        setShowCommandPalette(true);
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedGameId, showLogin, showShortcuts, showCommandPalette]);
-
-  // 4. Advanced Filter
+  // 2.5. Derived state and helper functions (before keyboard shortcuts)
+  // Filtering logic
   const filteredGames = useMemo(() => {
     let result = games;
     
@@ -2818,7 +3095,6 @@ export default function App() {
   }, [games, debouncedSearchTerm]);
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredGames.length / gamesPerPage);
   const paginatedGames = useMemo(() => {
     if (!usePagination) return filteredGames.slice(0, displayedGames);
     
@@ -2826,6 +3102,135 @@ export default function App() {
     const endIndex = startIndex + gamesPerPage;
     return filteredGames.slice(startIndex, endIndex);
   }, [filteredGames, currentPage, gamesPerPage, usePagination, displayedGames]);
+
+  const totalPages = Math.ceil(filteredGames.length / gamesPerPage);
+
+  // Bulk operation helpers (used in keyboard shortcuts)
+  const toggleGameSelection = useCallback((gameId) => {
+    setSelectedGames(prev => 
+      prev.includes(gameId) ? prev.filter(id => id !== gameId) : [...prev, gameId]
+    );
+  }, []);
+
+  const selectAllGames = useCallback(() => {
+    setSelectedGames(paginatedGames.map(g => g.id));
+  }, [paginatedGames]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedGames([]);
+  }, []);
+
+  // 3. Keyboard Shortcuts & Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't interfere with typing in inputs
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      // Esc key: close modals and clear selection
+      if (e.key === 'Escape') {
+        if (selectedGameId) {
+          setSelectedGameId(null);
+          e.preventDefault();
+        }
+        if (showLogin) {
+          setShowLogin(false);
+          e.preventDefault();
+        }
+        if (showShortcuts) {
+          setShowShortcuts(false);
+          e.preventDefault();
+        }
+        if (showCommandPalette) {
+          setShowCommandPalette(false);
+          e.preventDefault();
+        }
+        if (showQuickAdd) {
+          setShowQuickAdd(false);
+          e.preventDefault();
+        }
+        if (showExportImport) {
+          setShowExportImport(false);
+          e.preventDefault();
+        }
+        if (selectedGames.length > 0) {
+          clearSelection();
+          e.preventDefault();
+        }
+      }
+      
+      // Arrow key navigation for game grid
+      if (!selectedGameId && !showLogin && !showCommandPalette) {
+        const totalVisible = paginatedGames.length;
+        
+        if (e.key === 'ArrowRight') {
+          setFocusedGameIndex(prev => Math.min(prev + 1, totalVisible - 1));
+          e.preventDefault();
+        }
+        if (e.key === 'ArrowLeft') {
+          setFocusedGameIndex(prev => Math.max(prev - 1, 0));
+          e.preventDefault();
+        }
+        if (e.key === 'ArrowDown') {
+          setFocusedGameIndex(prev => Math.min(prev + 4, totalVisible - 1));
+          e.preventDefault();
+        }
+        if (e.key === 'ArrowUp') {
+          setFocusedGameIndex(prev => Math.max(prev - 4, 0));
+          e.preventDefault();
+        }
+        
+        // Enter: open focused game
+        if (e.key === 'Enter' && focusedGameIndex >= 0 && focusedGameIndex < totalVisible) {
+          const game = paginatedGames[focusedGameIndex];
+          setSelectedGameId(game.id);
+          analytics.track('gameView', {
+            gameId: game.id,
+            gameTitle: game.title,
+            antiCheat: game.antiCheat
+          });
+          e.preventDefault();
+        }
+        
+        // Space: toggle selection (bulk operations)
+        if (e.key === ' ' && focusedGameIndex >= 0 && focusedGameIndex < totalVisible && isEditMode) {
+          const game = paginatedGames[focusedGameIndex];
+          toggleGameSelection(game.id);
+          e.preventDefault();
+        }
+      }
+      
+      // ? key: show shortcuts
+      if (e.key === '?' && !showShortcuts && !showCommandPalette) {
+        setShowShortcuts(true);
+        e.preventDefault();
+      }
+      
+      // Ctrl/Cmd + K: open command palette
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        setShowCommandPalette(true);
+        e.preventDefault();
+      }
+      
+      // Ctrl/Cmd + N: quick add game (admin only)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n' && user) {
+        setShowQuickAdd(true);
+        e.preventDefault();
+      }
+      
+      // Ctrl/Cmd + A: select all (when in edit mode)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a' && isEditMode && !selectedGameId) {
+        selectAllGames();
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedGameId, showLogin, showShortcuts, showCommandPalette, showQuickAdd, showExportImport, 
+      selectedGames, isEditMode, user, focusedGameIndex, paginatedGames, clearSelection, 
+      toggleGameSelection, selectAllGames]);
 
   // 4. Actions
   const handleLogin = async (email, password) => {
@@ -2956,8 +3361,73 @@ export default function App() {
     return userVotes[`${selectedGame.id}_${cheatId}`] || false;
   };
 
+  // Quick Add Game Handler
+  const handleQuickAddGame = useCallback(async (gameData) => {
+    if (!user) {
+      addToast('You must be logged in to add games', 'error');
+      return;
+    }
+
+    try {
+      const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
+      await addDoc(gamesRef, gameData);
+      addToast('Game added successfully', 'success');
+    } catch (err) {
+      console.error('Error adding game:', err);
+      addToast('Failed to add game', 'error');
+    }
+  }, [user, addToast]);
+
+  // Export/Import Handlers
+  const handleImportData = useCallback(async (data) => {
+    if (!user) {
+      addToast('You must be logged in to import data', 'error');
+      return;
+    }
+
+    try {
+      const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
+      
+      for (const game of data) {
+        const { id, ...gameData } = game;
+        if (id) {
+          // Update existing
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'games', id), gameData);
+        } else {
+          // Add new
+          await addDoc(gamesRef, gameData);
+        }
+      }
+      
+      addToast(`Imported ${data.length} games successfully`, 'success');
+    } catch (err) {
+      console.error('Import error:', err);
+      addToast('Failed to import data', 'error');
+    }
+  }, [user, addToast]);
+
+  // Bulk Operations
+  const handleBulkDelete = useCallback(async () => {
+    if (!user || selectedGames.length === 0) return;
+    
+    if (!confirm(`Delete ${selectedGames.length} games? This cannot be undone.`)) return;
+
+    try {
+      for (const gameId of selectedGames) {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'games', gameId));
+      }
+      
+      setSelectedGames([]);
+      addToast(`Deleted ${selectedGames.length} games successfully`, 'success');
+    } catch (err) {
+      console.error('Bulk delete error:', err);
+      addToast('Failed to delete some games', 'error');
+    }
+  }, [user, selectedGames, addToast]);
+
   return (
-    <div id="app-root" className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 bg-[#050505] text-zinc-200">
+    <ErrorBoundary>
+      <div id="app-root" className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-500 bg-[#050505] text-zinc-200">
       
       {/* Falling Stars Animation - rendered via portal to document.body */}
       <FallingStars />
@@ -2998,7 +3468,7 @@ export default function App() {
               </div>
             </div>
             {user && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <button 
                   onClick={() => setShowAnalytics(true)}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 shadow-lg bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/5 hover:border-violet-500/30"
@@ -3006,6 +3476,14 @@ export default function App() {
                 >
                   <Database className="w-3 h-3" />
                   Analytics
+                </button>
+                <button 
+                  onClick={() => setShowExportImport(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 shadow-lg bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/5 hover:border-emerald-500/30"
+                  title="Export/Import Data"
+                >
+                  <Download className="w-3 h-3" />
+                  Backup
                 </button>
                 <button 
                   onClick={() => setIsEditMode(!isEditMode)}
@@ -3048,32 +3526,76 @@ export default function App() {
               <p className="text-sm text-red-300/60 max-w-md">{error}</p>
             </div>
           ) : loading ? (
-            <div className="flex flex-col items-center justify-center h-96">
-              <Loader2 className="w-10 h-10 text-violet-500 animate-spin mb-4" />
-              <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest animate-pulse">Loading Assets...</p>
-            </div>
+            <SkeletonGrid count={8} />
           ) : filteredGames.length > 0 ? (
             <>
+              {/* Bulk Operations Toolbar */}
+              {isEditMode && selectedGames.length > 0 && (
+                <div className="mb-6 p-4 bg-violet-500/10 border border-violet-500/30 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-2">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-bold text-violet-300">
+                      {selectedGames.length} game{selectedGames.length !== 1 ? 's' : ''} selected
+                    </span>
+                    <button
+                      onClick={selectAllGames}
+                      className="text-xs font-bold text-zinc-400 hover:text-violet-300 transition-colors flex items-center gap-1"
+                    >
+                      <CheckSquare className="w-3 h-3" />
+                      Select All
+                    </button>
+                    <button
+                      onClick={clearSelection}
+                      className="text-xs font-bold text-zinc-400 hover:text-violet-300 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 rounded-xl text-sm font-bold transition-all flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Selected
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {paginatedGames.map((game, idx) => (
-                  <GameCard 
-                    key={game.id} 
-                    game={game} 
-                    onClick={(game) => {
-                      setSelectedGameId(game.id);
-                      // Track game view analytics
-                      analytics.track('gameView', {
-                        gameId: game.id,
-                        gameTitle: game.title,
-                        antiCheat: game.antiCheat
-                      });
-                    }}
-                    onEdit={handleEditGame}
-                    user={user}
-                    onDelete={handleDeleteGame}
-                    isEditMode={isEditMode}
-                    index={idx}
-                  />
+                  <div
+                    key={game.id}
+                    className={`relative ${focusedGameIndex === idx ? 'ring-2 ring-violet-500 rounded-2xl' : ''}`}
+                  >
+                    {isEditMode && (
+                      <button
+                        onClick={() => toggleGameSelection(game.id)}
+                        className="absolute top-3 left-3 z-10 p-2 bg-black/80 rounded-lg border border-white/10 hover:border-violet-500/50 transition-all"
+                      >
+                        {selectedGames.includes(game.id) ? (
+                          <CheckSquare className="w-4 h-4 text-violet-400" />
+                        ) : (
+                          <Square className="w-4 h-4 text-zinc-500" />
+                        )}
+                      </button>
+                    )}
+                    <GameCard 
+                      game={game} 
+                      onClick={(game) => {
+                        setSelectedGameId(game.id);
+                        // Track game view analytics
+                        analytics.track('gameView', {
+                          gameId: game.id,
+                          gameTitle: game.title,
+                          antiCheat: game.antiCheat
+                        });
+                      }}
+                      onEdit={handleEditGame}
+                      user={user}
+                      onDelete={handleDeleteGame}
+                      isEditMode={isEditMode}
+                      index={idx}
+                    />
+                  </div>
                 ))}
               </div>
 
@@ -3210,7 +3732,36 @@ export default function App() {
             user={user}
           />
         )}
+
+        {/* Quick Add Game Modal */}
+        {showQuickAdd && (
+          <QuickAddGameModal
+            onClose={() => setShowQuickAdd(false)}
+            onAdd={handleQuickAddGame}
+          />
+        )}
+
+        {/* Export/Import Modal */}
+        {showExportImport && (
+          <ExportImportModal
+            onClose={() => setShowExportImport(false)}
+            games={games}
+            onImport={handleImportData}
+          />
+        )}
+
+        {/* Floating Action Button (Admin Only) */}
+        {user && !selectedGameId && (
+          <button
+            onClick={() => setShowQuickAdd(true)}
+            className="fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-r from-violet-600 to-pink-600 text-white rounded-full shadow-2xl hover:shadow-violet-500/50 hover:scale-110 active:scale-95 transition-all duration-300 group"
+            title="Quick Add Game (Ctrl/Cmd + N)"
+          >
+            <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+          </button>
+        )}
       </div>
     </div>
+    </ErrorBoundary>
   );
 }
