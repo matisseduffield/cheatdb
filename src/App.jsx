@@ -3294,20 +3294,20 @@ const FeaturesGuideModal = ({ onClose }) => {
         const dy = targetPosition.y - prev.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Check if majority of target is within FOV
-        // Target radius is ~4% (half of 8% width), so if distance > (fov + 4), majority is outside
-        const targetRadius = 4;
-        if (distance > currentFov + targetRadius) {
+        // Check if target is within FOV (using percentage distance)
+        // currentFov is in vh units, convert to percentage approximation
+        const fovThreshold = currentFov * 1.5; // Scale factor for percentage vs vh
+        if (distance > fovThreshold) {
           // Target is outside FOV, don't lock on
           return prev;
         }
         
-        if (distance < 2) return prev;
+        if (distance < 0.5) return prev; // Already on target
         
         const speed = (100 - currentSmoothness) / 100;
         return {
-          x: prev.x + (dx * speed * 0.1),
-          y: prev.y + (dy * speed * 0.1)
+          x: prev.x + (dx * speed * 0.15),
+          y: prev.y + (dy * speed * 0.15)
         };
       });
     }, 16);
@@ -3400,18 +3400,10 @@ const FeaturesGuideModal = ({ onClose }) => {
                   }}
                 >
                   <div className="relative w-0 h-0">
-                    {/* Top line */}
-                    <div className="absolute w-0.5 h-3 bg-cyan-400 shadow-lg shadow-cyan-500/50" style={{ left: '-1px', top: '-10px' }}></div>
-                    {/* Bottom line */}
-                    <div className="absolute w-0.5 h-3 bg-cyan-400 shadow-lg shadow-cyan-500/50" style={{ left: '-1px', top: '7px' }}></div>
-                    {/* Left line */}
-                    <div className="absolute w-3 h-0.5 bg-cyan-400 shadow-lg shadow-cyan-500/50" style={{ left: '-10px', top: '-1px' }}></div>
-                    {/* Right line */}
-                    <div className="absolute w-3 h-0.5 bg-cyan-400 shadow-lg shadow-cyan-500/50" style={{ left: '7px', top: '-1px' }}></div>
-                    {/* Center dot */}
-                    <div className="absolute w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-lg shadow-cyan-500/80" style={{ left: '-3px', top: '-3px' }}></div>
-                    {/* Outer circle */}
-                    <div className="absolute w-8 h-8 border border-cyan-400/40 rounded-full" style={{ left: '-16px', top: '-16px' }}></div>
+                    {/* Vertical line */}
+                    <div className="absolute w-0.5 h-4 bg-green-400" style={{ left: '-1px', top: '-8px' }}></div>
+                    {/* Horizontal line */}
+                    <div className="absolute w-4 h-0.5 bg-green-400" style={{ left: '-8px', top: '-1px' }}></div>
                   </div>
                 </div>
                 
