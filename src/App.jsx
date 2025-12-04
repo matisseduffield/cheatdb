@@ -3838,16 +3838,16 @@ export default function App() {
                     backgroundSize: '1.5em 1.5em'
                   }}
                 >
-                  <option value="title">A-Z</option>
-                  <option value="cheats">Most Cheats</option>
-                  <option value="popular">Most Popular</option>
+                  <option value="title" style={{ backgroundColor: '#18181b', color: 'white', padding: '0.5rem' }}>A-Z</option>
+                  <option value="cheats" style={{ backgroundColor: '#18181b', color: 'white', padding: '0.5rem' }}>Most Cheats</option>
+                  <option value="popular" style={{ backgroundColor: '#18181b', color: 'white', padding: '0.5rem' }}>Most Popular</option>
                 </select>
                 <Filter className="w-4 h-4 text-violet-400 absolute left-[-1.75rem] top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Anti-Cheat Filter */}
               <div className="flex gap-1 flex-wrap">
-                {['ALL', 'EAC', 'BattlEye', 'Vanguard', 'VAC', 'Ricochet', 'None'].map(ac => (
+                {['ALL', 'EAC', 'BattlEye', 'Vanguard', 'VAC', 'Ricochet', 'Defense Matrix', 'None'].map(ac => (
                   <button
                     key={ac}
                     onClick={() => setFilterAntiCheat(ac)}
