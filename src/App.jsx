@@ -2130,7 +2130,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
       <div className="flex items-center gap-2 mb-8">
         <span className="text-xs font-medium px-2 py-1 rounded-md border flex items-center gap-1.5 transition-all text-zinc-500 bg-zinc-800/50 border-white/5 group-hover:border-violet-500/30 group-hover:bg-zinc-800/80">
           <Zap className="w-3 h-3 text-violet-400" />
-          {game.cheats?.length || 0} Programs
+          {game.cheats?.length || 0} Cheats
         </span>
       </div>
 
@@ -2455,11 +2455,11 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                     <div className="p-2 rounded-lg transition-colors bg-violet-500/10">
                       <Zap className="w-5 h-5 text-violet-400" />
                     </div>
-                    New Cheat Program
+                    New Cheat
                   </h3>
                   <div className="space-y-6 mb-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Program Name</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider ml-1 transition-colors text-zinc-500">Cheat Name</label>
                       <input
                         autoFocus
                         required
@@ -2564,7 +2564,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                       type="submit"
                       className="px-6 py-2.5 text-white text-xs font-bold rounded-xl transition-all shadow-lg uppercase tracking-wide hover:scale-105 bg-violet-600 hover:bg-violet-500 shadow-violet-900/20"
                     >
-                      Add Program
+                      Add Cheat
                     </button>
                   </div>
                 </form>
@@ -2634,7 +2634,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                       <input
                         autoFocus
                         required
-                        placeholder="Program Name"
+                        placeholder="Cheat Name"
                         className="w-full rounded-lg px-3 py-2 outline-none text-sm transition-all focus:ring-1 border bg-black/50 border-white/10 text-white placeholder-zinc-600 focus:ring-violet-500"
                         value={editingCheat.name}
                         onChange={e => setEditingCheat({...editingCheat, name: e.target.value})}
@@ -2814,7 +2814,7 @@ const GameDetail = ({ game, onClose, onAddCheat, onVoteCheat, userVotedCheat, us
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border bg-zinc-900 border-zinc-800">
                    <Ghost className="w-8 h-8 text-zinc-700" />
                 </div>
-                <h3 className="font-bold mb-1 text-zinc-300">{tierFilter === 'ALL' ? 'No Programs Yet' : `No ${tierFilter} Programs`}</h3>
+                <h3 className="font-bold mb-1 text-zinc-300">{tierFilter === 'ALL' ? 'No Cheats Yet' : `No ${tierFilter} Cheats`}</h3>
                 <p className="text-sm text-zinc-600">{tierFilter === 'ALL' ? 'This database entry is waiting for contributions.' : 'Try selecting a different tier.'}</p>
               </div>
             )}
