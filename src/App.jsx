@@ -3399,13 +3399,19 @@ const FeaturesGuideModal = ({ onClose }) => {
                     transitionDuration: isAimbotEnabled ? '0ms' : '300ms'
                   }}
                 >
-                  <div className="relative">
-                    {/* Horizontal line */}
-                    <div className="absolute w-6 h-0.5 bg-green-400 shadow-lg shadow-green-500/50" style={{ left: '-12px', top: '0' }}></div>
-                    {/* Vertical line */}
-                    <div className="absolute w-0.5 h-6 bg-green-400 shadow-lg shadow-green-500/50" style={{ left: '0', top: '-12px' }}></div>
+                  <div className="relative w-0 h-0">
+                    {/* Top line */}
+                    <div className="absolute w-0.5 h-3 bg-cyan-400 shadow-lg shadow-cyan-500/50" style={{ left: '-1px', top: '-10px' }}></div>
+                    {/* Bottom line */}
+                    <div className="absolute w-0.5 h-3 bg-cyan-400 shadow-lg shadow-cyan-500/50" style={{ left: '-1px', top: '7px' }}></div>
+                    {/* Left line */}
+                    <div className="absolute w-3 h-0.5 bg-cyan-400 shadow-lg shadow-cyan-500/50" style={{ left: '-10px', top: '-1px' }}></div>
+                    {/* Right line */}
+                    <div className="absolute w-3 h-0.5 bg-cyan-400 shadow-lg shadow-cyan-500/50" style={{ left: '7px', top: '-1px' }}></div>
                     {/* Center dot */}
-                    <div className="absolute w-1 h-1 bg-green-400 rounded-full" style={{ left: '-2px', top: '-2px' }}></div>
+                    <div className="absolute w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-lg shadow-cyan-500/80" style={{ left: '-3px', top: '-3px' }}></div>
+                    {/* Outer circle */}
+                    <div className="absolute w-8 h-8 border border-cyan-400/40 rounded-full" style={{ left: '-16px', top: '-16px' }}></div>
                   </div>
                 </div>
                 
