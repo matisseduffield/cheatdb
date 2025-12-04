@@ -98,6 +98,16 @@ const FeaturesPage = () => {
   const [smoothness, setSmoothness] = useState(1); // 0=Low, 1=Medium, 2=High
   const [fov, setFov] = useState(1); // 0=Small, 1=Medium, 2=Large
   
+  // ESP Features
+  const [espFeatures, setEspFeatures] = useState({
+    box: false,
+    skeleton: false,
+    names: false,
+    health: false,
+    distance: false,
+    teamIndicator: false
+  });
+  
   // Smoothness mapping: Low=Fast, Medium=Normal, High=Slow
   const smoothnessValues = [20, 50, 80]; // Lower = faster aim snap
   const smoothnessLabels = ['Low (Fast)', 'Medium', 'High (Slow)'];
@@ -108,6 +118,13 @@ const FeaturesPage = () => {
   
   const currentSmoothness = smoothnessValues[smoothness];
   const currentFov = fovValues[fov];
+  
+  const toggleEspFeature = (feature) => {
+    setEspFeatures(prev => ({
+      ...prev,
+      [feature]: !prev[feature]
+    }));
+  };
   
   // Simulate aimbot movement
   useEffect(() => {
@@ -380,13 +397,152 @@ const FeaturesPage = () => {
               ESP (Extra Sensory Perception)
             </h2>
             <p className="text-zinc-300 mb-8 text-lg">
-              Displays visual overlays showing enemy positions, health, distance, and other information through walls. ESP helps you track opponents even when they're not in direct line of sight.
+              Displays visual overlays showing enemy positions, health, distance, and other information. ESP reveals opponent locations even through walls for tactical advantage.
             </p>
             
-            {/* Coming Soon */}
-            <div className="bg-zinc-800/30 border border-cyan-500/20 rounded-xl p-12 text-center">
-              <p className="text-zinc-400 text-lg mb-2">Interactive ESP Demo</p>
-              <p className="text-zinc-500">Coming soon...</p>
+            {/* Interactive Demo */}
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
+              <div className="relative w-full aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl overflow-hidden border border-cyan-500/20 flex items-center justify-center">
+                {/* Background grid */}
+                <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
+                  backgroundImage: 'linear-gradient(0deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent)',
+                  backgroundSize: '50px 50px'
+                }}></div>
+
+                {/* Enemy Model */}
+                <div className="relative">
+                  {/* Box */}
+                  {espFeatures.box && (
+                    <div className="absolute inset-0 border-2 border-cyan-400/50 w-16 h-24" style={{
+                      transform: 'translate(-50%, -50%)',
+                      left: '50%',
+                      top: '50%'
+                    }}></div>
+                  )}
+
+                  {/* Player Body */}
+                  <div className="w-16 h-24 relative">
+                    {/* Head */}
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gradient-to-b from-pink-400 to-pink-600 rounded-full border border-pink-300 shadow-lg shadow-pink-500/50"></div>
+                    
+                    {/* Body */}
+                    <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-6 h-8 bg-gradient-to-b from-violet-400 to-violet-600 border border-violet-300"></div>
+                    
+                    {/* Left Arm */}
+                    <div className="absolute top-8 left-0 w-3 h-10 bg-gradient-to-b from-pink-300 to-pink-500 border border-pink-200"></div>
+                    
+                    {/* Right Arm */}
+                    <div className="absolute top-8 right-0 w-3 h-10 bg-gradient-to-b from-pink-300 to-pink-500 border border-pink-200"></div>
+                    
+                    {/* Left Leg */}
+                    <div className="absolute bottom-0 left-1 w-3 h-6 bg-gradient-to-b from-slate-400 to-slate-600 border border-slate-300"></div>
+                    
+                    {/* Right Leg */}
+                    <div className="absolute bottom-0 right-1 w-3 h-6 bg-gradient-to-b from-slate-400 to-slate-600 border border-slate-300"></div>
+                  </div>
+
+                  {/* Skeleton */}
+                  {espFeatures.skeleton && (
+                    <svg className="absolute inset-0 w-16 h-24 pointer-events-none" viewBox="0 0 64 96">
+                      {/* Head */}
+                      <circle cx="32" cy="16" r="8" fill="none" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      {/* Body */}
+                      <line x1="32" y1="24" x2="32" y2="48" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      {/* Left Arm */}
+                      <line x1="32" y1="32" x2="12" y2="48" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      {/* Right Arm */}
+                      <line x1="32" y1="32" x2="52" y2="48" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      {/* Left Leg */}
+                      <line x1="32" y1="48" x2="20" y2="80" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      {/* Right Leg */}
+                      <line x1="32" y1="48" x2="44" y2="80" stroke="rgba(34, 197, 94, 0.6)" strokeWidth="1"/>
+                      {/* Joint circles */}
+                      <circle cx="32" cy="16" r="2" fill="rgba(34, 197, 94, 0.8)"/>
+                      <circle cx="32" cy="32" r="2" fill="rgba(34, 197, 94, 0.8)"/>
+                      <circle cx="12" cy="48" r="2" fill="rgba(34, 197, 94, 0.8)"/>
+                      <circle cx="52" cy="48" r="2" fill="rgba(34, 197, 94, 0.8)"/>
+                      <circle cx="20" cy="80" r="2" fill="rgba(34, 197, 94, 0.8)"/>
+                      <circle cx="44" cy="80" r="2" fill="rgba(34, 197, 94, 0.8)"/>
+                    </svg>
+                  )}
+
+                  {/* Overlay info */}
+                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-center whitespace-nowrap">
+                    {espFeatures.names && (
+                      <div className="text-cyan-400 font-bold text-xs mb-1">Enemy Player</div>
+                    )}
+                    {espFeatures.health && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-12 h-2 bg-red-900/50 border border-red-500 rounded">
+                          <div className="h-full bg-red-500 rounded" style={{ width: '65%' }}></div>
+                        </div>
+                        <span className="text-red-400 text-xs font-bold">65</span>
+                      </div>
+                    )}
+                    {espFeatures.distance && (
+                      <div className="text-yellow-400 text-xs mt-1">45.2m</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* ESP Feature Toggles */}
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+                {[
+                  { key: 'box', label: 'Box ESP', color: 'cyan' },
+                  { key: 'skeleton', label: 'Skeleton', color: 'green' },
+                  { key: 'names', label: 'Player Names', color: 'cyan' },
+                  { key: 'health', label: 'Health Bar', color: 'red' },
+                  { key: 'distance', label: 'Distance', color: 'yellow' },
+                  { key: 'teamIndicator', label: 'Team Color', color: 'blue' }
+                ].map(({ key, label, color }) => (
+                  <button
+                    key={key}
+                    onClick={() => toggleEspFeature(key)}
+                    className={`px-4 py-3 rounded-lg font-medium transition-all active:scale-95 text-sm ${
+                      espFeatures[key]
+                        ? `bg-${color}-500/30 border-${color}-500/50 text-${color}-300 border-2`
+                        : 'bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700'
+                    }`}
+                  >
+                    {espFeatures[key] ? '✓ ' : ''}{label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Technical Details */}
+            <div className="bg-zinc-800/30 border border-cyan-500/20 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-cyan-300 mb-4 flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                How It Works
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 text-xl">•</span>
+                  <span><strong>Box ESP:</strong> Draws a bounding box around each player for quick identification</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 text-xl">•</span>
+                  <span><strong>Skeleton:</strong> Shows enemy bone structure through walls and objects</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 text-xl">•</span>
+                  <span><strong>Player Names:</strong> Displays player usernames and IDs above their heads</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 text-xl">•</span>
+                  <span><strong>Health Bar:</strong> Shows remaining health and armor levels</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 text-xl">•</span>
+                  <span><strong>Distance:</strong> Displays distance to target in meters/units</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 text-xl">•</span>
+                  <span><strong>Team Color:</strong> Color-codes players by team (enemy/ally)</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
