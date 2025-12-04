@@ -91,6 +91,7 @@ const AnimatedBackgroundMesh = () => {
 };
 
 const FeaturesPage = () => {
+  const [activeTab, setActiveTab] = useState('aimbot'); // 'aimbot' or 'esp'
   const [targetPosition, setTargetPosition] = useState({ x: 50, y: 50 });
   const [crosshairPosition, setCrosshairPosition] = useState({ x: 50, y: 50 });
   const [isAimbotEnabled, setIsAimbotEnabled] = useState(false);
@@ -172,7 +173,48 @@ const FeaturesPage = () => {
           <p className="text-xl text-zinc-400">Learn how cheat features work with interactive demonstrations</p>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="flex gap-3 mb-8 border-b border-white/10 pb-4">
+          <button
+            onClick={() => setActiveTab('aimbot')}
+            className={`px-6 py-3 rounded-t-xl font-bold transition-all ${
+              activeTab === 'aimbot'
+                ? 'bg-violet-500/20 border-2 border-violet-500/50 border-b-0 text-violet-300'
+                : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:bg-zinc-800'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                <line x1="12" y1="2" x2="12" y2="6" strokeWidth="2"/>
+                <line x1="12" y1="18" x2="12" y2="22" strokeWidth="2"/>
+                <line x1="2" y1="12" x2="6" y2="12" strokeWidth="2"/>
+                <line x1="18" y1="12" x2="22" y2="12" strokeWidth="2"/>
+              </svg>
+              Aimbot
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('esp')}
+            className={`px-6 py-3 rounded-t-xl font-bold transition-all ${
+              activeTab === 'esp'
+                ? 'bg-cyan-500/20 border-2 border-cyan-500/50 border-b-0 text-cyan-300'
+                : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:bg-zinc-800'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
+                <path d="M3 9h18M9 21V9" strokeWidth="2"/>
+              </svg>
+              ESP
+            </div>
+          </button>
+        </div>
+
         {/* Aimbot Section */}
+        {activeTab === 'aimbot' && (
         <div className="space-y-8">
           <div className="bg-zinc-900/50 border border-violet-500/20 rounded-2xl p-8 backdrop-blur-xl">
             <h2 className="text-3xl font-bold text-violet-400 mb-4 flex items-center gap-3">
@@ -221,22 +263,17 @@ const FeaturesPage = () => {
                 </div>
                 
                 {/* Crosshair */}
-                <div 
-                  className="absolute transition-all pointer-events-none"
+                <img
+                  src="/logos/crosshair.png"
+                  alt="Crosshair"
+                  className="absolute w-8 h-8 pointer-events-none"
                   style={{
                     left: `${crosshairPosition.x}%`,
                     top: `${crosshairPosition.y}%`,
                     transform: 'translate(-50%, -50%)',
-                    transitionDuration: isAimbotEnabled ? '0ms' : '300ms'
+                    transition: isAimbotEnabled ? 'none' : 'all 300ms'
                   }}
-                >
-                  <div className="relative w-0 h-0">
-                    {/* Vertical line */}
-                    <div className="absolute w-0.5 h-4 bg-green-400" style={{ left: '-1px', top: '-8px' }}></div>
-                    {/* Horizontal line */}
-                    <div className="absolute w-4 h-0.5 bg-green-400" style={{ left: '-8px', top: '-1px' }}></div>
-                  </div>
-                </div>
+                />
                 
                 {/* Instructions overlay */}
                 <div className="absolute top-4 left-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg">
@@ -327,13 +364,29 @@ const FeaturesPage = () => {
                 </li>
               </ul>
             </div>
-          </div>
-          
-          {/* Coming Soon */}
-          <div className="text-center py-12">
-            <p className="text-zinc-500 text-lg">More features (ESP, Exploits, Configs, Misc) coming soon...</p>
+          </div>Section */}
+        {activeTab === 'esp' && (
+        <div className="space-y-8">
+          <div className="bg-zinc-900/50 border border-cyan-500/20 rounded-2xl p-8 backdrop-blur-xl">
+            <h2 className="text-3xl font-bold text-cyan-400 mb-4 flex items-center gap-3">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
+                <path d="M3 9h18M9 21V9" strokeWidth="2"/>
+              </svg>
+              ESP (Extra Sensory Perception)
+            </h2>
+            <p className="text-zinc-300 mb-8 text-lg">
+              Displays visual overlays showing enemy positions, health, distance, and other information through walls. ESP helps you track opponents even when they're not in direct line of sight.
+            </p>
+            
+            {/* Coming Soon */}
+            <div className="bg-zinc-800/30 border border-cyan-500/20 rounded-xl p-12 text-center">
+              <p className="text-zinc-400 text-lg mb-2">Interactive ESP Demo</p>
+              <p className="text-zinc-500">Coming soon...</p>
+            </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
