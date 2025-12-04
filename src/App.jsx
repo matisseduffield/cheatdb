@@ -253,10 +253,10 @@ const antiCheatInfo = {
   },
   'Ricochet': {
     name: 'Ricochet Anti-Cheat',
-    difficulty: 'Very Hard',
+    difficulty: 'Hard',
     description: 'Activision\'s proprietary kernel-level driver and server-side detection system for Call of Duty.',
     detection: 'Kernel-level driver, server-side tools, machine learning, and team-based investigation of reports.',
-    bypassDifficulty: 9,
+    bypassDifficulty: 7,
     color: 'purple'
   },
   'Defense Matrix': {
@@ -3290,6 +3290,7 @@ export default function App() {
   const [focusedGameIndex, setFocusedGameIndex] = useState(-1);
   const [showAntiCheatInfo, setShowAntiCheatInfo] = useState(null);
   const [sortBy, setSortBy] = useState('title'); // title, cheats, popular
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [filterAntiCheat, setFilterAntiCheat] = useState('ALL');
   const [favGames, setFavGames] = useState(() => favorites.getAll().games);
   const gamesPerPage = 20;
@@ -3835,22 +3836,61 @@ export default function App() {
             <div className="mb-6 flex flex-wrap items-center gap-3">
               {/* Sort Dropdown */}
               <div className="relative">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-zinc-900/80 backdrop-blur-sm border border-white/10 text-white rounded-xl pl-4 pr-10 py-2.5 text-sm font-bold focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none cursor-pointer hover:bg-zinc-900 hover:border-violet-500/30 transition-all appearance-none shadow-lg shadow-black/20"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a78bfa' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: '1.5em 1.5em'
-                  }}
+                <button
+                  onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+                  className="inline-flex items-center justify-between gap-3 px-4 py-2.5 border border-white/20 shadow-lg text-sm font-bold rounded-xl text-white bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all focus:outline-none focus:ring-2 focus:ring-violet-500/30 min-w-[160px]"
                 >
-                  <option value="title" style={{ backgroundColor: '#18181b', color: 'white', padding: '0.5rem' }}>A-Z</option>
-                  <option value="cheats" style={{ backgroundColor: '#18181b', color: 'white', padding: '0.5rem' }}>Most Cheats</option>
-                  <option value="popular" style={{ backgroundColor: '#18181b', color: 'white', padding: '0.5rem' }}>Most Popular</option>
-                </select>
-                <Filter className="w-4 h-4 text-violet-400 absolute left-[-1.75rem] top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Filter className="w-4 h-4 text-violet-400" />
+                  <span className="flex-1 text-left">
+                    {sortBy === 'title' ? 'A-Z' : sortBy === 'cheats' ? 'Most Cheats' : 'Most Popular'}
+                  </span>
+                  <svg className={`w-4 h-4 text-white/80 transition-transform duration-200 ${sortDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+
+                {sortDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setSortDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-56 origin-top-right bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-40 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="p-2 space-y-1">
+                        <button
+                          onClick={() => { setSortBy('title'); setSortDropdownOpen(false); }}
+                          className="group flex items-center w-full px-4 py-3 text-sm text-white rounded-lg hover:bg-white/10 transition-all text-left"
+                        >
+                          <span className={`w-2 h-2 rounded-full mr-3 transition-all ${
+                            sortBy === 'title' 
+                              ? 'bg-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.8)]' 
+                              : 'bg-zinc-600'
+                          }`}></span>
+                          A-Z
+                        </button>
+                        <button
+                          onClick={() => { setSortBy('cheats'); setSortDropdownOpen(false); }}
+                          className="group flex items-center w-full px-4 py-3 text-sm text-white rounded-lg hover:bg-white/10 transition-all text-left"
+                        >
+                          <span className={`w-2 h-2 rounded-full mr-3 transition-all ${
+                            sortBy === 'cheats' 
+                              ? 'bg-pink-400 shadow-[0_0_10px_rgba(244,114,182,0.8)]' 
+                              : 'bg-zinc-600'
+                          }`}></span>
+                          Most Cheats
+                        </button>
+                        <button
+                          onClick={() => { setSortBy('popular'); setSortDropdownOpen(false); }}
+                          className="group flex items-center w-full px-4 py-3 text-sm text-white rounded-lg hover:bg-white/10 transition-all text-left"
+                        >
+                          <span className={`w-2 h-2 rounded-full mr-3 transition-all ${
+                            sortBy === 'popular' 
+                              ? 'bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]' 
+                              : 'bg-zinc-600'
+                          }`}></span>
+                          Most Popular
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Anti-Cheat Filter */}
