@@ -858,19 +858,116 @@ const FeaturesPage = () => {
               Makes walls and objects transparent, allowing you to see through terrain and buildings. Shows enemy positions even when they're behind solid obstacles.
             </p>
             
-            {/* Demo Placeholder */}
+            {/* Interactive Demo */}
             <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
-              <div className="relative w-full aspect-video bg-gradient-to-br from-orange-900/20 to-red-900/20 rounded-xl overflow-hidden border border-orange-500/20 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🪟</div>
-                  <p className="text-zinc-400">Interactive wallhack visualization coming soon</p>
+              <div className="relative w-full aspect-video bg-gradient-to-br from-orange-900/20 to-red-900/20 rounded-xl overflow-hidden border border-orange-500/20">
+                {/* Simulated 3D environment */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {/* Wall (solid obstruction) */}
+                  <div 
+                    className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-4 transition-all duration-300"
+                    style={{
+                      background: wallhackEnabled 
+                        ? `linear-gradient(to right, rgba(100, 100, 100, ${1 - wallTransparency / 100}), rgba(80, 80, 80, ${1 - wallTransparency / 100}))`
+                        : 'linear-gradient(to right, #666, #444)',
+                      boxShadow: wallhackEnabled ? 'none' : '0 0 20px rgba(0,0,0,0.5)'
+                    }}
+                  >
+                    <div className="absolute inset-0 opacity-20" style={{
+                      backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)'
+                    }}></div>
+                  </div>
+                  
+                  {/* Enemies behind wall (left side) */}
+                  <div className="absolute left-[20%] top-1/2 transform -translate-y-1/2 space-y-4">
+                    {[1, 2].map((id) => (
+                      <div 
+                        key={id}
+                        className="relative transition-all duration-300"
+                        style={{
+                          opacity: wallhackEnabled ? 1 : 0.2,
+                          filter: wallhackEnabled ? 'none' : 'blur(2px)'
+                        }}
+                      >
+                        <div className="w-12 h-16 bg-red-600 rounded-lg border-2 border-red-400 relative overflow-hidden">
+                          {/* Enemy silhouette */}
+                          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-red-400 rounded-full"></div>
+                          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-500 rounded"></div>
+                          {wallhackEnabled && (
+                            <div className="absolute inset-0 border-2 border-orange-400 animate-pulse"></div>
+                          )}
+                        </div>
+                        {wallhackEnabled && (
+                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-orange-400 font-bold whitespace-nowrap">
+                            [{50 + id * 10}m]
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Enemies visible (right side) */}
+                  <div className="absolute right-[20%] top-1/2 transform -translate-y-1/2 space-y-4">
+                    {[3].map((id) => (
+                      <div key={id} className="relative">
+                        <div className="w-12 h-16 bg-red-600 rounded-lg border-2 border-red-400 relative overflow-hidden">
+                          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-red-400 rounded-full"></div>
+                          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-500 rounded"></div>
+                        </div>
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-cyan-400 font-bold">
+                          [28m]
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Player indicator (bottom center) */}
+                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+                    <div className="w-10 h-12 bg-cyan-600 rounded-lg border-2 border-cyan-400 relative overflow-hidden">
+                      <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-cyan-300 rounded-full"></div>
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-cyan-500 rounded"></div>
+                    </div>
+                    <div className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-xs text-cyan-300 font-bold">
+                      YOU
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Status indicators */}
+                <div className="absolute top-4 left-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  {wallhackEnabled ? '👁️ Wallhack Active - Enemies Visible' : '🚫 Normal Vision - Enemies Hidden'}
+                </div>
+                
+                {/* Performance metrics */}
+                <div className="absolute top-4 right-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">●</span>
+                    <span>FPS: {wallhackEnabled ? '120-144' : '144'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400">●</span>
+                    <span>GPU: {wallhackEnabled ? '42%' : '28%'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={wallhackEnabled ? 'text-red-400' : 'text-green-400'}>●</span>
+                    <span>Risk: {wallhackEnabled ? 'Critical' : 'None'}</span>
+                  </div>
                 </div>
               </div>
               
               <div className="mt-6 space-y-4">
                 <div>
                   <label className="text-sm font-bold text-zinc-400 mb-3 block">Wall Transparency: {wallTransparency}%</label>
-                  <input type="range" min="0" max="100" value={wallTransparency} onChange={(e) => setWallTransparency(e.target.value)} className="w-full" />
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={wallTransparency} 
+                    onChange={(e) => setWallTransparency(e.target.value)} 
+                    className="w-full accent-orange-500"
+                    disabled={!wallhackEnabled}
+                  />
+                  <p className="text-xs text-zinc-500 mt-2">Adjust how transparent walls appear (only works when wallhack is enabled)</p>
                 </div>
                 <button
                   onClick={() => setWallhackEnabled(!wallhackEnabled)}
@@ -885,7 +982,7 @@ const FeaturesPage = () => {
               </div>
             </div>
 
-            <div className="bg-zinc-800/30 border border-orange-500/20 rounded-xl p-6">
+            <div className="bg-zinc-800/30 border border-orange-500/20 rounded-xl p-6 mb-6">
               <h3 className="text-lg font-bold text-orange-300 mb-4 flex items-center gap-2">
                 <Info className="w-5 h-5" />
                 How It Works
@@ -902,6 +999,38 @@ const FeaturesPage = () => {
                 <li className="flex items-start gap-3">
                   <span className="text-orange-400 text-xl">•</span>
                   <span>Often combined with ESP to show enemy positions through all barriers</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-orange-400 text-xl">•</span>
+                  <span>Can render walls as semi-transparent or completely invisible</span>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Anti-Cheat Detection Info */}
+            <div className="bg-red-900/10 border border-red-500/30 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeWidth="2"/>
+                </svg>
+                Why It's Banned & Detection Methods
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>VAC:</strong> Detects DirectX/OpenGL hooks and texture modifications</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>EasyAntiCheat:</strong> Scans for driver-level rendering modifications</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>BattlEye:</strong> Monitors graphics pipeline and shader manipulations</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>Reason for ban:</strong> Provides complete information advantage, impossible to counter</span>
                 </li>
               </ul>
             </div>
@@ -925,19 +1054,151 @@ const FeaturesPage = () => {
               Displays a tactical minimap showing your position and all enemy locations in real-time. Provides instant awareness of the battlefield layout and enemy movements.
             </p>
             
-            {/* Demo Placeholder */}
+            {/* Interactive Demo */}
             <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
               <div className="relative w-full aspect-video bg-gradient-to-br from-green-900/20 to-cyan-900/20 rounded-xl overflow-hidden border border-green-500/20 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">📡</div>
-                  <p className="text-zinc-400">Interactive radar minimap coming soon</p>
+                {/* Radar Display */}
+                <div className="relative">
+                  <svg width="300" height="300" viewBox="0 0 300 300" className="transform transition-all duration-300" style={{ transform: `scale(${radarScale})` }}>
+                    {/* Background */}
+                    <circle cx="150" cy="150" r="145" fill="#000000" opacity="0.6"/>
+                    
+                    {/* Distance rings */}
+                    <circle cx="150" cy="150" r="120" fill="none" stroke="#22c55e" strokeWidth="1" opacity="0.3"/>
+                    <circle cx="150" cy="150" r="80" fill="none" stroke="#22c55e" strokeWidth="1" opacity="0.3"/>
+                    <circle cx="150" cy="150" r="40" fill="none" stroke="#22c55e" strokeWidth="1" opacity="0.3"/>
+                    
+                    {/* Grid lines */}
+                    <line x1="150" y1="5" x2="150" y2="295" stroke="#22c55e" strokeWidth="1" opacity="0.2"/>
+                    <line x1="5" y1="150" x2="295" y2="150" stroke="#22c55e" strokeWidth="1" opacity="0.2"/>
+                    
+                    {/* Distance labels */}
+                    <text x="150" y="25" textAnchor="middle" fill="#22c55e" fontSize="10" opacity="0.5">100m</text>
+                    <text x="150" y="65" textAnchor="middle" fill="#22c55e" fontSize="10" opacity="0.5">66m</text>
+                    <text x="150" y="105" textAnchor="middle" fill="#22c55e" fontSize="10" opacity="0.5">33m</text>
+                    
+                    {/* Sweep effect (radar animation) */}
+                    {radarEnabled && (
+                      <g>
+                        <defs>
+                          <radialGradient id="sweepGradient">
+                            <stop offset="0%" stopColor="#22c55e" stopOpacity="0.3"/>
+                            <stop offset="100%" stopColor="#22c55e" stopOpacity="0"/>
+                          </radialGradient>
+                        </defs>
+                        <path
+                          d="M 150 150 L 150 5 A 145 145 0 0 1 270 80 Z"
+                          fill="url(#sweepGradient)"
+                          className="animate-spin origin-center"
+                          style={{ transformOrigin: '150px 150px', animationDuration: '4s' }}
+                        />
+                      </g>
+                    )}
+                    
+                    {/* Enemy positions (red dots) */}
+                    {radarEnabled && (
+                      <>
+                        <circle cx="200" cy="100" r="6" fill="#ef4444" opacity="0.9">
+                          <animate attributeName="r" values="6;8;6" dur="1.5s" repeatCount="indefinite"/>
+                        </circle>
+                        <text x="200" y="90" textAnchor="middle" fill="#ef4444" fontSize="10" fontWeight="bold">E1</text>
+                        
+                        <circle cx="100" cy="180" r="6" fill="#ef4444" opacity="0.9">
+                          <animate attributeName="r" values="6;8;6" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+                        </circle>
+                        <text x="100" y="170" textAnchor="middle" fill="#ef4444" fontSize="10" fontWeight="bold">E2</text>
+                        
+                        <circle cx="220" cy="200" r="6" fill="#ef4444" opacity="0.9">
+                          <animate attributeName="r" values="6;8;6" dur="1.5s" begin="1s" repeatCount="indefinite"/>
+                        </circle>
+                        <text x="220" y="190" textAnchor="middle" fill="#ef4444" fontSize="10" fontWeight="bold">E3</text>
+                        
+                        <circle cx="80" cy="80" r="6" fill="#ef4444" opacity="0.9">
+                          <animate attributeName="r" values="6;8;6" dur="1.5s" begin="0.75s" repeatCount="indefinite"/>
+                        </circle>
+                        <text x="80" y="70" textAnchor="middle" fill="#ef4444" fontSize="10" fontWeight="bold">E4</text>
+                      </>
+                    )}
+                    
+                    {/* Team positions (green dots) */}
+                    {radarEnabled && (
+                      <>
+                        <circle cx="140" cy="120" r="5" fill="#22c55e" opacity="0.8"/>
+                        <text x="140" y="112" textAnchor="middle" fill="#22c55e" fontSize="9">T1</text>
+                        
+                        <circle cx="170" cy="165" r="5" fill="#22c55e" opacity="0.8"/>
+                        <text x="170" y="157" textAnchor="middle" fill="#22c55e" fontSize="9">T2</text>
+                      </>
+                    )}
+                    
+                    {/* Player position (center - blue) */}
+                    <circle cx="150" cy="150" r="8" fill="#3b82f6" stroke="#60a5fa" strokeWidth="2"/>
+                    
+                    {/* Directional indicator */}
+                    <polygon points="150,140 145,150 155,150" fill="#60a5fa" opacity="0.8"/>
+                    
+                    {/* Outer border */}
+                    <circle cx="150" cy="150" r="145" fill="none" stroke="#22c55e" strokeWidth="2" opacity="0.6"/>
+                  </svg>
+                  
+                  {/* Scale indicator */}
+                  <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-green-400 font-bold bg-black/50 px-3 py-1 rounded-full">
+                    {radarScale}x Zoom
+                  </div>
+                </div>
+                
+                {/* Status */}
+                <div className="absolute top-4 left-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  {radarEnabled ? '📡 Radar Active - Tracking 4 Enemies' : '🚫 Radar Disabled'}
+                </div>
+                
+                {/* Legend */}
+                <div className="absolute bottom-4 right-4 text-xs bg-black/50 backdrop-blur-sm px-4 py-3 rounded-lg space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span className="text-zinc-400">You</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span className="text-zinc-400">Team</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span className="text-zinc-400">Enemy</span>
+                  </div>
+                </div>
+                
+                {/* Performance */}
+                <div className="absolute top-4 right-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">●</span>
+                    <span>FPS: {radarEnabled ? '138-144' : '144'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400">●</span>
+                    <span>CPU: {radarEnabled ? '18%' : '12%'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={radarEnabled ? 'text-orange-400' : 'text-green-400'}>●</span>
+                    <span>Risk: {radarEnabled ? 'High' : 'None'}</span>
+                  </div>
                 </div>
               </div>
               
               <div className="mt-6 space-y-4">
                 <div>
                   <label className="text-sm font-bold text-zinc-400 mb-3 block">Radar Scale: {radarScale}x</label>
-                  <input type="range" min="0.5" max="3" step="0.5" value={radarScale} onChange={(e) => setRadarScale(e.target.value)} className="w-full" />
+                  <input 
+                    type="range" 
+                    min="0.5" 
+                    max="3" 
+                    step="0.5" 
+                    value={radarScale} 
+                    onChange={(e) => setRadarScale(e.target.value)} 
+                    className="w-full accent-green-500"
+                    disabled={!radarEnabled}
+                  />
+                  <p className="text-xs text-zinc-500 mt-2">Adjust radar zoom level (only works when radar is enabled)</p>
                 </div>
                 <button
                   onClick={() => setRadarEnabled(!radarEnabled)}
@@ -952,7 +1213,7 @@ const FeaturesPage = () => {
               </div>
             </div>
 
-            <div className="bg-zinc-800/30 border border-green-500/20 rounded-xl p-6">
+            <div className="bg-zinc-800/30 border border-green-500/20 rounded-xl p-6 mb-6">
               <h3 className="text-lg font-bold text-green-300 mb-4 flex items-center gap-2">
                 <Info className="w-5 h-5" />
                 How It Works
@@ -960,15 +1221,47 @@ const FeaturesPage = () => {
               <ul className="text-zinc-400 space-y-3">
                 <li className="flex items-start gap-3">
                   <span className="text-green-400 text-xl">•</span>
-                  <span>Reads player positions from game memory to create a minimap representation</span>
+                  <span>Reads 3D coordinates of all players from game memory</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-green-400 text-xl">•</span>
-                  <span>Shows team members in one color and enemies in another for quick identification</span>
+                  <span>Projects positions onto 2D minimap relative to your location</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-green-400 text-xl">•</span>
-                  <span>Updates in real-time as players move across the map</span>
+                  <span>Updates in real-time to show enemy movements and rotations</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-green-400 text-xl">•</span>
+                  <span>Often includes distance indicators and player identification</span>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Anti-Cheat Detection Info */}
+            <div className="bg-red-900/10 border border-red-500/30 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeWidth="2"/>
+                </svg>
+                Why It's Banned & Detection Methods
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>VAC:</strong> Detects memory reads of player position arrays</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>EasyAntiCheat:</strong> Monitors unauthorized overlay applications</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>BattlEye:</strong> Scans for memory pattern signatures of radar cheats</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>Reason for ban:</strong> Provides tactical awareness impossible through legitimate gameplay</span>
                 </li>
               </ul>
             </div>
