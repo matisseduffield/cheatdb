@@ -221,49 +221,57 @@ const favorites = {
 const antiCheatInfo = {
   'EAC': {
     name: 'Easy Anti-Cheat',
-    difficulty: 'Hard',
-    description: 'Kernel-level anti-cheat used in many popular games',
-    detection: 'Signature scanning, behavior analysis, memory integrity checks',
-    bypassDifficulty: 8,
+    difficulty: 'Very Hard',
+    description: 'A widely-used kernel-level anti-cheat developed by Epic Games. Monitors system processes and memory to detect cheating software.',
+    detection: 'Uses kernel-level drivers, process scanning, memory integrity checks, and behavioral analysis to detect cheats.',
+    bypassDifficulty: 9,
     color: 'blue'
   },
   'BattlEye': {
     name: 'BattlEye',
-    difficulty: 'Very Hard',
-    description: 'Proactive anti-cheat with aggressive detection',
-    detection: 'Driver-level protection, screenshot analysis, network monitoring',
-    bypassDifficulty: 9,
+    difficulty: 'Hard',
+    description: 'Professional anti-cheat solution used by AAA games. Provides real-time protection with proactive detection methods.',
+    detection: 'Advanced kernel-mode protection, machine learning detection, pattern recognition, and regular signature updates.',
+    bypassDifficulty: 8,
     color: 'yellow'
   },
   'Vanguard': {
     name: 'Riot Vanguard',
     difficulty: 'Extreme',
-    description: 'Riot Games\' kernel-level anti-cheat (boots with Windows)',
-    detection: 'Always-on monitoring, TPM checks, secure boot validation',
+    description: 'Riot Games\' proprietary anti-cheat with aggressive system-level monitoring. Starts with Windows boot.',
+    detection: 'Boots with Windows, uses secure boot verification, TPM requirements, kernel-level monitoring, and AI-based detection.',
     bypassDifficulty: 10,
     color: 'red'
   },
   'VAC': {
     name: 'Valve Anti-Cheat',
-    difficulty: 'Medium',
-    description: 'Delayed ban system used in Steam games',
-    detection: 'Delayed signature detection, rarely updated',
-    bypassDifficulty: 5,
+    difficulty: 'Easy',
+    description: 'Valve\'s signature-based anti-cheat system. Delayed banning system makes detection less obvious to cheat developers.',
+    detection: 'Signature scanning, module verification, delayed ban waves, and community reporting integration.',
+    bypassDifficulty: 2,
     color: 'green'
   },
   'Ricochet': {
     name: 'Ricochet Anti-Cheat',
-    difficulty: 'Hard',
-    description: 'Activision\'s kernel-level solution for Call of Duty',
-    detection: 'Machine learning, kernel driver, server-side verification',
-    bypassDifficulty: 8,
+    difficulty: 'Very Hard',
+    description: 'Activision\'s proprietary kernel-level driver and server-side detection system for Call of Duty.',
+    detection: 'Kernel-level driver, server-side tools, machine learning, and team-based investigation of reports.',
+    bypassDifficulty: 9,
     color: 'purple'
+  },
+  'Defense Matrix': {
+    name: 'Defense Matrix',
+    difficulty: 'Hard',
+    description: 'Blizzard\'s proprietary anti-cheat system used in Overwatch. Combines client-side scanning with server-side behavioral analysis.',
+    detection: 'Client-side integrity checks, server-side behavior analysis, machine learning for pattern detection, and player reporting systems.',
+    bypassDifficulty: 7,
+    color: 'cyan'
   },
   'None': {
     name: 'No Anti-Cheat',
     difficulty: 'Easy',
-    description: 'Game has no active anti-cheat system',
-    detection: 'No automated detection',
+    description: 'This game does not use dedicated anti-cheat software. Moderation may rely on player reports or basic server-side checks.',
+    detection: 'May use basic server-side validation, player reports, or no detection at all.',
     bypassDifficulty: 1,
     color: 'zinc'
   }
