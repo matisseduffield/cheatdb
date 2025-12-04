@@ -2115,6 +2115,7 @@ const AntiCheatBadge = ({ ac, onClick }) => {
     'Vanguard': 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_10px_-4px_rgba(239,68,68,0.3)] hover:shadow-[0_0_20px_-4px_rgba(239,68,68,0.6)]',
     'VAC': 'bg-green-500/10 text-green-400 border-green-500/20 shadow-[0_0_10px_-4px_rgba(34,197,94,0.3)] hover:shadow-[0_0_20px_-4px_rgba(34,197,94,0.6)]',
     'Ricochet': 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_10px_-4px_rgba(168,85,247,0.3)] hover:shadow-[0_0_20px_-4px_rgba(168,85,247,0.6)]',
+    'Defense Matrix': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 shadow-[0_0_10px_-4px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_-4px_rgba(6,182,212,0.6)]',
     'None': 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
   };
   
@@ -3829,11 +3830,11 @@ export default function App() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-xs font-bold focus:border-violet-500/50 focus:outline-none transition-colors cursor-pointer"
+                  className="bg-zinc-900/50 backdrop-blur-sm border border-white/10 text-white rounded-xl px-4 py-2 text-sm font-bold focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 focus:outline-none cursor-pointer hover:bg-zinc-900/80 hover:border-violet-500/30 transition-all appearance-none pr-10 bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3cpath%20d%3D%22M7%207l3-3%203%203m0%206l-3%203-3-3%22%20stroke%3D%22%239CA3AF%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3c%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.5rem_center] bg-no-repeat"
                 >
-                  <option value="title">A-Z</option>
-                  <option value="cheats">Most Cheats</option>
-                  <option value="popular">Most Popular</option>
+                  <option value="title" className="bg-zinc-900 text-white">A-Z</option>
+                  <option value="cheats" className="bg-zinc-900 text-white">Most Cheats</option>
+                  <option value="popular" className="bg-zinc-900 text-white">Most Popular</option>
                 </select>
               </div>
 
