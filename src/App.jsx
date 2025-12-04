@@ -1951,7 +1951,7 @@ const TypewriterText = ({ text = "v2.0 // Database" }) => {
   );
 };
 
-const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick, onFeaturesClick }) => {
+const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   return (
@@ -2026,13 +2026,13 @@ const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick, onFea
             </div>
           )}
 
-          <button 
-            onClick={onFeaturesClick}
-            className="p-3 bg-zinc-900/50 border border-white/5 rounded-xl text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 hover:border-cyan-500/20 transition-all duration-300 hover:shadow-[0_0_15px_-3px_rgba(34,211,238,0.3)]"
+          <a 
+            href="/features.html"
+            className="p-3 bg-zinc-900/50 border border-white/5 rounded-xl text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 hover:border-cyan-500/20 transition-all duration-300 hover:shadow-[0_0_15px_-3px_rgba(34,211,238,0.3)] inline-flex items-center justify-center"
             title="Features Guide"
           >
             <Info className="w-5 h-5" />
-          </button>
+          </a>
 
           {user ? (
             <button 
@@ -3531,7 +3531,7 @@ export default function App() {
   const [selectedGames, setSelectedGames] = useState([]);
   const [focusedGameIndex, setFocusedGameIndex] = useState(-1);
   const [showAntiCheatInfo, setShowAntiCheatInfo] = useState(null);
-  const [showFeaturesGuide, setShowFeaturesGuide] = useState(false);
+
   const [sortBy, setSortBy] = useState('title'); // title, cheats, popular
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [filterAntiCheat, setFilterAntiCheat] = useState('ALL');
@@ -4002,7 +4002,6 @@ export default function App() {
           user={user}
           onLoginClick={() => setShowLogin(true)}
           onLogoutClick={handleLogout}
-          onFeaturesClick={() => setShowFeaturesGuide(true)}
         />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -4361,9 +4360,7 @@ export default function App() {
         )}
 
         {/* Features Guide Modal */}
-        {showFeaturesGuide && (
-          <FeaturesGuideModal onClose={() => setShowFeaturesGuide(false)} />
-        )}
+
 
         {/* Toast Notifications Queue */}
         <Toast 
