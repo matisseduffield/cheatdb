@@ -364,7 +364,11 @@ const FeaturesPage = () => {
                 </li>
               </ul>
             </div>
-          </div>Section */}
+          </div>
+        </div>
+        )}
+
+        {/* ESP Section */}
         {activeTab === 'esp' && (
         <div className="space-y-8">
           <div className="bg-zinc-900/50 border border-cyan-500/20 rounded-2xl p-8 backdrop-blur-xl">
