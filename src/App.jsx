@@ -2459,7 +2459,7 @@ const LoginModal = ({ onClose, onLogin }) => {
             type="submit" 
             disabled={loading}
             onMouseDown={createRipple}
-            className="w-full text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 ripple-button"
+            className="w-full text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 active:scale-95 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 ripple-button"
           >
             {loading ? (
               <>
