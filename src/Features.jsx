@@ -91,14 +91,25 @@ const AnimatedBackgroundMesh = () => {
 };
 
 const FeaturesPage = () => {
-  const [activeTab, setActiveTab] = useState('aimbot'); // 'aimbot' or 'esp'
-  const [targetPosition, setTargetPosition] = useState({ x: 50, y: 50 });
+  const [activeTab, setActiveTab] = useState('aimbot'); // 'aimbot', 'esp', 'wallhack', 'radar', 'triggerbot', 'recoil'
+  
+  // Aimbot Features - Enhanced with multiple targets
+  const [targets, setTargets] = useState([
+    { id: 1, x: 30, y: 30, vx: 0.3, vy: 0.2 },
+    { id: 2, x: 70, y: 50, vx: -0.2, vy: 0.3 },
+    { id: 3, x: 50, y: 70, vx: 0.25, vy: -0.25 }
+  ]);
   const [crosshairPosition, setCrosshairPosition] = useState({ x: 50, y: 50 });
   const [isAimbotEnabled, setIsAimbotEnabled] = useState(false);
   const [smoothness, setSmoothness] = useState(1); // 0=Low, 1=Medium, 2=High
   const [fov, setFov] = useState(1); // 0=Small, 1=Medium, 2=Large
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragTargetId, setDragTargetId] = useState(null);
   
-  // ESP Features
+  // ESP Features - Enhanced with multiple enemies
+  const [enemies, setEnemies] = useState([
+    { id: 1, x: 50, y: 50, health: 65, distance: 45.2, name: 'Enemy Player', weapon: 'Rifle', team: 'enemy' }
+  ]);
   const [espFeatures, setEspFeatures] = useState({
     box: false,
     skeleton: false,
@@ -107,6 +118,22 @@ const FeaturesPage = () => {
     distance: false,
     weapon: false
   });
+  
+  // Wallhack Features
+  const [wallhackEnabled, setWallhackEnabled] = useState(false);
+  const [wallTransparency, setWallTransparency] = useState(50);
+  
+  // Radar Features
+  const [radarEnabled, setRadarEnabled] = useState(false);
+  const [radarScale, setRadarScale] = useState(1);
+  
+  // Triggerbot Features
+  const [triggerbotEnabled, setTriggerbotEnabled] = useState(false);
+  const [triggerDelay, setTriggerDelay] = useState(50);
+  
+  // Recoil Features
+  const [recoilCompensationEnabled, setRecoilCompensationEnabled] = useState(false);
+  const [recoilStrength, setRecoilStrength] = useState(1);
   
   // Smoothness mapping: Low=Fast, Medium=Normal, High=Slow
   const smoothnessValues = [20, 50, 80]; // Lower = faster aim snap
@@ -126,27 +153,60 @@ const FeaturesPage = () => {
     }));
   };
   
-  // Simulate aimbot movement
+  // Move targets automatically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTargets(prev => prev.map(target => {
+        let newX = target.x + target.vx;
+        let newY = target.y + target.vy;
+        let newVx = target.vx;
+        let newVy = target.vy;
+        
+        // Bounce off edges
+        if (newX <= 10 || newX >= 90) {
+          newVx = -target.vx;
+          newX = newX <= 10 ? 10 : 90;
+        }
+        if (newY <= 10 || newY >= 90) {
+          newVy = -target.vy;
+          newY = newY <= 10 ? 10 : 90;
+        }
+        
+        return { ...target, x: newX, y: newY, vx: newVx, vy: newVy };
+      }));
+    }, 50);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Aimbot tracking - find closest target in FOV
   useEffect(() => {
     if (!isAimbotEnabled) return;
     
     const interval = setInterval(() => {
       setCrosshairPosition(prev => {
-        const dx = targetPosition.x - prev.x;
-        const dy = targetPosition.y - prev.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        // Find closest target within FOV
+        let closestTarget = null;
+        let closestDistance = Infinity;
         
-        // Check if target is within FOV (using percentage distance)
-        // currentFov is in vh units, convert to percentage approximation
-        const fovThreshold = currentFov * 1.5; // Scale factor for percentage vs vh
-        if (distance > fovThreshold) {
-          // Target is outside FOV, don't lock on
-          return prev;
-        }
+        targets.forEach(target => {
+          const dx = target.x - prev.x;
+          const dy = target.y - prev.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          const fovThreshold = currentFov * 1.5;
+          if (distance < fovThreshold && distance < closestDistance) {
+            closestDistance = distance;
+            closestTarget = target;
+          }
+        });
         
-        if (distance < 0.5) return prev; // Already on target
+        if (!closestTarget || closestDistance < 0.5) return prev;
         
+        const dx = closestTarget.x - prev.x;
+        const dy = closestTarget.y - prev.y;
         const speed = (100 - currentSmoothness) / 100;
+        
         return {
           x: prev.x + (dx * speed * 0.15),
           y: prev.y + (dy * speed * 0.15)
@@ -155,18 +215,63 @@ const FeaturesPage = () => {
     }, 16);
     
     return () => clearInterval(interval);
-  }, [isAimbotEnabled, targetPosition, currentSmoothness, currentFov]);
+  }, [isAimbotEnabled, targets, currentSmoothness, currentFov]);
+
+  // Handle dragging targets
+  const handleMouseDown = (e, targetId) => {
+    if (!isAimbotEnabled) {
+      setIsDragging(true);
+      setDragTargetId(targetId);
+      e.stopPropagation();
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && dragTargetId !== null) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      
+      setTargets(prev => prev.map(t => 
+        t.id === dragTargetId ? { ...t, x: Math.max(10, Math.min(90, x)), y: Math.max(10, Math.min(90, y)) } : t
+      ));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDragTargetId(null);
+  };
   
-  // Move target randomly
+  // Keyboard shortcuts
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTargetPosition({
-        x: 20 + Math.random() * 60,
-        y: 20 + Math.random() * 60
-      });
-    }, 3000);
+    const handleKeyPress = (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      
+      switch(e.key.toLowerCase()) {
+        case 'a':
+          setActiveTab('aimbot');
+          break;
+        case 'e':
+          setActiveTab('esp');
+          break;
+        case 'w':
+          setActiveTab('wallhack');
+          break;
+        case 'r':
+          setActiveTab('radar');
+          break;
+        case 't':
+          setActiveTab('triggerbot');
+          break;
+        case 'c':
+          setActiveTab('recoil');
+          break;
+      }
+    };
     
-    return () => clearInterval(interval);
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
 
   return (
@@ -191,10 +296,10 @@ const FeaturesPage = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-3 mb-8 border-b border-white/10 pb-4">
+        <div className="flex gap-3 mb-8 border-b border-white/10 pb-4 overflow-x-auto">
           <button
             onClick={() => setActiveTab('aimbot')}
-            className={`px-6 py-3 rounded-t-xl font-bold transition-all ${
+            className={`px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${
               activeTab === 'aimbot'
                 ? 'bg-violet-500/20 border-2 border-violet-500/50 border-b-0 text-violet-300'
                 : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:bg-zinc-800'
@@ -214,7 +319,7 @@ const FeaturesPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('esp')}
-            className={`px-6 py-3 rounded-t-xl font-bold transition-all ${
+            className={`px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${
               activeTab === 'esp'
                 ? 'bg-cyan-500/20 border-2 border-cyan-500/50 border-b-0 text-cyan-300'
                 : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:bg-zinc-800'
@@ -226,6 +331,71 @@ const FeaturesPage = () => {
                 <path d="M3 9h18M9 21V9" strokeWidth="2"/>
               </svg>
               ESP
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('wallhack')}
+            className={`px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${
+              activeTab === 'wallhack'
+                ? 'bg-orange-500/20 border-2 border-orange-500/50 border-b-0 text-orange-300'
+                : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:bg-zinc-800'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
+                <path d="M8 12h8M12 8v8" strokeWidth="2"/>
+              </svg>
+              Wallhack
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('radar')}
+            className={`px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${
+              activeTab === 'radar'
+                ? 'bg-green-500/20 border-2 border-green-500/50 border-b-0 text-green-300'
+                : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:bg-zinc-800'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="6" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="3" strokeWidth="2"/>
+              </svg>
+              Radar
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('triggerbot')}
+            className={`px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${
+              activeTab === 'triggerbot'
+                ? 'bg-pink-500/20 border-2 border-pink-500/50 border-b-0 text-pink-300'
+                : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:bg-zinc-800'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M6 12c0 3.3 2.7 6 6 6s6-2.7 6-6-2.7-6-6-6-6 2.7-6 6z" strokeWidth="2"/>
+                <path d="M12 2v4M12 18v4" strokeWidth="2"/>
+              </svg>
+              Triggerbot
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('recoil')}
+            className={`px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${
+              activeTab === 'recoil'
+                ? 'bg-red-500/20 border-2 border-red-500/50 border-b-0 text-red-300'
+                : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:bg-zinc-800'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M6 12h12M12 6v12" strokeWidth="2"/>
+                <path d="M9 9l6 6M15 9l-6 6" strokeWidth="2"/>
+              </svg>
+              Recoil
             </div>
           </button>
         </div>
@@ -251,7 +421,12 @@ const FeaturesPage = () => {
             
             {/* Interactive Demo */}
             <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
-              <div className="relative w-full aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl overflow-hidden border border-violet-500/20">
+              <div 
+                className="relative w-full aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl overflow-hidden border border-violet-500/20 cursor-crosshair"
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
                 {/* FOV Circle */}
                 <div 
                   className="absolute border-2 border-violet-500/30 rounded-full pointer-events-none transition-all"
@@ -264,20 +439,26 @@ const FeaturesPage = () => {
                   }}
                 />
                 
-                {/* Target (Enemy) */}
-                <div 
-                  className="absolute w-8 h-8 transition-all duration-500"
-                  style={{
-                    left: `${targetPosition.x}%`,
-                    top: `${targetPosition.y}%`,
-                    transform: 'translate(-50%, -50%)'
-                  }}
-                >
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
-                    <div className="relative bg-red-500 w-8 h-8 rounded-full border-2 border-red-300 shadow-lg shadow-red-500/50"></div>
+                {/* Multiple Targets (Enemies) */}
+                {targets.map((target) => (
+                  <div 
+                    key={target.id}
+                    className={`absolute w-8 h-8 transition-all ${!isAimbotEnabled ? 'cursor-move' : ''}`}
+                    style={{
+                      left: `${target.x}%`,
+                      top: `${target.y}%`,
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                    onMouseDown={(e) => handleMouseDown(e, target.id)}
+                  >
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                      <div className="relative bg-red-500 w-8 h-8 rounded-full border-2 border-red-300 shadow-lg shadow-red-500/50 flex items-center justify-center text-white text-xs font-bold">
+                        {target.id}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
                 
                 {/* Crosshair */}
                 <img
@@ -294,7 +475,23 @@ const FeaturesPage = () => {
                 
                 {/* Instructions overlay */}
                 <div className="absolute top-4 left-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg">
-                  {isAimbotEnabled ? '🎯 Aimbot Active - Tracking Target' : '⏸️ Aimbot Disabled - Manual Aim'}
+                  {isAimbotEnabled ? `🎯 Aimbot Active - Tracking ${targets.length} Targets` : '⏸️ Aimbot Disabled - Drag targets to reposition'}
+                </div>
+                
+                {/* Performance Metrics */}
+                <div className="absolute top-4 right-4 text-xs text-zinc-400 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">●</span>
+                    <span>FPS: {isAimbotEnabled ? '58-62' : '144'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400">●</span>
+                    <span>CPU: {isAimbotEnabled ? '24%' : '12%'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={isAimbotEnabled ? 'text-orange-400' : 'text-green-400'}>●</span>
+                    <span>Risk: {isAimbotEnabled ? 'High' : 'None'}</span>
+                  </div>
                 </div>
               </div>
               
@@ -353,11 +550,34 @@ const FeaturesPage = () => {
                   </div>
                   <p className="text-xs text-zinc-500 mt-2">Circle radius - only locks onto targets within this area</p>
                 </div>
+                
+                {/* Reset and Keyboard Shortcuts */}
+                <div className="flex gap-3 pt-4 border-t border-white/10">
+                  <button
+                    onClick={() => {
+                      setIsAimbotEnabled(false);
+                      setSmoothness(1);
+                      setFov(1);
+                      setTargets([
+                        { id: 1, x: 30, y: 30, vx: 0.3, vy: 0.2 },
+                        { id: 2, x: 70, y: 50, vx: -0.2, vy: 0.3 },
+                        { id: 3, x: 50, y: 70, vx: 0.25, vy: -0.25 }
+                      ]);
+                      setCrosshairPosition({ x: 50, y: 50 });
+                    }}
+                    className="px-6 py-3 rounded-xl font-bold transition-all active:scale-95 bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700"
+                  >
+                    🔄 Reset All
+                  </button>
+                  <div className="flex-1 bg-zinc-800/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-zinc-400">
+                    <strong className="text-zinc-300">Keyboard Shortcuts:</strong> Press <kbd className="px-2 py-1 bg-zinc-700 rounded">A</kbd> for Aimbot, <kbd className="px-2 py-1 bg-zinc-700 rounded">E</kbd> for ESP, <kbd className="px-2 py-1 bg-zinc-700 rounded">W</kbd> for Wallhack, <kbd className="px-2 py-1 bg-zinc-700 rounded">R</kbd> for Radar
+                  </div>
+                </div>
               </div>
             </div>
             
             {/* Technical Details */}
-            <div className="bg-zinc-800/30 border border-violet-500/20 rounded-xl p-6">
+            <div className="bg-zinc-800/30 border border-violet-500/20 rounded-xl p-6 mb-6">
               <h3 className="text-lg font-bold text-violet-300 mb-4 flex items-center gap-2">
                 <Info className="w-5 h-5" />
                 How It Works
@@ -378,6 +598,38 @@ const FeaturesPage = () => {
                 <li className="flex items-start gap-3">
                   <span className="text-violet-400 text-xl">•</span>
                   <span>FOV limits the activation radius to make it less obvious</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-violet-400 text-xl">•</span>
+                  <span>Multiple target tracking prioritizes closest enemy within FOV range</span>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Anti-Cheat Detection Info */}
+            <div className="bg-red-900/10 border border-red-500/30 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeWidth="2"/>
+                </svg>
+                Why It's Banned & Detection Methods
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>VAC (Valve Anti-Cheat):</strong> Detects memory injection and abnormal mouse movements</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>EasyAntiCheat:</strong> Monitors process memory and detects aim pattern anomalies</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>BattlEye:</strong> Uses statistical analysis to detect superhuman reaction times</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>Reason for ban:</strong> Provides unfair advantage and ruins competitive integrity</span>
                 </li>
               </ul>
             </div>
@@ -402,102 +654,103 @@ const FeaturesPage = () => {
             
             {/* Interactive Demo */}
             <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
-              <div className="relative w-full aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl overflow-hidden border border-cyan-500/20 flex items-center justify-center">
+              <div className="relative w-full aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl overflow-hidden border border-cyan-500/20 flex items-center justify-center gap-8">
                 {/* Background grid */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
                   backgroundImage: 'linear-gradient(0deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent)',
                   backgroundSize: '50px 50px'
                 }}></div>
 
-                {/* Enemy Model */}
-                <div className="relative w-80 h-96">
-                  {/* Box with Health Bar */}
-                  {espFeatures.box && (
-                    <>
-                      <div className="absolute inset-0 border-2 border-cyan-400/50" style={{
-                        width: '100%',
-                        height: '100%'
-                      }}></div>
-                      {/* Health Bar on Right Side */}
-                      {espFeatures.health && (
-                        <div className="absolute right-0 top-0 h-full w-4 bg-red-900/50 border border-red-500 border-l-0 flex flex-col-reverse">
-                          <div className="w-full bg-red-500" style={{ height: '65%' }}></div>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Player Model Image */}
-                  <img 
-                    src="/logos/model.png" 
-                    alt="Player Model" 
-                    className="w-full h-full object-contain"
-                  />
-
-                  {/* Skeleton */}
-                  {espFeatures.skeleton && (
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 320 480" preserveAspectRatio="xMidYMid meet">
-                      {/* Head */}
-                      <circle cx="160" cy="80" r="28" fill="none" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2.5"/>
-                      {/* Neck */}
-                      <line x1="160" y1="108" x2="160" y2="130" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Spine/Body */}
-                      <line x1="160" y1="130" x2="160" y2="260" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Left Shoulder (T-pose straight) */}
-                      <line x1="160" y1="140" x2="40" y2="140" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Left Arm Upper */}
-                      <line x1="40" y1="140" x2="15" y2="180" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Left Arm Lower */}
-                      <line x1="15" y1="180" x2="10" y2="240" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Right Shoulder (T-pose straight) */}
-                      <line x1="160" y1="140" x2="280" y2="140" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Right Arm Upper */}
-                      <line x1="280" y1="140" x2="305" y2="180" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Right Arm Lower */}
-                      <line x1="305" y1="180" x2="310" y2="240" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Left Hip */}
-                      <line x1="160" y1="260" x2="120" y2="260" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Left Leg Upper */}
-                      <line x1="120" y1="260" x2="100" y2="380" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Left Leg Lower */}
-                      <line x1="100" y1="380" x2="100" y2="460" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Right Hip */}
-                      <line x1="160" y1="260" x2="200" y2="260" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Right Leg Upper */}
-                      <line x1="200" y1="260" x2="220" y2="380" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Right Leg Lower */}
-                      <line x1="220" y1="380" x2="220" y2="460" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
-                      {/* Joint circles */}
-                      <circle cx="160" cy="80" r="5" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="160" cy="130" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="40" cy="140" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="15" cy="180" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="10" cy="240" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="280" cy="140" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="305" cy="180" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="310" cy="240" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="120" cy="260" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="100" cy="380" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="200" cy="260" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                      <circle cx="220" cy="380" r="4" fill="rgba(34, 197, 94, 0.95)"/>
-                    </svg>
-                  )}
-
-                  {/* Overlay info */}
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-4 text-center whitespace-nowrap">
-                    {espFeatures.names && (
-                      <div className="text-cyan-400 font-bold text-sm mb-2">
-                        Enemy Player
+                {/* Multiple Enemy Models */}
+                {[
+                  { id: 1, scale: 0.7, x: '20%', health: 45, distance: 78.5, name: 'Player_Alpha', weapon: 'Sniper' },
+                  { id: 2, scale: 1, x: '50%', health: 65, distance: 45.2, name: 'Enemy_Beta', weapon: 'Rifle' },
+                  { id: 3, scale: 0.5, x: '80%', health: 92, distance: 125.8, name: 'xX_Pro_Xx', weapon: 'SMG' }
+                ].map((enemy) => (
+                  <div key={enemy.id} className="relative" style={{ width: `${20 * enemy.scale}rem`, height: `${24 * enemy.scale}rem` }}>
+                    {/* Box ESP */}
+                    {espFeatures.box && (
+                      <div className="absolute inset-0 border-2 border-cyan-400/50"></div>
+                    )}
+                    
+                    {/* Health Bar on Right Side */}
+                    {espFeatures.health && (
+                      <div className="absolute right-0 top-0 h-full w-3 bg-red-900/50 border border-red-500 flex flex-col-reverse">
+                        <div className="w-full bg-gradient-to-t from-red-500 to-red-400" style={{ height: `${enemy.health}%` }}></div>
                       </div>
                     )}
-                    {espFeatures.distance && (
-                      <div className="text-yellow-400 text-sm mb-2 font-bold">[45.2m]</div>
+
+                    {/* Player Model Image */}
+                    <img 
+                      src="/logos/model.png" 
+                      alt="Player Model" 
+                      className="w-full h-full object-contain"
+                    />
+
+                    {/* Skeleton */}
+                    {espFeatures.skeleton && (
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 320 480" preserveAspectRatio="xMidYMid meet">
+                        <circle cx="160" cy="80" r="28" fill="none" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2.5"/>
+                        <line x1="160" y1="108" x2="160" y2="130" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="160" y1="130" x2="160" y2="260" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="160" y1="160" x2="30" y2="160" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="30" y1="160" x2="5" y2="160" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="160" y1="160" x2="290" y2="160" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="290" y1="160" x2="315" y2="160" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="160" y1="260" x2="120" y2="260" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="120" y1="260" x2="100" y2="340" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="100" y1="340" x2="100" y2="420" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="160" y1="260" x2="200" y2="260" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="200" y1="260" x2="220" y2="340" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <line x1="220" y1="340" x2="220" y2="420" stroke="rgba(34, 197, 94, 0.8)" strokeWidth="2"/>
+                        <circle cx="160" cy="80" r="5" fill="rgba(34, 197, 94, 0.95)"/>
+                        <circle cx="160" cy="130" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                        <circle cx="30" cy="160" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                        <circle cx="5" cy="160" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                        <circle cx="290" cy="160" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                        <circle cx="315" cy="160" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                        <circle cx="120" cy="260" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                        <circle cx="100" cy="340" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                        <circle cx="200" cy="260" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                        <circle cx="220" cy="340" r="4" fill="rgba(34, 197, 94, 0.95)"/>
+                      </svg>
                     )}
-                    {espFeatures.weapon && (
-                      <div className="text-orange-400 text-xs mb-1">⚔ Rifle</div>
+
+                    {/* Overlay info */}
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-2 text-center whitespace-nowrap">
+                      {espFeatures.names && (
+                        <div className="text-cyan-400 font-bold text-xs mb-1">
+                          {espFeatures.distance ? (
+                            <span>{enemy.name} <span className="text-yellow-400">[{enemy.distance}m]</span></span>
+                          ) : (
+                            <span>{enemy.name}</span>
+                          )}
+                        </div>
+                      )}
+                      {!espFeatures.names && espFeatures.distance && (
+                        <div className="text-yellow-400 text-xs mb-1 font-bold">[{enemy.distance}m]</div>
+                      )}
+                      {espFeatures.weapon && (
+                        <div className="text-orange-400 text-xs">⚔ {enemy.weapon}</div>
+                      )}
+                    </div>
+                    
+                    {/* Distance line to center */}
+                    {espFeatures.distance && (
+                      <svg className="absolute inset-0 w-screen h-screen pointer-events-none" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+                        <line 
+                          x1="50%" 
+                          y1="90%" 
+                          x2={enemy.x} 
+                          y2="50%" 
+                          stroke="rgba(234, 179, 8, 0.3)" 
+                          strokeWidth="1" 
+                          strokeDasharray="5,5"
+                        />
+                      </svg>
                     )}
                   </div>
-                </div>
+                ))}
               </div>
               
               {/* ESP Feature Toggles */}
@@ -555,6 +808,299 @@ const FeaturesPage = () => {
                 <li className="flex items-start gap-3">
                   <span className="text-cyan-400 text-xl">•</span>
                   <span><strong>Weapon Info:</strong> Shows weapon type and equipment the enemy is carrying</span>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Anti-Cheat Detection Info */}
+            <div className="bg-red-900/10 border border-red-500/30 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeWidth="2"/>
+                </svg>
+                Why It's Banned & Detection Methods
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>VAC:</strong> Scans for rendering modifications and wallhack signatures</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>EasyAntiCheat:</strong> Detects overlay rendering and DirectX hooks</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>BattlEye:</strong> Monitors graphics driver interactions and memory patterns</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span><strong>Reason for ban:</strong> Provides complete vision advantage and ruins game balance</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Wallhack Section */}
+        {activeTab === 'wallhack' && (
+        <div className="space-y-8">
+          <div className="bg-zinc-900/50 border border-orange-500/20 rounded-2xl p-8 backdrop-blur-xl">
+            <h2 className="text-3xl font-bold text-orange-400 mb-4 flex items-center gap-3">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
+                <path d="M8 12h8M12 8v8" strokeWidth="2"/>
+              </svg>
+              Wallhack
+            </h2>
+            <p className="text-zinc-300 mb-8 text-lg">
+              Makes walls and objects transparent, allowing you to see through terrain and buildings. Shows enemy positions even when they're behind solid obstacles.
+            </p>
+            
+            {/* Demo Placeholder */}
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
+              <div className="relative w-full aspect-video bg-gradient-to-br from-orange-900/20 to-red-900/20 rounded-xl overflow-hidden border border-orange-500/20 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">🪟</div>
+                  <p className="text-zinc-400">Interactive wallhack visualization coming soon</p>
+                </div>
+              </div>
+              
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="text-sm font-bold text-zinc-400 mb-3 block">Wall Transparency: {wallTransparency}%</label>
+                  <input type="range" min="0" max="100" value={wallTransparency} onChange={(e) => setWallTransparency(e.target.value)} className="w-full" />
+                </div>
+                <button
+                  onClick={() => setWallhackEnabled(!wallhackEnabled)}
+                  className={`w-full px-6 py-3 rounded-xl font-bold transition-all ${
+                    wallhackEnabled 
+                      ? 'bg-orange-500/20 border-orange-500/50 text-orange-300 border-2' 
+                      : 'bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700'
+                  }`}
+                >
+                  {wallhackEnabled ? '✓ Wallhack Enabled' : 'Enable Wallhack'}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-zinc-800/30 border border-orange-500/20 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-orange-300 mb-4 flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                How It Works
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-orange-400 text-xl">•</span>
+                  <span>Modifies rendering to skip drawing opaque objects (walls, buildings, terrain)</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-orange-400 text-xl">•</span>
+                  <span>Displays enemies with full visibility regardless of obstacles</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-orange-400 text-xl">•</span>
+                  <span>Often combined with ESP to show enemy positions through all barriers</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Radar Section */}
+        {activeTab === 'radar' && (
+        <div className="space-y-8">
+          <div className="bg-zinc-900/50 border border-green-500/20 rounded-2xl p-8 backdrop-blur-xl">
+            <h2 className="text-3xl font-bold text-green-400 mb-4 flex items-center gap-3">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="6" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="3" strokeWidth="2"/>
+              </svg>
+              Radar / Minimap
+            </h2>
+            <p className="text-zinc-300 mb-8 text-lg">
+              Displays a tactical minimap showing your position and all enemy locations in real-time. Provides instant awareness of the battlefield layout and enemy movements.
+            </p>
+            
+            {/* Demo Placeholder */}
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
+              <div className="relative w-full aspect-video bg-gradient-to-br from-green-900/20 to-cyan-900/20 rounded-xl overflow-hidden border border-green-500/20 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">📡</div>
+                  <p className="text-zinc-400">Interactive radar minimap coming soon</p>
+                </div>
+              </div>
+              
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="text-sm font-bold text-zinc-400 mb-3 block">Radar Scale: {radarScale}x</label>
+                  <input type="range" min="0.5" max="3" step="0.5" value={radarScale} onChange={(e) => setRadarScale(e.target.value)} className="w-full" />
+                </div>
+                <button
+                  onClick={() => setRadarEnabled(!radarEnabled)}
+                  className={`w-full px-6 py-3 rounded-xl font-bold transition-all ${
+                    radarEnabled 
+                      ? 'bg-green-500/20 border-green-500/50 text-green-300 border-2' 
+                      : 'bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700'
+                  }`}
+                >
+                  {radarEnabled ? '✓ Radar Enabled' : 'Enable Radar'}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-zinc-800/30 border border-green-500/20 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-green-300 mb-4 flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                How It Works
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-green-400 text-xl">•</span>
+                  <span>Reads player positions from game memory to create a minimap representation</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-green-400 text-xl">•</span>
+                  <span>Shows team members in one color and enemies in another for quick identification</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-green-400 text-xl">•</span>
+                  <span>Updates in real-time as players move across the map</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Triggerbot Section */}
+        {activeTab === 'triggerbot' && (
+        <div className="space-y-8">
+          <div className="bg-zinc-900/50 border border-pink-500/20 rounded-2xl p-8 backdrop-blur-xl">
+            <h2 className="text-3xl font-bold text-pink-400 mb-4 flex items-center gap-3">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M6 12c0 3.3 2.7 6 6 6s6-2.7 6-6-2.7-6-6-6-6 2.7-6 6z" strokeWidth="2"/>
+                <path d="M12 2v4M12 18v4" strokeWidth="2"/>
+              </svg>
+              Triggerbot
+            </h2>
+            <p className="text-zinc-300 mb-8 text-lg">
+              Automatically fires your weapon when an enemy enters your crosshair. Provides instant reaction time with minimal human delay, perfect for precise targeting scenarios.
+            </p>
+            
+            {/* Demo Placeholder */}
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
+              <div className="relative w-full aspect-video bg-gradient-to-br from-pink-900/20 to-purple-900/20 rounded-xl overflow-hidden border border-pink-500/20 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">🎯</div>
+                  <p className="text-zinc-400">Interactive triggerbot simulation coming soon</p>
+                </div>
+              </div>
+              
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="text-sm font-bold text-zinc-400 mb-3 block">Trigger Delay: {triggerDelay}ms</label>
+                  <input type="range" min="0" max="200" value={triggerDelay} onChange={(e) => setTriggerDelay(e.target.value)} className="w-full" />
+                </div>
+                <button
+                  onClick={() => setTriggerbotEnabled(!triggerbotEnabled)}
+                  className={`w-full px-6 py-3 rounded-xl font-bold transition-all ${
+                    triggerbotEnabled 
+                      ? 'bg-pink-500/20 border-pink-500/50 text-pink-300 border-2' 
+                      : 'bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700'
+                  }`}
+                >
+                  {triggerbotEnabled ? '✓ Triggerbot Enabled' : 'Enable Triggerbot'}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-zinc-800/30 border border-pink-500/20 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-pink-300 mb-4 flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                How It Works
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-pink-400 text-xl">•</span>
+                  <span>Detects when an enemy player enters your weapon's crosshair</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-pink-400 text-xl">•</span>
+                  <span>Automatically sends fire input with configurable delay</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-pink-400 text-xl">•</span>
+                  <span>Works through walls if combined with wallhack</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Recoil Control Section */}
+        {activeTab === 'recoil' && (
+        <div className="space-y-8">
+          <div className="bg-zinc-900/50 border border-red-500/20 rounded-2xl p-8 backdrop-blur-xl">
+            <h2 className="text-3xl font-bold text-red-400 mb-4 flex items-center gap-3">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M6 12h12M12 6v12" strokeWidth="2"/>
+                <path d="M9 9l6 6M15 9l-6 6" strokeWidth="2"/>
+              </svg>
+              Recoil Control
+            </h2>
+            <p className="text-zinc-300 mb-8 text-lg">
+              Automatically compensates for weapon recoil by adjusting mouse position downward and sideways. Maintains perfect accuracy even during sustained fire with full-auto weapons.
+            </p>
+            
+            {/* Demo Placeholder */}
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 mb-6">
+              <div className="relative w-full aspect-video bg-gradient-to-br from-red-900/20 to-orange-900/20 rounded-xl overflow-hidden border border-red-500/20 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">💥</div>
+                  <p className="text-zinc-400">Interactive recoil compensation pattern coming soon</p>
+                </div>
+              </div>
+              
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="text-sm font-bold text-zinc-400 mb-3 block">Recoil Strength: {recoilStrength}x</label>
+                  <input type="range" min="0.5" max="3" step="0.5" value={recoilStrength} onChange={(e) => setRecoilStrength(e.target.value)} className="w-full" />
+                </div>
+                <button
+                  onClick={() => setRecoilCompensationEnabled(!recoilCompensationEnabled)}
+                  className={`w-full px-6 py-3 rounded-xl font-bold transition-all ${
+                    recoilCompensationEnabled 
+                      ? 'bg-red-500/20 border-red-500/50 text-red-300 border-2' 
+                      : 'bg-zinc-800 border-white/10 text-zinc-400 border hover:bg-zinc-700'
+                  }`}
+                >
+                  {recoilCompensationEnabled ? '✓ Recoil Control Enabled' : 'Enable Recoil Control'}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-zinc-800/30 border border-red-500/20 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-red-300 mb-4 flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                How It Works
+              </h3>
+              <ul className="text-zinc-400 space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span>Calculates weapon recoil patterns based on weapon type and fire mode</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span>Moves crosshair opposite to recoil direction to keep aim steady</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-red-400 text-xl">•</span>
+                  <span>Enables perfect accuracy during extended firefights</span>
                 </li>
               </ul>
             </div>
