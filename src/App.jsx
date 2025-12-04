@@ -1929,11 +1929,11 @@ const gameLogoMap = {
 
 // Scale multipliers for logos with extra whitespace
 const logoScaleMap = {
-  'Apex Legends': 1.05,
-  'Counter Strike 2': 1.35,
-  'Rust': 1.4,
-  'Call of Duty: Warzone': 1.4,
-  'Team Fortress 2': 1.55,
+  'Apex Legends': 1.0,
+  'Counter Strike 2': 1.15,
+  'Rust': 1.2,
+  'Call of Duty: Warzone': 1.2,
+  'Team Fortress 2': 1.25,
 };
 
 // Lazy Loading Image Component
@@ -2014,8 +2014,8 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
               <LazyImage
                 src={gameLogoMap[game.title]} 
                 alt={game.title}
-                className="w-full h-full object-cover object-center"
-                style={{ transform: `scale(${logoScaleMap[game.title] || 1.5})` }}
+                className="w-full h-full object-contain object-center"
+                style={{ transform: `scale(${logoScaleMap[game.title] || 1.1})`, maxWidth: '100%', maxHeight: '100%' }}
                 onError={(e) => {
                   e.target.style.display = 'none';
                 }}
