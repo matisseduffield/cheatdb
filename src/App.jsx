@@ -2066,7 +2066,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
         {game.title}
       </h3>
       
-      <div className="flex items-center gap-2 mb-8">
+      <div className="flex items-center gap-2 flex-grow">
         <span className="text-xs font-medium px-2 py-1 rounded-md border flex items-center gap-1.5 transition-all text-zinc-500 bg-zinc-800/50 border-white/5 group-hover:border-violet-500/30 group-hover:bg-zinc-800/80">
           <Zap className="w-3 h-3 text-violet-400" />
           {game.cheats?.length || 0} Programs
