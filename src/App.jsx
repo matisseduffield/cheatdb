@@ -3361,15 +3361,15 @@ const FeaturesGuideModal = ({ onClose }) => {
             
             {/* Interactive Demo */}
             <div className="bg-zinc-900 border border-white/10 rounded-lg p-4 mb-4">
-              <div className="relative w-full h-64 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg overflow-hidden border border-violet-500/20">
+              <div className="relative w-full aspect-video bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg overflow-hidden border border-violet-500/20">
                 {/* FOV Circle */}
                 <div 
                   className="absolute border-2 border-violet-500/30 rounded-full pointer-events-none transition-all"
                   style={{
                     left: `${crosshairPosition.x}%`,
                     top: `${crosshairPosition.y}%`,
-                    width: `${currentFov * 2}%`,
-                    height: `${currentFov * 2}%`,
+                    width: `${currentFov * 2}vh`,
+                    height: `${currentFov * 2}vh`,
                     transform: 'translate(-50%, -50%)'
                   }}
                 />
