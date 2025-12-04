@@ -1990,7 +1990,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
     onClick={() => onClick(game)}
     onMouseEnter={() => setShowPreview(true)}
     onMouseLeave={() => setShowPreview(false)}
-    className="group relative z-20 rounded-3xl p-6 transition-all duration-500 cursor-pointer hover:-translate-y-3 overflow-hidden card-bounce-enter stagger-cascade border backdrop-blur-sm bg-zinc-900/30 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)]"
+    className="group relative z-20 rounded-3xl p-6 transition-all duration-500 cursor-pointer hover:-translate-y-3 overflow-hidden card-bounce-enter stagger-cascade border backdrop-blur-sm bg-zinc-900/30 hover:bg-zinc-900/60 border-white/5 hover:border-violet-500/40 hover:shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] h-full"
     style={{ animationDelay: `${index * 50}ms` }}
   >
     {/* Animated Gradient Background on Hover */}
@@ -2066,7 +2066,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
         {game.title}
       </h3>
       
-      <div className="flex items-center gap-2 flex-grow">
+      <div className="flex items-center gap-2 mb-8">
         <span className="text-xs font-medium px-2 py-1 rounded-md border flex items-center gap-1.5 transition-all text-zinc-500 bg-zinc-800/50 border-white/5 group-hover:border-violet-500/30 group-hover:bg-zinc-800/80">
           <Zap className="w-3 h-3 text-violet-400" />
           {game.cheats?.length || 0} Programs
