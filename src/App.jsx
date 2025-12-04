@@ -3278,7 +3278,7 @@ const FeaturesGuideModal = ({ onClose }) => {
   const smoothnessLabels = ['Low (Fast)', 'Medium', 'High (Slow)'];
   
   // FOV mapping: Small, Medium, Large radius
-  const fovValues = [15, 25, 40];
+  const fovValues = [8, 15, 25];
   const fovLabels = ['Small', 'Medium', 'Large'];
   
   const currentSmoothness = smoothnessValues[smoothness];
