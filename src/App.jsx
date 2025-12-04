@@ -506,11 +506,11 @@ const ShootingStars = () => {
           position: absolute;
           right: 0;
           top: 50%;
-          width: 250px;
-          height: 2px;
-          background: linear-gradient(to left, rgba(255, 255, 255, 0.8) 0%, rgba(139, 92, 246, 0.5) 30%, transparent 100%);
+          width: 200px;
+          height: 1.5px;
+          background: linear-gradient(to left, rgba(255, 255, 255, 0.3) 0%, rgba(139, 92, 246, 0.2) 30%, transparent 100%);
           transform: translateY(-50%);
-          filter: blur(1px);
+          filter: blur(1.5px);
           pointer-events: none;
           animation: tail-fade ease-in-out forwards;
         }
@@ -520,17 +520,16 @@ const ShootingStars = () => {
           position: absolute;
           right: 0;
           top: 50%;
-          width: 14px;
-          height: 14px;
+          width: 10px;
+          height: 10px;
           transform: translateY(-50%);
           background: white;
           clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
           box-shadow: 
-            0 0 10px rgba(139, 92, 246, 1),
-            0 0 20px rgba(139, 92, 246, 0.8),
-            0 0 30px rgba(139, 92, 246, 0.6),
-            inset 0 0 8px rgba(255, 255, 255, 0.6);
-          filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.8));
+            0 0 5px rgba(139, 92, 246, 0.4),
+            0 0 10px rgba(139, 92, 246, 0.3),
+            inset 0 0 4px rgba(255, 255, 255, 0.3);
+          filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.4));
           pointer-events: none;
         }
 
@@ -549,8 +548,8 @@ const ShootingStars = () => {
         /* Tail fade animation: Evaporating from the back end */
         @keyframes tail-fade {
           0% { width: 0; opacity: 0; }
-          20% { width: 250px; opacity: 1; }
-          50% { width: 250px; opacity: 0.8; }
+          20% { width: 200px; opacity: 0.4; }
+          50% { width: 200px; opacity: 0.3; }
           100% { width: 0; opacity: 0; }
         }
       `;
@@ -708,10 +707,10 @@ const FallingStars = () => {
         @keyframes fall {
           0% {
             transform: translateY(0) rotate(45deg);
-            opacity: 1;
+            opacity: 0.3;
           }
           90% {
-            opacity: 1;
+            opacity: 0.2;
           }
           100% {
             transform: translateY(110vh) rotate(45deg);
@@ -733,16 +732,16 @@ const FallingStars = () => {
 
     // Set CSS variables
     const root = document.documentElement;
-    root.style.setProperty('--particle-color', 'rgba(174, 194, 224, 0.8)');
-    root.style.setProperty('--particle-width', '8px');
-    root.style.setProperty('--particle-height', '8px');
-    root.style.setProperty('--blur', '0px');
+    root.style.setProperty('--particle-color', 'rgba(174, 194, 224, 0.15)');
+    root.style.setProperty('--particle-width', '4px');
+    root.style.setProperty('--particle-height', '4px');
+    root.style.setProperty('--blur', '1px');
 
     const createParticles = () => {
       // Check if particles already exist to prevent duplicates on re-renders
       if (container.childElementCount > 0) return;
 
-      const particleCount = 100;
+      const particleCount = 30;
 
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
