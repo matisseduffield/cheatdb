@@ -50,7 +50,18 @@ import {
   Upload,
   RefreshCw,
   CheckSquare,
-  Square
+  Square,
+  Star,
+  TrendingUp,
+  Clock,
+  Filter,
+  Info,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Flame,
+  Eye,
+  Award
 } from 'lucide-react';
 
 // --- Firebase Configuration ---
@@ -181,6 +192,80 @@ const sanitizeCheatData = (cheatData) => {
     type: ['INTERNAL', 'EXTERNAL'].includes(cheatData.type) ? cheatData.type : 'INTERNAL',
     features: Array.isArray(cheatData.features) ? cheatData.features.filter(f => typeof f === 'string').slice(0, 10) : [],
   };
+};
+
+// Favorites management utility
+const favorites = {
+  getAll: () => safeLocalStorage.getItem('cheatdb_favorites', { games: [], cheats: [] }),
+  
+  toggleGame: (gameId) => {
+    const favs = favorites.getAll();
+    const gameIndex = favs.games.indexOf(gameId);
+    if (gameIndex > -1) {
+      favs.games.splice(gameIndex, 1);
+    } else {
+      favs.games.push(gameId);
+    }
+    safeLocalStorage.setItem('cheatdb_favorites', favs);
+    return favs;
+  },
+  
+  isGameFavorited: (gameId) => {
+    const favs = favorites.getAll();
+    return favs.games.includes(gameId);
+  }
+};
+
+// Anti-Cheat Information Database
+const antiCheatInfo = {
+  'EAC': {
+    name: 'Easy Anti-Cheat',
+    difficulty: 'Hard',
+    description: 'Kernel-level anti-cheat used in many popular games',
+    detection: 'Signature scanning, behavior analysis, memory integrity checks',
+    bypassDifficulty: 8,
+    color: 'blue'
+  },
+  'BattlEye': {
+    name: 'BattlEye',
+    difficulty: 'Very Hard',
+    description: 'Proactive anti-cheat with aggressive detection',
+    detection: 'Driver-level protection, screenshot analysis, network monitoring',
+    bypassDifficulty: 9,
+    color: 'yellow'
+  },
+  'Vanguard': {
+    name: 'Riot Vanguard',
+    difficulty: 'Extreme',
+    description: 'Riot Games\' kernel-level anti-cheat (boots with Windows)',
+    detection: 'Always-on monitoring, TPM checks, secure boot validation',
+    bypassDifficulty: 10,
+    color: 'red'
+  },
+  'VAC': {
+    name: 'Valve Anti-Cheat',
+    difficulty: 'Medium',
+    description: 'Delayed ban system used in Steam games',
+    detection: 'Delayed signature detection, rarely updated',
+    bypassDifficulty: 5,
+    color: 'green'
+  },
+  'Ricochet': {
+    name: 'Ricochet Anti-Cheat',
+    difficulty: 'Hard',
+    description: 'Activision\'s kernel-level solution for Call of Duty',
+    detection: 'Machine learning, kernel driver, server-side verification',
+    bypassDifficulty: 8,
+    color: 'purple'
+  },
+  'None': {
+    name: 'No Anti-Cheat',
+    difficulty: 'Easy',
+    description: 'Game has no active anti-cheat system',
+    detection: 'No automated detection',
+    bypassDifficulty: 1,
+    color: 'zinc'
+  }
 };
 
 // Custom hook for debounced value
@@ -1956,7 +2041,74 @@ const Header = ({ onSearch, searchTerm, user, onLoginClick, onLogoutClick }) => 
   );
 };
 
-const AntiCheatBadge = ({ ac }) => {
+// Anti-Cheat Info Modal
+const AntiCheatInfoModal = ({ antiCheat, onClose }) => {
+  const info = antiCheatInfo[antiCheat] || antiCheatInfo['None'];
+  
+  const difficultyColor = {
+    'Easy': 'text-green-400 bg-green-500/10 border-green-500/30',
+    'Medium': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
+    'Hard': 'text-orange-400 bg-orange-500/10 border-orange-500/30',
+    'Very Hard': 'text-red-400 bg-red-500/10 border-red-500/30',
+    'Extreme': 'text-purple-400 bg-purple-500/10 border-purple-500/30'
+  };
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
+      <div className="relative bg-zinc-900/95 border border-violet-500/20 rounded-2xl p-8 max-w-lg w-full animate-in fade-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-1">{info.name}</h2>
+            <span className={`inline-block px-3 py-1 rounded-lg text-xs font-bold border ${difficultyColor[info.difficulty]}`}>
+              {info.difficulty} to Bypass
+            </span>
+          </div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Description
+            </h3>
+            <p className="text-zinc-300">{info.description}</p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              Detection Methods
+            </h3>
+            <p className="text-zinc-300">{info.detection}</p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-2">Bypass Difficulty</h3>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-500 ${
+                    info.bypassDifficulty <= 3 ? 'bg-green-500' :
+                    info.bypassDifficulty <= 6 ? 'bg-yellow-500' :
+                    info.bypassDifficulty <= 8 ? 'bg-orange-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${info.bypassDifficulty * 10}%` }}
+                />
+              </div>
+              <span className="text-white font-bold text-sm">{info.bypassDifficulty}/10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AntiCheatBadge = ({ ac, onClick }) => {
   const styles = {
     'EAC': 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_10px_-4px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_-4px_rgba(59,130,246,0.6)]',
     'BattlEye': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-[0_0_10px_-4px_rgba(234,179,8,0.3)] hover:shadow-[0_0_20px_-4px_rgba(234,179,8,0.6)]',
@@ -1969,8 +2121,51 @@ const AntiCheatBadge = ({ ac }) => {
   const acName = ac || 'Unknown';
   
   return (
-    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md transition-all duration-300 hover:scale-110 cursor-pointer ${styles[acName] || styles.None}`}>
+    <span 
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.();
+      }}
+      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md transition-all duration-300 hover:scale-110 cursor-pointer flex items-center gap-1 ${styles[acName] || styles.None}`}
+    >
+      <Info className="w-3 h-3" />
       {acName}
+    </span>
+  );
+};
+
+// Cheat Status Badge Component
+const StatusBadge = ({ status = 'UNDETECTED' }) => {
+  const statusConfig = {
+    'UNDETECTED': {
+      icon: CheckCircle,
+      text: 'Undetected',
+      className: 'bg-green-500/20 text-green-300 border-green-500/30'
+    },
+    'DETECTED': {
+      icon: XCircle,
+      text: 'Detected',
+      className: 'bg-red-500/20 text-red-300 border-red-500/30'
+    },
+    'RISKY': {
+      icon: AlertCircle,
+      text: 'Risky',
+      className: 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+    },
+    'UPDATED': {
+      icon: Clock,
+      text: 'Updated',
+      className: 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+    }
+  };
+  
+  const config = statusConfig[status] || statusConfig['UNDETECTED'];
+  const Icon = config.icon;
+  
+  return (
+    <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap transition-all border flex items-center gap-1 ${config.className}`}>
+      <Icon className="w-2.5 h-2.5" />
+      {config.text}
     </span>
   );
 };
@@ -2041,7 +2236,7 @@ const LazyImage = ({ src, alt, className, style, onError }) => {
   );
 };
 
-const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index, onEdit }) => {
+const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index, onEdit, onAntiCheatClick, onToggleFavorite, isFavorited }) => {
   const [showPreview, setShowPreview] = useState(false);
   const freeCount = game.cheats?.filter(c => c.tier === 'FREE' || !c.tier).length || 0;
   const paidCount = game.cheats?.filter(c => c.tier === 'PAID').length || 0;
@@ -2056,6 +2251,18 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
   >
     {/* Animated Gradient Background on Hover */}
     <div className="absolute inset-0 bg-gradient-to-br from-violet-600/10 via-transparent to-fuchsia-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+    
+    {/* Favorite Button */}
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggleFavorite?.(game.id);
+      }}
+      className="absolute top-4 right-4 z-30 p-2 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 hover:border-yellow-500/50 transition-all hover:scale-110"
+      title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+    >
+      <Star className={`w-4 h-4 transition-colors ${isFavorited ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-500'}`} />
+    </button>
     
     {/* Hover Preview Tooltip */}
     {showPreview && game.cheats && game.cheats.length > 0 && (
@@ -2085,7 +2292,7 @@ const GameCard = React.memo(({ game, onClick, user, onDelete, isEditMode, index,
               <ShieldAlert className="w-8 h-8 transition-colors icon-pulse text-zinc-400 group-hover:text-violet-400" />
             )}
           </div>
-          <AntiCheatBadge ac={game.antiCheat} />
+          <AntiCheatBadge ac={game.antiCheat} onClick={() => onAntiCheatClick?.(game.antiCheat)} />
         </div>
         
         {/* EDIT & DELETE BUTTONS (Admin Only + Edit Mode) */}
@@ -3071,6 +3278,10 @@ export default function App() {
   const [showExportImport, setShowExportImport] = useState(false);
   const [selectedGames, setSelectedGames] = useState([]);
   const [focusedGameIndex, setFocusedGameIndex] = useState(-1);
+  const [showAntiCheatInfo, setShowAntiCheatInfo] = useState(null);
+  const [sortBy, setSortBy] = useState('title'); // title, cheats, popular
+  const [filterAntiCheat, setFilterAntiCheat] = useState('ALL');
+  const [favGames, setFavGames] = useState(() => favorites.getAll().games);
   const gamesPerPage = 20;
   const [userVotes, setUserVotes] = useState(() => {
     // Load votes from localStorage on initialization
@@ -3129,9 +3340,18 @@ export default function App() {
   }, []);
 
   // 2.5. Derived state and helper functions (before keyboard shortcuts)
-  // Filtering logic
+  // Filtering and Sorting logic
   const filteredGames = useMemo(() => {
     let result = games;
+    
+    // Favorites Filter
+    if (filterAntiCheat === 'FAVORITES') {
+      result = result.filter(g => favGames.includes(g.id));
+    }
+    // Anti-Cheat Filter
+    else if (filterAntiCheat !== 'ALL') {
+      result = result.filter(g => g.antiCheat === filterAntiCheat);
+    }
     
     // Text search (use debounced term for performance)
     if (debouncedSearchTerm.trim()) {
@@ -3147,8 +3367,24 @@ export default function App() {
       analytics.track('search', { query: debouncedSearchTerm });
     }
     
+    // Sorting
+    result = [...result].sort((a, b) => {
+      if (sortBy === 'cheats') {
+        return (b.cheats?.length || 0) - (a.cheats?.length || 0);
+      } else if (sortBy === 'popular') {
+        // Sort by analytics views
+        const analyticsData = safeLocalStorage.getItem('cheatdb_analytics', {});
+        const viewsA = analyticsData.gameView?.filter(v => v.gameTitle === a.title).length || 0;
+        const viewsB = analyticsData.gameView?.filter(v => v.gameTitle === b.title).length || 0;
+        return viewsB - viewsA;
+      } else {
+        // Default: alphabetical by title
+        return a.title.localeCompare(b.title);
+      }
+    });
+    
     return result;
-  }, [games, debouncedSearchTerm]);
+  }, [games, debouncedSearchTerm, sortBy, filterAntiCheat, favGames]);
 
   // Pagination logic
   const paginatedGames = useMemo(() => {
@@ -3437,6 +3673,14 @@ export default function App() {
     }
   }, [user, addToast]);
 
+  // Toggle Favorite Handler
+  const handleToggleFavorite = useCallback((gameId) => {
+    const newFavs = favorites.toggleGame(gameId);
+    setFavGames(newFavs.games);
+    const isFav = newFavs.games.includes(gameId);
+    addToast(isFav ? 'Added to favorites' : 'Removed from favorites', 'success');
+  }, [addToast]);
+
   // Export/Import Handlers
   const handleImportData = useCallback(async (data) => {
     if (!user) {
@@ -3576,6 +3820,62 @@ export default function App() {
             )}
           </div>
 
+          {/* Filter and Sort Controls */}
+          {!loading && games.length > 0 && (
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-zinc-500" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-xs font-bold focus:border-violet-500/50 focus:outline-none transition-colors cursor-pointer"
+                >
+                  <option value="title">A-Z</option>
+                  <option value="cheats">Most Cheats</option>
+                  <option value="popular">Most Popular</option>
+                </select>
+              </div>
+
+              {/* Anti-Cheat Filter */}
+              <div className="flex gap-1 flex-wrap">
+                {['ALL', 'EAC', 'BattlEye', 'Vanguard', 'VAC', 'Ricochet', 'None'].map(ac => (
+                  <button
+                    key={ac}
+                    onClick={() => setFilterAntiCheat(ac)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                      filterAntiCheat === ac
+                        ? 'bg-violet-500/30 border-violet-500/50 text-violet-200'
+                        : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/50'
+                    }`}
+                  >
+                    {ac}
+                  </button>
+                ))}
+              </div>
+
+              {/* Favorites Toggle */}
+              {favGames.length > 0 && (
+                <button
+                  onClick={() => setFilterAntiCheat('FAVORITES')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                    filterAntiCheat === 'FAVORITES'
+                      ? 'bg-yellow-500/30 border-yellow-500/50 text-yellow-200'
+                      : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/50'
+                  }`}
+                >
+                  <Star className={`w-3 h-3 ${filterAntiCheat === 'FAVORITES' ? 'fill-yellow-400' : ''}`} />
+                  Favorites ({favGames.length})
+                </button>
+              )}
+
+              {/* Results Count */}
+              <span className="ml-auto text-xs text-zinc-500 font-medium">
+                {filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'}
+              </span>
+            </div>
+          )}
+
           {error ? (
             <div className="flex flex-col items-center justify-center h-64 p-6 bg-red-500/5 border border-red-500/10 rounded-3xl text-center backdrop-blur-md">
               <div className="p-4 bg-red-500/10 rounded-full mb-4">
@@ -3653,6 +3953,9 @@ export default function App() {
                       onDelete={handleDeleteGame}
                       isEditMode={isEditMode}
                       index={idx}
+                      onAntiCheatClick={(ac) => setShowAntiCheatInfo(ac)}
+                      onToggleFavorite={handleToggleFavorite}
+                      isFavorited={favGames.includes(game.id)}
                     />
                   </div>
                 ))}
@@ -3806,6 +4109,14 @@ export default function App() {
             onClose={() => setShowExportImport(false)}
             games={games}
             onImport={handleImportData}
+          />
+        )}
+
+        {/* Anti-Cheat Info Modal */}
+        {showAntiCheatInfo && (
+          <AntiCheatInfoModal
+            antiCheat={showAntiCheatInfo}
+            onClose={() => setShowAntiCheatInfo(null)}
           />
         )}
 
