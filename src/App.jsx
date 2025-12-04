@@ -3283,6 +3283,12 @@ const FeaturesGuideModal = ({ onClose }) => {
         const dy = targetPosition.y - prev.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
+        // Check if target is within FOV (distance is in percentage units)
+        if (distance > fov) {
+          // Target is outside FOV, don't lock on
+          return prev;
+        }
+        
         if (distance < 2) return prev;
         
         const speed = (100 - smoothness) / 100;
@@ -3294,7 +3300,7 @@ const FeaturesGuideModal = ({ onClose }) => {
     }, 16);
     
     return () => clearInterval(interval);
-  }, [isAimbotEnabled, targetPosition, smoothness]);
+  }, [isAimbotEnabled, targetPosition, smoothness, fov]);
   
   // Move target randomly
   useEffect(() => {
